@@ -1,4 +1,5 @@
 [build]
+  base    = "wedding-portal"
   command = "pnpm build"
   publish = ".next"
 
