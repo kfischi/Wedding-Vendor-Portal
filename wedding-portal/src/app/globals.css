@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --ivory: 250 247 242;
+    --champagne: 232 221 208;
+    --blush: 201 169 154;
+    --dusty-rose: 140 95 88;
+    --obsidian: 26 22 20;
+    --stone: 107 95 90;
+    --gold: 184 147 90;
+    --cream-white: 255 253 250;
+
+    --background: var(--ivory);
+    --foreground: var(--obsidian);
+    --muted: var(--champagne);
+    --muted-foreground: var(--stone);
+    --border: var(--champagne);
+    --input: var(--champagne);
+    --ring: var(--gold);
+    --primary: var(--dusty-rose);
+    --primary-foreground: var(--cream-white);
+    --secondary: var(--champagne);
+    --secondary-foreground: var(--obsidian);
+    --accent: var(--blush);
+    --accent-foreground: var(--obsidian);
+    --destructive: 220 38 38;
+    --destructive-foreground: 255 255 255;
+    --card: var(--cream-white);
+    --card-foreground: var(--obsidian);
+    --popover: var(--cream-white);
+    --popover-foreground: var(--obsidian);
+
+    --radius: 0.5rem;
+
+    --font-cormorant: "Cormorant Garamond", serif;
+    --font-inter: "Inter", sans-serif;
+    --font-script: "Great Vibes", cursive;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: rgb(var(--ivory));
+    color: rgb(var(--obsidian));
+    font-family: var(--font-inter);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgb(255 253 250 / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgb(232 221 208 / 0.5);
+  }
+
+  .card-shadow {
+    box-shadow:
+      0 1px 3px rgb(26 22 20 / 0.04),
+      0 4px 12px rgb(26 22 20 / 0.06),
+      0 12px 32px rgb(26 22 20 / 0.04);
+  }
+
+  .gold-border {
+    border: 1px solid rgb(184 147 90 / 0.4);
+  }
+
+  .section-padding {
+    padding-inline: 1.5rem;
+    padding-block: 5rem;
+  }
+
+  @media (min-width: 768px) {
+    .section-padding {
+      padding-inline: 3rem;
+      padding-block: 6rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-padding {
+      padding-inline: 5rem;
+      padding-block: 8rem;
+    }
+  }
+
+  .font-display {
+    font-family: var(--font-cormorant);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .font-script {
+    font-family: var(--font-script);
+    font-weight: 400;
+  }
+
+  .text-ivory { color: rgb(250 247 242); }
+  .text-champagne { color: rgb(232 221 208); }
+  .text-blush { color: rgb(201 169 154); }
+  .text-dusty-rose { color: rgb(140 95 88); }
+  .text-obsidian { color: rgb(26 22 20); }
+  .text-stone { color: rgb(107 95 90); }
+  .text-gold { color: rgb(184 147 90); }
+
+  .bg-ivory { background-color: rgb(250 247 242); }
+  .bg-champagne { background-color: rgb(232 221 208); }
+  .bg-blush { background-color: rgb(201 169 154); }
+  .bg-dusty-rose { background-color: rgb(140 95 88); }
+  .bg-obsidian { background-color: rgb(26 22 20); }
+  .bg-gold { background-color: rgb(184 147 90); }
+  .bg-cream-white { background-color: rgb(255 253 250); }
+
+  .border-gold { border-color: rgb(184 147 90); }
+  .border-champagne { border-color: rgb(232 221 208); }
+}
