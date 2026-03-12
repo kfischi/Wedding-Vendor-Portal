@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe/config";
+import { getStripe } from "@/lib/stripe/config";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import { slugify } from "@/lib/utils";
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
