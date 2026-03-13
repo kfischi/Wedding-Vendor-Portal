@@ -53,6 +53,7 @@ export const vendorCategoryEnum = pgEnum("vendor_category", [
   "transport",
   "lighting",
   "planning",
+  "wedding-dress-designers",
   "other",
 ]);
 

@@ -21,6 +21,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   transport: "הסעות",
   lighting: "תאורה",
   planning: "ייעוץ ותכנון",
+  "wedding-dress-designers": "מעצבי שמלות כלה",
   other: "ספק שירותים",
 };
 

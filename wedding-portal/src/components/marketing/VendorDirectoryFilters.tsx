@@ -18,6 +18,7 @@ const CATEGORIES = [
   { value: "cake", label: "עוגות" },
   { value: "planning", label: "תכנון" },
   { value: "lighting", label: "תאורה" },
+  { value: "wedding-dress-designers", label: "מעצבי שמלות כלה" },
   { value: "other", label: "אחר" },
 ];
 

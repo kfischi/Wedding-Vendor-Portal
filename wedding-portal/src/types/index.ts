@@ -24,6 +24,7 @@ export type VendorCategory =
   | "transport"
   | "lighting"
   | "planning"
+  | "wedding-dress-designers"
   | "other";
 
 // ─── Vendor ───────────────────────────────────────────────────────────────────
