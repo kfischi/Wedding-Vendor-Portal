@@ -127,19 +127,22 @@ export function VendorHero({ vendor, heroVideo, heroImageUrl }: VendorHeroProps)
         </motion.div>
       </div>
 
+      {/* ── Bottom gradient — fades to page background ── */}
+      <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-b from-transparent to-[rgb(250_247_242)] pointer-events-none" />
+
       {/* ── Scroll indicator ── */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none"
+        className="absolute bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 0.8 }}
       >
-        <span className="text-white/30 text-[10px] uppercase tracking-[0.2em]">גלול</span>
+        <span className="text-[11px] uppercase tracking-[0.2em]" style={{ color: "rgba(184,147,90,0.75)" }}>גלול</span>
         <motion.div
-          animate={{ y: [0, 9, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ y: [0, 7, 0] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
         >
-          <ChevronDown className="h-5 w-5 text-white/35" />
+          <ChevronDown className="h-5 w-5" style={{ color: "rgba(184,147,90,0.8)" }} />
         </motion.div>
       </motion.div>
     </section>

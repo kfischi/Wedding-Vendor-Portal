@@ -77,7 +77,7 @@ export function VendorNavbar({ businessName, sections }: VendorNavbarProps) {
         className={cn(
           "sticky top-0 z-40 w-full transition-all duration-300",
           scrolled
-            ? "bg-ivory/90 backdrop-blur-md border-b border-champagne/50 shadow-sm"
+            ? "bg-ivory/92 backdrop-blur-lg border-b border-champagne/60 shadow-[0_1px_12px_rgba(0,0,0,0.06)]"
             : "bg-transparent"
         )}
       >

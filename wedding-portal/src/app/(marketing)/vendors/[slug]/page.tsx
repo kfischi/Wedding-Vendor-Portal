@@ -399,7 +399,7 @@ export default async function VendorPage({ params }: Props) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12">
 
             {/* ── Main column (2/3) ── */}
-            <div className="lg:col-span-2 space-y-14">
+            <div className="lg:col-span-2 space-y-10">
               <div id="about">
                 <VendorInfo vendor={vendor} />
               </div>

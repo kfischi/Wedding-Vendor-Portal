@@ -93,7 +93,7 @@ export function MasonryGallery({ images, cloudName }: MasonryGalleryProps) {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-60px" }}
-          className="[column-count:1] sm:[column-count:2] lg:[column-count:3] [column-gap:0.75rem]"
+          className="[column-count:2] lg:[column-count:3] [column-gap:0.75rem]"
         >
           {images.map((media, idx) => (
             <motion.div
@@ -108,7 +108,7 @@ export function MasonryGallery({ images, cloudName }: MasonryGalleryProps) {
                 alt={media.altText ?? `תמונה ${idx + 1}`}
                 width={800}
                 height={600}
-                className="w-full h-auto block transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                className="w-full h-auto block transition-transform duration-500 ease-out group-hover:scale-[1.05]"
               />
 
               {/* Hover overlay */}

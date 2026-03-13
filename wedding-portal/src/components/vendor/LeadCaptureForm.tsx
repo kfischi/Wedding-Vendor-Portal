@@ -8,11 +8,16 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Send, Heart, Calendar, User, Mail, Phone, MessageSquare } from "lucide-react";
 
+const datePattern = /^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+
 const schema = z.object({
   name: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
   email: z.string().email("כתובת אימייל לא תקינה"),
   phone: z.string().optional(),
-  eventDate: z.string().optional(),
+  eventDate: z
+    .string()
+    .optional()
+    .refine((v) => !v || datePattern.test(v), "פורמט תאריך לא תקין — DD/MM/YYYY"),
   message: z.string().min(10, "הודעה חייבת להכיל לפחות 10 תווים"),
 });
 
@@ -23,7 +28,60 @@ interface LeadCaptureFormProps {
   vendorName: string;
 }
 
-function Field({
+/* ── Floating-label input field ── */
+function InputField({
+  icon: Icon,
+  id,
+  label,
+  error,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  id: string;
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="relative">
+        <Icon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone/40 pointer-events-none z-10" />
+        {children}
+        <label
+          htmlFor={id}
+          className="
+            absolute right-9 pointer-events-none select-none
+            top-1.5 text-[10px] font-medium tracking-wide
+            text-gold/75
+            transition-all duration-200
+            peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2
+            peer-placeholder-shown:text-sm peer-placeholder-shown:text-stone/45
+            peer-placeholder-shown:font-normal peer-placeholder-shown:tracking-normal
+            peer-focus:top-1.5 peer-focus:translate-y-0
+            peer-focus:text-[10px] peer-focus:font-medium peer-focus:text-gold/75 peer-focus:tracking-wide
+          "
+        >
+          {label}
+        </label>
+      </div>
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-red-500 text-xs mt-1 pr-1 overflow-hidden"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ── Textarea field (plain placeholder, no floating label) ── */
+function TextareaField({
   icon: Icon,
   error,
   children,
@@ -35,7 +93,7 @@ function Field({
   return (
     <div>
       <div className="relative">
-        <Icon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone/50 pointer-events-none" />
+        <Icon className="absolute right-3 top-3.5 w-4 h-4 text-stone/40 pointer-events-none" />
         {children}
       </div>
       <AnimatePresence>
@@ -54,12 +112,23 @@ function Field({
   );
 }
 
+/* Shared input class — peer is required for floating label to work */
 const inputCls = `
-  w-full pr-9 pl-3 py-2.5 rounded-xl text-sm
-  border border-champagne bg-ivory/70
-  text-obsidian placeholder:text-stone/40
-  focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/60
+  peer w-full pr-9 pl-3 pt-5 pb-1.5 rounded-xl text-sm
+  border border-champagne/80 bg-white
+  text-obsidian placeholder-transparent
+  focus:outline-none focus:ring-1 focus:ring-gold/25 focus:border-gold
   transition-all duration-200
+  shadow-sm
+`;
+
+const textareaCls = `
+  w-full pr-9 pl-3 py-3 rounded-xl text-sm
+  border border-champagne/80 bg-white
+  text-obsidian placeholder:text-stone/40
+  focus:outline-none focus:ring-1 focus:ring-gold/25 focus:border-gold
+  transition-all duration-200
+  shadow-sm resize-none leading-relaxed
 `;
 
 export function LeadCaptureForm({ vendorId, vendorName }: LeadCaptureFormProps) {
@@ -121,9 +190,7 @@ export function LeadCaptureForm({ vendorId, vendorName }: LeadCaptureFormProps) 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
           >
-            <h3 className="font-display text-2xl text-obsidian mb-2">
-              הפנייה נשלחה!
-            </h3>
+            <h3 className="font-display text-2xl text-obsidian mb-2">הפנייה נשלחה!</h3>
             <p className="text-stone text-sm leading-relaxed mb-5">
               {vendorName} יחזרו אליך בהקדם האפשרי.
             </p>
@@ -152,74 +219,89 @@ export function LeadCaptureForm({ vendorId, vendorName }: LeadCaptureFormProps) 
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
             {/* Name */}
-            <Field icon={User} error={errors.name?.message}>
+            <InputField icon={User} id="lcf-name" label="שם מלא *" error={errors.name?.message}>
               <input
                 {...register("name")}
-                placeholder="שם מלא *"
+                id="lcf-name"
+                placeholder=" "
                 className={inputCls}
               />
-            </Field>
+            </InputField>
 
             {/* Email */}
-            <Field icon={Mail} error={errors.email?.message}>
+            <InputField icon={Mail} id="lcf-email" label="אימייל *" error={errors.email?.message}>
               <input
                 {...register("email")}
+                id="lcf-email"
                 type="email"
                 dir="ltr"
-                placeholder="אימייל *"
+                placeholder=" "
                 className={inputCls}
               />
-            </Field>
+            </InputField>
 
             {/* Phone */}
-            <Field icon={Phone}>
+            <InputField icon={Phone} id="lcf-phone" label="טלפון">
               <input
                 {...register("phone")}
+                id="lcf-phone"
                 type="tel"
                 dir="ltr"
-                placeholder="טלפון"
+                placeholder=" "
                 className={inputCls}
               />
-            </Field>
+            </InputField>
 
-            {/* Event date */}
-            <Field icon={Calendar}>
+            {/* Event date — text input with DD/MM/YYYY pattern */}
+            <InputField
+              icon={Calendar}
+              id="lcf-date"
+              label="תאריך האירוע"
+              error={errors.eventDate?.message}
+            >
               <input
                 {...register("eventDate")}
-                type="date"
+                id="lcf-date"
+                type="text"
                 dir="ltr"
-                placeholder="dd/mm/yyyy"
-                min={new Date().toISOString().split("T")[0]}
+                placeholder=" "
+                pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
+                inputMode="numeric"
                 className={inputCls}
               />
-            </Field>
+            </InputField>
 
             {/* Message */}
-            <Field icon={MessageSquare} error={errors.message?.message}>
+            <TextareaField icon={MessageSquare} error={errors.message?.message}>
               <textarea
                 {...register("message")}
                 placeholder="ספרו לי על האירוע שלכם... *"
                 rows={4}
-                className={`${inputCls} pt-3 pr-9 resize-none leading-relaxed`}
-                style={{ paddingTop: "0.75rem" }}
+                className={textareaCls}
               />
-            </Field>
+            </TextareaField>
 
-            {/* Submit */}
+            {/* Submit — gold gradient with shimmer */}
             <motion.button
               type="submit"
               disabled={isSubmitting}
+              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               className="
+                relative overflow-hidden
                 w-full py-3 rounded-xl text-sm font-medium mt-1
-                bg-dusty-rose text-white
-                hover:bg-dusty-rose/90
+                text-white
                 disabled:opacity-60 disabled:cursor-not-allowed
-                transition-colors duration-200
                 flex items-center justify-center gap-2
-                shadow-sm shadow-dusty-rose/30
+                shadow-md shadow-[#b8935a]/25
+                group
               "
+              style={{
+                background: "linear-gradient(135deg, #b8935a 0%, #d4af70 50%, #b8935a 100%)",
+              }}
             >
+              {/* Shimmer sweep */}
+              <span className="absolute inset-0 pointer-events-none -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12" />
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

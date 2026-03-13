@@ -47,7 +47,7 @@ export function VendorInfo({ vendor }: { vendor: Vendor }) {
               <span className="p-2 rounded-xl bg-champagne/40 group-hover:bg-dusty-rose/10 transition-colors">
                 <Mail className="h-4 w-4" />
               </span>
-              <span className="text-sm truncate">{vendor.email}</span>
+              <span className="text-sm break-all">{vendor.email}</span>
             </a>
           )}
 
