@@ -48,22 +48,26 @@ export function HeroSlideshow() {
             />
           </motion.div>
         </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-l from-obsidian/75 via-obsidian/50 to-obsidian/20" />
+        <div className="absolute inset-0 bg-gradient-to-l from-black/70 via-black/50 to-black/30" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-24 w-full">
-        <div className="max-w-2xl">
+        <div className="max-w-2xl backdrop-blur-[1px]">
           <motion.p
             initial={hidden}
             animate={visible}
             transition={{ delay: 0, duration: 0.65, ease: "easeOut" }}
             className="font-script text-gold text-2xl sm:text-3xl mb-3 drop-shadow"
+            style={{ textShadow: '0 1px 8px rgba(0,0,0,0.8)' }}
           >
             היום הגדול שלכם מתחיל כאן
           </motion.p>
 
-          <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl text-white leading-tight mb-6 drop-shadow-lg">
+          <h1
+            className="font-display text-5xl sm:text-6xl lg:text-7xl text-white leading-tight mb-6 drop-shadow-lg"
+            style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}
+          >
             <motion.span
               initial={hidden}
               animate={visible}
@@ -87,6 +91,7 @@ export function HeroSlideshow() {
             animate={visible}
             transition={{ delay: 0.45, duration: 0.65, ease: "easeOut" }}
             className="text-white/80 text-lg sm:text-xl leading-relaxed mb-10 max-w-lg"
+            style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}
           >
             מעל 500 ספקים מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד.
             כל מה שצריך למסע אל חתונת החלומות.
