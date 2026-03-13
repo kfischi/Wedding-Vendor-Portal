@@ -223,16 +223,27 @@ const MOCK_FALLBACK = () => ({
 });
 
 async function getVendorData(slug: string): Promise<VendorData | null> {
+  console.log(`[vendor-page] getVendorData called with slug="${slug}"`);
+  console.log(`[vendor-page] DATABASE_URL set: ${!!process.env.DATABASE_URL}`);
+  console.log(`[vendor-page] DATABASE_URL prefix: ${process.env.DATABASE_URL?.slice(0, 30) ?? "MISSING"}`);
+
   try {
+    console.log(`[vendor-page] Running DB query: SELECT * FROM vendors WHERE slug='${slug}' AND status='active'`);
+
     const [vendor] = await db
       .select()
       .from(vendors)
       .where(and(eq(vendors.slug, slug), eq(vendors.status, "active")))
       .limit(1);
 
+    console.log(`[vendor-page] DB query result: ${vendor ? `found vendor id=${vendor.id} status=${vendor.status}` : "no rows returned"}`);
+
     if (!vendor) {
+      console.log(`[vendor-page] No vendor found — slug="${slug}" isMockFallback=${slug === "demo"}`);
       return slug === "demo" ? MOCK_FALLBACK() : null;
     }
+
+    console.log(`[vendor-page] Vendor found: id=${vendor.id} businessName="${vendor.businessName}" status=${vendor.status} plan=${vendor.plan}`);
 
     const [media, pricing, vendorReviews] = await Promise.all([
       db
@@ -260,8 +271,17 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
         .orderBy(reviews.createdAt),
     ]);
 
+    console.log(`[vendor-page] Related data: media=${media.length} pricing=${pricing.length} reviews=${vendorReviews.length}`);
+    console.log(`[vendor-page] Code path: DB_FOUND → returning real data`);
+
     return { vendor, media, pricing, reviews: vendorReviews };
-  } catch {
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const errorStack = err instanceof Error ? err.stack : undefined;
+    console.error(`[vendor-page] ERROR for slug="${slug}": ${errorMessage}`);
+    console.error(`[vendor-page] Full error:`, err);
+    if (errorStack) console.error(`[vendor-page] Stack: ${errorStack}`);
+    console.log(`[vendor-page] Code path: CATCH → isMockFallback=${slug === "demo"}`);
     return slug === "demo" ? MOCK_FALLBACK() : null;
   }
 }
@@ -314,8 +334,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function VendorPage({ params }: Props) {
   const { slug } = await params;
+  console.log(`[vendor-page] VendorPage render for slug="${slug}"`);
   const data = await getVendorData(slug);
-  if (!data) notFound();
+  if (!data) {
+    console.log(`[vendor-page] No data returned → calling notFound() for slug="${slug}"`);
+    notFound();
+  }
 
   const { vendor, media, pricing, reviews: vendorReviews } = data;
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
