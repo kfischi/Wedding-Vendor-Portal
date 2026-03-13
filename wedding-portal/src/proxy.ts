@@ -34,43 +34,54 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Helper: determine if the current user is an admin
+  const checkIsAdmin = () => {
+    if (!user) return false;
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail && user.email === adminEmail) return true;
+    // role can live in user_metadata (raw_user_meta_data) or app_metadata
+    const role =
+      (user.user_metadata?.role as string | undefined) ??
+      (user.app_metadata?.role as string | undefined);
+    console.log(
+      "[proxy] email:", user.email,
+      "user_metadata:", JSON.stringify(user.user_metadata),
+      "app_metadata:", JSON.stringify(user.app_metadata),
+      "role:", role
+    );
+    return role === "admin";
+  };
+
   // מחובר → redirect מ-login
   if (user && pathname.startsWith("/auth/login")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const isAdmin = checkIsAdmin();
+    return NextResponse.redirect(
+      new URL(isAdmin ? "/admin" : "/dashboard", request.url)
+    );
   }
 
-  // הגנה על /dashboard
-  if (pathname.startsWith("/dashboard") && !user) {
-    const redirectUrl = new URL("/auth/login", request.url);
-    redirectUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(redirectUrl);
+  // הגנה על /dashboard — דורש אימות
+  if (pathname.startsWith("/dashboard")) {
+    if (!user) {
+      const redirectUrl = new URL("/auth/login", request.url);
+      redirectUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+    // אדמין שמנסה לגשת ל-/dashboard → שלח ל-/admin
+    if (checkIsAdmin()) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
   }
 
-  // הגנה על /admin
+  // הגנה על /admin — דורש אימות + תפקיד admin
   if (pathname.startsWith("/admin")) {
     if (!user) {
       const redirectUrl = new URL("/auth/login", request.url);
       redirectUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(redirectUrl);
     }
-
-    // Debug: log what metadata the JWT contains
-    console.log("[admin-guard] user.email:", user.email);
-    console.log("[admin-guard] user_metadata:", JSON.stringify(user.user_metadata));
-    console.log("[admin-guard] app_metadata:", JSON.stringify(user.app_metadata));
-
-    // Check role in user_metadata (raw_user_meta_data) or app_metadata
-    const metaRole =
-      (user.user_metadata?.role as string | undefined) ??
-      (user.app_metadata?.role as string | undefined);
-
-    // Also allow ADMIN_EMAIL bypass (matches layout.tsx + actions.ts logic)
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const isAdmin = metaRole === "admin" || (adminEmail && user.email === adminEmail);
-
-    console.log("[admin-guard] metaRole:", metaRole, "isAdmin:", isAdmin);
-
-    if (!isAdmin) {
+    if (!checkIsAdmin()) {
+      console.log("[proxy] non-admin tried to access /admin, redirecting to /dashboard");
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
