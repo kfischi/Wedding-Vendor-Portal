@@ -20,6 +20,7 @@ import {
   suspendVendor,
   overridePlan,
   impersonateVendor,
+  deleteVendor,
 } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -100,6 +101,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
   if (!vendor) notFound();
 
   const impersonateAction = impersonateVendor.bind(null, vendor.email);
+  const deleteAction = deleteVendor.bind(null, vendor.id);
 
   return (
     <div className="space-y-6">
@@ -189,6 +191,21 @@ export default async function AdminVendorDetailPage({ params }: Props) {
               </button>
             </form>
           )}
+          <form
+            action={deleteAction}
+            onSubmit={(e) => {
+              if (!confirm(`למחוק את ${vendor.businessName}? פעולה זו בלתי הפיכה.`)) {
+                e.preventDefault();
+              }
+            }}
+          >
+            <button
+              type="submit"
+              className="px-3 py-2 text-sm bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors border border-red-200"
+            >
+              מחק ספק
+            </button>
+          </form>
         </div>
       </div>
 
@@ -337,8 +354,8 @@ export default async function AdminVendorDetailPage({ params }: Props) {
                 className="w-full px-3 py-2.5 bg-ivory border border-champagne rounded-xl text-sm text-obsidian focus:outline-none focus:border-gold transition-colors"
               >
                 <option value="free">חינם</option>
-                <option value="standard">סטנדרטי (₪299/חודש)</option>
-                <option value="premium">פרמיום (₪599/חודש)</option>
+                <option value="standard">סטנדרטי (₪149/חודש)</option>
+                <option value="premium">פרמיום (₪349/חודש)</option>
               </select>
               <button
                 type="submit"

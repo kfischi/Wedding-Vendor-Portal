@@ -50,13 +50,15 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 interface Props {
-  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; plan?: string; q?: string; page?: string }>;
 }
 
 export default async function AdminVendorsPage({ searchParams }: Props) {
   const params = await searchParams;
   const statusFilter =
     params.status && params.status !== "all" ? params.status : null;
+  const planFilter =
+    params.plan && params.plan !== "all" ? params.plan : null;
   const query = params.q?.trim() ?? "";
   const page = Math.max(1, Number(params.page ?? 1));
 
@@ -71,6 +73,10 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
           vendors.status,
           statusFilter as "pending" | "active" | "suspended" | "rejected"
         )
+      );
+    if (planFilter)
+      filters.push(
+        eq(vendors.plan, planFilter as "free" | "standard" | "premium")
       );
     if (query) filters.push(ilike(vendors.businessName, `%${query}%`));
     const where = filters.length > 0 ? and(...filters) : undefined;
@@ -94,6 +100,7 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
   const buildUrl = (overrides: Record<string, string>) => {
     const p = new URLSearchParams();
     if (statusFilter) p.set("status", statusFilter);
+    if (planFilter) p.set("plan", planFilter);
     if (query) p.set("q", query);
     p.set("page", String(page));
     Object.entries(overrides).forEach(([k, v]) =>
@@ -109,6 +116,13 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
     { value: "suspended", label: "מושהים" },
   ];
 
+  const planTabs = [
+    { value: "all", label: "כל הפלאנים" },
+    { value: "free", label: "חינם" },
+    { value: "standard", label: "סטנדרטי" },
+    { value: "premium", label: "פרמיום" },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -118,44 +132,55 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
       </div>
 
       {/* Filters bar */}
-      <div className="bg-cream-white rounded-2xl card-shadow p-4 flex flex-col sm:flex-row gap-3">
-        {/* Search */}
-        <form
-          method="GET"
-          action="/admin/vendors"
-          className="flex-1"
-        >
-          {statusFilter && (
-            <input type="hidden" name="status" value={statusFilter} />
-          )}
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone pointer-events-none" />
-            <input
-              name="q"
-              defaultValue={query}
-              placeholder="חפש שם עסק..."
-              className="w-full pr-9 pl-4 py-2.5 bg-ivory border border-champagne rounded-xl text-sm text-obsidian placeholder:text-stone/50 focus:outline-none focus:border-gold transition-colors"
-            />
-          </div>
-        </form>
+      <div className="bg-cream-white rounded-2xl card-shadow p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <form method="GET" action="/admin/vendors" className="flex-1">
+            {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+            {planFilter && <input type="hidden" name="plan" value={planFilter} />}
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone pointer-events-none" />
+              <input
+                name="q"
+                defaultValue={query}
+                placeholder="חפש שם עסק..."
+                className="w-full pr-9 pl-4 py-2.5 bg-ivory border border-champagne rounded-xl text-sm text-obsidian placeholder:text-stone/50 focus:outline-none focus:border-gold transition-colors"
+              />
+            </div>
+          </form>
 
-        {/* Status tabs */}
-        <div className="flex gap-1 p-1 bg-ivory rounded-xl border border-champagne self-start sm:self-auto">
-          {statusTabs.map((tab) => {
+          {/* Status tabs */}
+          <div className="flex gap-1 p-1 bg-ivory rounded-xl border border-champagne self-start sm:self-auto flex-wrap">
+            {statusTabs.map((tab) => {
+              const active =
+                (tab.value === "all" && !statusFilter) ||
+                tab.value === statusFilter;
+              return (
+                <Link
+                  key={tab.value}
+                  href={buildUrl({ status: tab.value === "all" ? "" : tab.value, page: "1" })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                    active ? "bg-obsidian text-white" : "text-stone hover:text-obsidian"
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Plan filter */}
+        <div className="flex gap-1 p-1 bg-ivory rounded-xl border border-champagne self-start flex-wrap">
+          {planTabs.map((tab) => {
             const active =
-              (tab.value === "all" && !statusFilter) ||
-              tab.value === statusFilter;
+              (tab.value === "all" && !planFilter) || tab.value === planFilter;
             return (
               <Link
                 key={tab.value}
-                href={buildUrl({
-                  status: tab.value === "all" ? "" : tab.value,
-                  page: "1",
-                })}
+                href={buildUrl({ plan: tab.value === "all" ? "" : tab.value, page: "1" })}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  active
-                    ? "bg-obsidian text-white"
-                    : "text-stone hover:text-obsidian"
+                  active ? "bg-gold text-white" : "text-stone hover:text-obsidian"
                 }`}
               >
                 {tab.label}

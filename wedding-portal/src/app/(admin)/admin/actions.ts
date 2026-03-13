@@ -131,6 +131,21 @@ export async function impersonateVendor(vendorEmail: string) {
   redirect(data.properties.action_link);
 }
 
+export async function deleteVendor(vendorId: string) {
+  const admin = await requireAdmin();
+  await db.insert(adminLogs).values({
+    id: crypto.randomUUID(),
+    adminId: admin.id,
+    action: "delete_vendor",
+    targetType: "vendor",
+    targetId: vendorId,
+  });
+  await db.delete(vendors).where(eq(vendors.id, vendorId));
+  revalidatePath("/admin");
+  revalidatePath("/admin/vendors");
+  redirect("/admin/vendors");
+}
+
 export async function stopImpersonation() {
   const cookieStore = await cookies();
   cookieStore.delete("x-admin-impersonating");

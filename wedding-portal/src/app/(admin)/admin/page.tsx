@@ -12,11 +12,13 @@ import {
   AlertTriangle,
   ChevronLeft,
   ExternalLink,
+  UserPlus,
+  MessageSquare,
 } from "lucide-react";
 import { approveVendor, suspendVendor } from "./actions";
 import { formatPrice } from "@/lib/utils";
 
-const PLAN_MRR = { standard: 299, premium: 599 };
+const PLAN_MRR = { standard: 149, premium: 349 };
 
 const CATEGORY_LABELS: Record<string, string> = {
   photography: "צילום",
@@ -62,12 +64,14 @@ export default async function AdminDashboardPage() {
   };
   let recentVendors: (typeof vendors.$inferSelect)[] = [];
 
+  let newVendorsThisWeek = 0;
+  let newLeadsThisWeek = 0;
+  let topVendors: { id: string; businessName: string; leadCount: number; slug: string }[] = [];
+
   try {
-    const firstOfMonth = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      1
-    );
+    const now = new Date();
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const [
       totalRes,
@@ -77,33 +81,25 @@ export default async function AdminDashboardPage() {
       standardRes,
       premiumRes,
       recentRes,
+      newVendorsRes,
+      newLeadsRes,
+      topVendorsRes,
     ] = await Promise.all([
       db.select({ c: count() }).from(vendors),
-      db
-        .select({ c: count() })
-        .from(vendors)
-        .where(eq(vendors.status, "active")),
-      db
-        .select({ c: count() })
-        .from(vendors)
-        .where(eq(vendors.status, "pending")),
-      db
-        .select({ c: count() })
-        .from(leads)
-        .where(gte(leads.createdAt, firstOfMonth)),
-      db
-        .select({ c: count() })
-        .from(vendors)
-        .where(
-          and(eq(vendors.status, "active"), eq(vendors.plan, "standard"))
-        ),
-      db
-        .select({ c: count() })
-        .from(vendors)
-        .where(
-          and(eq(vendors.status, "active"), eq(vendors.plan, "premium"))
-        ),
+      db.select({ c: count() }).from(vendors).where(eq(vendors.status, "active")),
+      db.select({ c: count() }).from(vendors).where(eq(vendors.status, "pending")),
+      db.select({ c: count() }).from(leads).where(gte(leads.createdAt, firstOfMonth)),
+      db.select({ c: count() }).from(vendors).where(and(eq(vendors.status, "active"), eq(vendors.plan, "standard"))),
+      db.select({ c: count() }).from(vendors).where(and(eq(vendors.status, "active"), eq(vendors.plan, "premium"))),
       db.select().from(vendors).orderBy(desc(vendors.createdAt)).limit(10),
+      db.select({ c: count() }).from(vendors).where(gte(vendors.createdAt, sevenDaysAgo)),
+      db.select({ c: count() }).from(leads).where(gte(leads.createdAt, sevenDaysAgo)),
+      db
+        .select({ id: vendors.id, businessName: vendors.businessName, leadCount: vendors.leadCount, slug: vendors.slug })
+        .from(vendors)
+        .where(eq(vendors.status, "active"))
+        .orderBy(desc(vendors.leadCount))
+        .limit(5),
     ]);
 
     stats = {
@@ -116,6 +112,9 @@ export default async function AdminDashboardPage() {
         Number(premiumRes[0]?.c ?? 0) * PLAN_MRR.premium,
     };
     recentVendors = recentRes;
+    newVendorsThisWeek = Number(newVendorsRes[0]?.c ?? 0);
+    newLeadsThisWeek = Number(newLeadsRes[0]?.c ?? 0);
+    topVendors = topVendorsRes;
   } catch {}
 
   const statCards = [
@@ -147,6 +146,20 @@ export default async function AdminDashboardPage() {
       colorClass: "text-gold",
       bgClass: "bg-amber-50",
     },
+    {
+      label: "ספקים חדשים השבוע",
+      value: newVendorsThisWeek,
+      icon: UserPlus,
+      colorClass: "text-indigo-600",
+      bgClass: "bg-indigo-50",
+    },
+    {
+      label: "לידים חדשים השבוע",
+      value: newLeadsThisWeek,
+      icon: MessageSquare,
+      colorClass: "text-pink-600",
+      bgClass: "bg-pink-50",
+    },
   ];
 
   return (
@@ -174,7 +187,7 @@ export default async function AdminDashboardPage() {
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {statCards.map(({ label, value, icon: Icon, colorClass, bgClass }) => (
           <div key={label} className="bg-cream-white rounded-2xl p-5 card-shadow">
             <div
@@ -188,8 +201,37 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Recent vendors table */}
-      <div className="bg-cream-white rounded-2xl card-shadow overflow-hidden">
+      {/* Top vendors + Recent vendors row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top vendors by lead count */}
+        <div className="bg-cream-white rounded-2xl card-shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-champagne">
+            <h2 className="font-display text-xl text-obsidian">ספקים מובילים</h2>
+            <p className="text-xs text-stone mt-0.5">לפי כמות לידים</p>
+          </div>
+          {topVendors.length === 0 ? (
+            <div className="p-10 text-center text-stone text-sm">אין נתונים</div>
+          ) : (
+            <div className="divide-y divide-champagne/50">
+              {topVendors.map((v, i) => (
+                <div key={v.id} className="px-6 py-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-gold/20 text-gold" : "bg-ivory text-stone"}`}>
+                      {i + 1}
+                    </span>
+                    <Link href={`/admin/vendors/${v.id}`} className="text-sm font-medium text-obsidian hover:text-dusty-rose transition-colors">
+                      {v.businessName}
+                    </Link>
+                  </div>
+                  <span className="text-sm font-semibold text-obsidian">{v.leadCount}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent vendors table */}
+        <div className="lg:col-span-2 bg-cream-white rounded-2xl card-shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-champagne flex items-center justify-between">
           <h2 className="font-display text-xl text-obsidian">ספקים אחרונים</h2>
           <Link
@@ -314,6 +356,7 @@ export default async function AdminDashboardPage() {
             </table>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
