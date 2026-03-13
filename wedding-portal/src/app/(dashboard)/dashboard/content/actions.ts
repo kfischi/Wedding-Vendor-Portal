@@ -13,11 +13,11 @@ const contentSchema = z.object({
   category: z.enum([
     "photography","videography","venue","catering","flowers",
     "music","dj","makeup","dress","suit","cake","invitation",
-    "transport","lighting","planning","other",
+    "transport","lighting","planning","wedding-dress-designers","other",
   ]),
   city: z.string().min(2, "נדרש שם עיר"),
   region: z.string().optional(),
-  description: z.string().max(5000, "תיאור עד 5000 תווים").optional(),
+  description: z.string().max(1000, "תיאור עד 1000 תווים").optional(),
   phone: z.string().optional(),
   email: z.string().email("אימייל לא תקין"),
   website: z.string().url("כתובת אתר לא תקינה").optional().or(z.literal("")),

@@ -215,17 +215,14 @@ interface VendorData {
   reviews: Review[];
 }
 
-async function getVendorData(slug: string): Promise<VendorData | null> {
-  // Serve mock data for the "demo" slug
-  if (slug === "demo") {
-    return {
-      vendor: MOCK_VENDOR,
-      media: MOCK_IMAGES,
-      pricing: MOCK_PRICING,
-      reviews: MOCK_REVIEWS,
-    };
-  }
+const MOCK_FALLBACK = () => ({
+  vendor: MOCK_VENDOR,
+  media: MOCK_IMAGES,
+  pricing: MOCK_PRICING,
+  reviews: MOCK_REVIEWS,
+});
 
+async function getVendorData(slug: string): Promise<VendorData | null> {
   try {
     const [vendor] = await db
       .select()
@@ -233,7 +230,9 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
       .where(and(eq(vendors.slug, slug), eq(vendors.status, "active")))
       .limit(1);
 
-    if (!vendor) return null;
+    if (!vendor) {
+      return slug === "demo" ? MOCK_FALLBACK() : null;
+    }
 
     const [media, pricing, vendorReviews] = await Promise.all([
       db
@@ -263,7 +262,7 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
 
     return { vendor, media, pricing, reviews: vendorReviews };
   } catch {
-    return null;
+    return slug === "demo" ? MOCK_FALLBACK() : null;
   }
 }
 

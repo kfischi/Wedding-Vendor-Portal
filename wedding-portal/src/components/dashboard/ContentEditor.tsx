@@ -22,7 +22,19 @@ const CATEGORIES = [
   { value: "transport", label: "הסעות" },
   { value: "lighting", label: "תאורה" },
   { value: "planning", label: "מתכנן חתונות" },
+  { value: "wedding-dress-designers", label: "מעצבי שמלות כלה" },
   { value: "other", label: "אחר" },
+];
+
+const REGIONS = [
+  { value: "", label: "— בחר אזור —" },
+  { value: "מרכז", label: "מרכז" },
+  { value: "צפון", label: "צפון" },
+  { value: "דרום", label: "דרום" },
+  { value: "ירושלים", label: "ירושלים והסביבה" },
+  { value: "שרון", label: "השרון" },
+  { value: "שפלה", label: "שפלה" },
+  { value: "ערבה", label: "ערבה ונגב" },
 ];
 
 const inputCls = `
@@ -34,6 +46,7 @@ const inputCls = `
 `;
 
 const labelCls = "block text-sm font-medium text-obsidian mb-1.5";
+const hintCls = "text-stone/50 text-xs mt-1";
 
 interface ContentEditorProps {
   vendor: Vendor;
@@ -64,6 +77,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
               name="businessName"
               defaultValue={vendor.businessName}
               required
+              maxLength={100}
               placeholder="לדוגמה: Studio Rivka"
               className={inputCls}
             />
@@ -74,11 +88,11 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
             <input
               name="shortDescription"
               defaultValue={vendor.shortDescription ?? ""}
-              maxLength={160}
+              maxLength={100}
               placeholder="משפט אחד שמתאר את השירות שלך"
               className={inputCls}
             />
-            <p className="text-stone/50 text-xs mt-1">עד 160 תווים</p>
+            <p className={hintCls}>עד 100 תווים — מופיע מתחת לשם בפרופיל</p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -103,6 +117,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
                 name="city"
                 defaultValue={vendor.city}
                 required
+                maxLength={50}
                 placeholder="תל אביב"
                 className={inputCls}
               />
@@ -111,12 +126,17 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
 
           <div>
             <label className={labelCls}>אזור</label>
-            <input
+            <select
               name="region"
               defaultValue={vendor.region ?? ""}
-              placeholder="מרכז, צפון, דרום..."
               className={inputCls}
-            />
+            >
+              {REGIONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -125,10 +145,11 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
               name="description"
               defaultValue={vendor.description ?? ""}
               rows={6}
-              maxLength={5000}
+              maxLength={1000}
               placeholder="ספר על עצמך, הניסיון שלך, הסגנון שלך..."
               className={`${inputCls} resize-none`}
             />
+            <p className={hintCls}>עד 1000 תווים</p>
           </div>
         </div>
       </section>
@@ -139,7 +160,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
         <div className="grid sm:grid-cols-2 gap-4">
 
           <div>
-            <label className={labelCls}>טלפון</label>
+            <label className={labelCls}>טלפון / WhatsApp</label>
             <input
               name="phone"
               type="tel"
@@ -148,6 +169,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
               placeholder="050-0000000"
               className={inputCls}
             />
+            <p className={hintCls}>גם מופיע כפתור WhatsApp בפרופיל</p>
           </div>
 
           <div>
@@ -176,14 +198,14 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
 
           <div>
             <label className={labelCls}>אינסטגרם</label>
-            <div className="flex items-center gap-2">
-              <span className="text-stone text-sm shrink-0">@</span>
+            <div className="relative">
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-stone/50 text-sm select-none">@</span>
               <input
                 name="instagram"
                 dir="ltr"
                 defaultValue={vendor.instagram?.replace("@", "") ?? ""}
                 placeholder="yourusername"
-                className={inputCls}
+                className={`${inputCls} pr-8`}
               />
             </div>
           </div>
@@ -213,7 +235,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
               placeholder={`${vendor.businessName} | WeddingPro`}
               className={`${inputCls} disabled:cursor-not-allowed`}
             />
-            <p className="text-stone/50 text-xs mt-1">עד 70 תווים</p>
+            <p className={hintCls}>עד 70 תווים</p>
           </div>
 
           <div>
@@ -227,7 +249,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
               placeholder={vendor.shortDescription ?? "תיאור לגוגל..."}
               className={`${inputCls} resize-none disabled:cursor-not-allowed`}
             />
-            <p className="text-stone/50 text-xs mt-1">עד 160 תווים</p>
+            <p className={hintCls}>עד 160 תווים</p>
           </div>
         </div>
       </section>
