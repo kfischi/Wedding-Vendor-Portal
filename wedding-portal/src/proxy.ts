@@ -1,18 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
   const { pathname } = request.nextUrl;
 
+  // אם Supabase לא מוגדר — מאפשרים הכול (dev mode)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Dev mode — no Supabase configured, allow everything
-  if (!supabaseUrl || !supabaseKey) return NextResponse.next({ request });
-
-  // Must create supabaseResponse first and keep it in sync — per Supabase SSR docs
-  let supabaseResponse = NextResponse.next({ request });
+  if (!supabaseUrl || !supabaseKey) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
@@ -20,11 +19,9 @@ export async function proxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        // Set on request (for downstream server components)
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value)
         );
-        // Recreate response so cookies are attached
         supabaseResponse = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options)
@@ -37,42 +34,36 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const isAdmin =
-    user?.user_metadata?.role === "admin" ||
-    user?.app_metadata?.role === "admin" ||
-    (!!adminEmail && user?.email === adminEmail);
+  // מחובר → redirect מ-login
+  if (user && pathname.startsWith("/auth/login")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
-  // Helper: redirect while preserving Supabase auth cookies
-  const redirectTo = (url: string) => {
-    const res = NextResponse.redirect(new URL(url, request.url));
-    supabaseResponse.cookies.getAll().forEach(({ name, value, ...opts }) => {
-      res.cookies.set(name, value, opts);
-    });
-    return res;
-  };
+  // הגנה על /dashboard
+  if (pathname.startsWith("/dashboard") && !user) {
+    const redirectUrl = new URL("/auth/login", request.url);
+    redirectUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
 
-  // Protect /admin — must be admin
+  // הגנה על /admin
   if (pathname.startsWith("/admin")) {
-    if (!user) return redirectTo("/auth/login");
-    if (!isAdmin) return redirectTo("/dashboard");
-    return supabaseResponse;
-  }
-
-  // Protect /dashboard — must be logged in
-  if (pathname.startsWith("/dashboard")) {
-    if (!user) return redirectTo("/auth/login");
-    return supabaseResponse;
-  }
-
-  // Redirect logged-in users away from login page
-  if (pathname === "/auth/login" && user) {
-    return redirectTo(isAdmin ? "/admin" : "/dashboard");
+    if (!user) {
+      const redirectUrl = new URL("/auth/login", request.url);
+      redirectUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+    const role = user.user_metadata?.role as string | undefined;
+    if (role !== "admin") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
 
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*", "/auth/login"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
