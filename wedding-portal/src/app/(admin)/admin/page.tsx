@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { db } from "@/lib/db/db";
 import { vendors, leads } from "@/lib/db/schema";
 import { eq, count, gte, and, desc } from "drizzle-orm";
