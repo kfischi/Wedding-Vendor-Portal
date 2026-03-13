@@ -16,8 +16,6 @@ import {
 import { approveVendor, suspendVendor } from "./actions";
 import { formatPrice } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
 const PLAN_MRR = { standard: 299, premium: 599 };
 
 const CATEGORY_LABELS: Record<string, string> = {
