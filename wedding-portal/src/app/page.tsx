@@ -294,7 +294,7 @@ export default async function HomePage() {
             הצטרפו אלינו
           </p>
           <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl text-white mb-6">
-            אתם ספקי חתונות?
+            מקצוענים בתחום החתונות?
           </h2>
           <p className="text-white/60 text-lg leading-relaxed mb-10 max-w-xl mx-auto">
             הגדילו את הנוכחות הדיגיטלית שלכם, קבלו לידים איכותיים וצמחו עם פלטפורמה שבנויה

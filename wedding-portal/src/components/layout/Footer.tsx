@@ -15,7 +15,7 @@ export function Footer() {
             <div>
               <p className="font-script text-gold text-2xl leading-none mb-1">WeddingPro</p>
               <h2 className="font-display text-lg text-white leading-tight">
-                Wedding Vendor Portal
+                WeddingPro
               </h2>
             </div>
             <p className="text-sm leading-relaxed text-white/50">
@@ -77,7 +77,7 @@ export function Footer() {
         {/* Divider */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-white/30 flex items-center gap-1.5">
-            © {YEAR} Wedding Vendor Portal. כל הזכויות שמורות.
+            © {YEAR} WeddingPro. כל הזכויות שמורות.
           </p>
           <p className="text-xs text-white/25 flex items-center gap-1.5">
             נבנה עם <Heart className="w-3 h-3 text-dusty-rose fill-dusty-rose" /> בישראל
