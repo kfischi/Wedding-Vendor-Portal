@@ -5,13 +5,14 @@ import type { NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  let response = NextResponse.next();
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Dev mode — no Supabase configured, allow everything
-  if (!supabaseUrl || !supabaseKey) return response;
+  if (!supabaseUrl || !supabaseKey) return NextResponse.next({ request });
+
+  // Must create supabaseResponse first and keep it in sync — per Supabase SSR docs
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
@@ -19,9 +20,15 @@ export async function proxy(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
+        // Set on request (for downstream server components)
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        );
+        // Recreate response so cookies are attached
+        supabaseResponse = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        );
       },
     },
   });
@@ -36,26 +43,34 @@ export async function proxy(request: NextRequest) {
     user?.app_metadata?.role === "admin" ||
     (!!adminEmail && user?.email === adminEmail);
 
+  // Helper: redirect while preserving Supabase auth cookies
+  const redirectTo = (url: string) => {
+    const res = NextResponse.redirect(new URL(url, request.url));
+    supabaseResponse.cookies.getAll().forEach(({ name, value, ...opts }) => {
+      res.cookies.set(name, value, opts);
+    });
+    return res;
+  };
+
   // Protect /admin — must be admin
   if (pathname.startsWith("/admin")) {
-    if (!user) return NextResponse.redirect(new URL("/auth/login", request.url));
-    if (!isAdmin) return NextResponse.redirect(new URL("/dashboard", request.url));
-    return response;
+    if (!user) return redirectTo("/auth/login");
+    if (!isAdmin) return redirectTo("/dashboard");
+    return supabaseResponse;
   }
 
   // Protect /dashboard — must be logged in
   if (pathname.startsWith("/dashboard")) {
-    if (!user) return NextResponse.redirect(new URL("/auth/login", request.url));
-    return response;
+    if (!user) return redirectTo("/auth/login");
+    return supabaseResponse;
   }
 
   // Redirect logged-in users away from login page
   if (pathname === "/auth/login" && user) {
-    if (isAdmin) return NextResponse.redirect(new URL("/admin", request.url));
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return redirectTo(isAdmin ? "/admin" : "/dashboard");
   }
 
-  return response;
+  return supabaseResponse;
 }
 
 export const config = {
