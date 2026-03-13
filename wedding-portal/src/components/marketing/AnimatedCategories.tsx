@@ -5,7 +5,6 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import {
   Camera,
-  Video,
   Building2,
   UtensilsCrossed,
   Flower2,
@@ -19,7 +18,7 @@ import {
 
 const CATEGORIES = [
   { slug: "photography", label: "צילום חתונות", icon: Camera, color: "bg-blush/20 text-dusty-rose" },
-  { slug: "videography", label: "וידאו קינמטי", icon: Video, color: "bg-stone/10 text-stone" },
+  { slug: "wedding-dress-designers", label: "מעצבי שמלות כלה", icon: Shirt, color: "bg-fuchsia-50 text-fuchsia-500" },
   { slug: "venue", label: "אולמות ומקומות", icon: Building2, color: "bg-gold/10 text-gold" },
   { slug: "catering", label: "קייטרינג", icon: UtensilsCrossed, color: "bg-amber-50 text-amber-600" },
   { slug: "flowers", label: "פרחים ועיצוב", icon: Flower2, color: "bg-pink-50 text-pink-500" },
@@ -28,7 +27,6 @@ const CATEGORIES = [
   { slug: "planning", label: "תכנון אירועים", icon: Calendar, color: "bg-teal-50 text-teal-600" },
   { slug: "dj", label: "DJ", icon: Headphones, color: "bg-indigo-50 text-indigo-500" },
   { slug: "cake", label: "עוגות חתונה", icon: Cake, color: "bg-orange-50 text-orange-500" },
-  { slug: "wedding-dress-designers", label: "מעצבי שמלות כלה", icon: Shirt, color: "bg-fuchsia-50 text-fuchsia-500" },
 ];
 
 export function AnimatedCategories() {

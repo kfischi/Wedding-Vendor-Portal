@@ -7,7 +7,7 @@ import { useCallback, useRef } from "react";
 const CATEGORIES = [
   { value: "", label: "כל הקטגוריות" },
   { value: "photography", label: "צילום" },
-  { value: "videography", label: "וידאו" },
+  { value: "wedding-dress-designers", label: "מעצבי שמלות כלה" },
   { value: "venue", label: "אולמות" },
   { value: "catering", label: "קייטרינג" },
   { value: "flowers", label: "פרחים" },
@@ -18,7 +18,6 @@ const CATEGORIES = [
   { value: "cake", label: "עוגות" },
   { value: "planning", label: "תכנון" },
   { value: "lighting", label: "תאורה" },
-  { value: "wedding-dress-designers", label: "מעצבי שמלות כלה" },
   { value: "other", label: "אחר" },
 ];
 
