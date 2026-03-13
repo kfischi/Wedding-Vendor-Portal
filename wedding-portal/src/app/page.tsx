@@ -1,17 +1,7 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
-import Image from "next/image";
 import {
-  Camera,
-  Video,
-  Building2,
-  UtensilsCrossed,
-  Flower2,
-  Music,
-  Sparkles,
-  Calendar,
-  Headphones,
-  Cake,
-  Shirt,
   MessageCircle,
   Star,
   Users,
@@ -25,22 +15,11 @@ import type { Vendor } from "@/lib/db/schema";
 import { VendorCard } from "@/components/vendor/VendorCard";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/shared/CookieBanner";
+import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
+import { AnimatedStats } from "@/components/marketing/AnimatedStats";
+import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
 
-// ─── Category grid data ────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { slug: "photography", label: "צילום חתונות", icon: Camera, color: "bg-blush/20 text-dusty-rose" },
-  { slug: "videography", label: "וידאו קינמטי", icon: Video, color: "bg-stone/10 text-stone" },
-  { slug: "venue", label: "אולמות ומקומות", icon: Building2, color: "bg-gold/10 text-gold" },
-  { slug: "catering", label: "קייטרינג", icon: UtensilsCrossed, color: "bg-amber-50 text-amber-600" },
-  { slug: "flowers", label: "פרחים ועיצוב", icon: Flower2, color: "bg-pink-50 text-pink-500" },
-  { slug: "music", label: "מוזיקה חיה", icon: Music, color: "bg-purple-50 text-purple-500" },
-  { slug: "makeup", label: "איפור ושיער", icon: Sparkles, color: "bg-rose-50 text-rose-500" },
-  { slug: "planning", label: "תכנון אירועים", icon: Calendar, color: "bg-teal-50 text-teal-600" },
-  { slug: "dj", label: "DJ", icon: Headphones, color: "bg-indigo-50 text-indigo-500" },
-  { slug: "cake", label: "עוגות חתונה", icon: Cake, color: "bg-orange-50 text-orange-500" },
-  { slug: "wedding-dress-designers", label: "מעצבי שמלות כלה", icon: Shirt, color: "bg-fuchsia-50 text-fuchsia-500" },
-];
+// ─── Stats data ────────────────────────────────────────────────────────────────
 
 const STATS = [
   { value: "500+", label: "ספקים מובחרים" },
@@ -180,76 +159,13 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-ivory" dir="rtl">
 
-      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[92svh] flex items-center overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&q=85&fit=crop"
-            alt="חתונה מושלמת"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-l from-obsidian/75 via-obsidian/50 to-obsidian/20" />
-        </div>
+      {/* ── HERO (rotating images + animated text) ─────────────────────────────── */}
+      <HeroSlideshow />
 
-        {/* Content */}
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-24 w-full">
-          <div className="max-w-2xl">
-            <p className="font-script text-gold text-2xl sm:text-3xl mb-3 drop-shadow">
-              היום הגדול שלכם מתחיל כאן
-            </p>
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl text-white leading-tight mb-6 drop-shadow-lg">
-              מצאו את ספקי
-              <br />
-              <span className="text-gold">החתונה המושלמים</span>
-            </h1>
-            <p className="text-white/80 text-lg sm:text-xl leading-relaxed mb-10 max-w-lg">
-              מעל 500 ספקים מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד.
-              כל מה שצריך למסע אל חתונת החלומות.
-            </p>
+      {/* ── STATS (count-up on scroll) ─────────────────────────────────────────── */}
+      <AnimatedStats stats={STATS} />
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/vendors"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gold text-obsidian font-semibold text-sm hover:bg-gold/90 transition-colors shadow-lg"
-              >
-                חפשו ספקים
-                <ChevronLeft className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/auth/login"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-sm hover:bg-white/25 transition-colors"
-              >
-                הצטרפו כספק
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5 text-white/50">
-          <span className="text-xs tracking-widest uppercase">גלול למטה</span>
-          <div className="w-px h-8 bg-gradient-to-b from-white/50 to-transparent" />
-        </div>
-      </section>
-
-      {/* ── STATS ─────────────────────────────────────────────────────────────── */}
-      <section className="bg-obsidian text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0 sm:divide-x sm:divide-x-reverse sm:divide-white/10">
-            {STATS.map(({ value, label }) => (
-              <div key={label} className="text-center sm:px-8">
-                <p className="font-display text-3xl sm:text-4xl text-gold">{value}</p>
-                <p className="text-white/50 text-xs mt-1">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CATEGORIES ────────────────────────────────────────────────────────── */}
+      {/* ── CATEGORIES (stagger on scroll + hover lift) ────────────────────────── */}
       <section className="py-20 sm:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -259,20 +175,7 @@ export default async function HomePage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-            {CATEGORIES.map(({ slug, label, icon: Icon, color }) => (
-              <Link
-                key={slug}
-                href={`/vendors?category=${slug}`}
-                className="group flex flex-col items-center gap-3 p-4 sm:p-5 bg-cream-white rounded-2xl card-shadow hover:shadow-md transition-shadow text-center"
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color} group-hover:scale-110 transition-transform duration-200`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="text-sm font-medium text-obsidian leading-tight">{label}</span>
-              </Link>
-            ))}
-          </div>
+          <AnimatedCategories />
         </div>
       </section>
 
