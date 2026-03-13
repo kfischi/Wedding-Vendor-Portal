@@ -53,8 +53,24 @@ export async function proxy(request: NextRequest) {
       redirectUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(redirectUrl);
     }
-    const role = user.user_metadata?.role as string | undefined;
-    if (role !== "admin") {
+
+    // Debug: log what metadata the JWT contains
+    console.log("[admin-guard] user.email:", user.email);
+    console.log("[admin-guard] user_metadata:", JSON.stringify(user.user_metadata));
+    console.log("[admin-guard] app_metadata:", JSON.stringify(user.app_metadata));
+
+    // Check role in user_metadata (raw_user_meta_data) or app_metadata
+    const metaRole =
+      (user.user_metadata?.role as string | undefined) ??
+      (user.app_metadata?.role as string | undefined);
+
+    // Also allow ADMIN_EMAIL bypass (matches layout.tsx + actions.ts logic)
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const isAdmin = metaRole === "admin" || (adminEmail && user.email === adminEmail);
+
+    console.log("[admin-guard] metaRole:", metaRole, "isAdmin:", isAdmin);
+
+    if (!isAdmin) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
