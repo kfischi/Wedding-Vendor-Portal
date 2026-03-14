@@ -8,12 +8,18 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/vendors",  label: "ספקים" },
+  { href: "/blog",     label: "בלוג" },
+  { href: "/about",    label: "אודות" },
+  { href: "/contact",  label: "צור קשר" },
   { href: "/pricing",  label: "מחירים" },
 ];
 
 const DRAWER_LINKS = [
-  { href: "/vendors",  label: "ספקים" },
-  { href: "/pricing",  label: "מחירים" },
+  { href: "/vendors",    label: "ספקים" },
+  { href: "/blog",       label: "בלוג" },
+  { href: "/about",      label: "אודות" },
+  { href: "/contact",    label: "צור קשר" },
+  { href: "/pricing",    label: "מחירים" },
   { href: "/auth/login", label: "התחברות" },
 ];
 

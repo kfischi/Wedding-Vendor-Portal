@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { BLOG_POSTS } from "@/lib/blog";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
+    },
+    {
+      url: `${appUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${appUrl}/join`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${appUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${appUrl}/contact`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.6,
     },
     {
       url: `${appUrl}/auth/login`,
@@ -77,5 +102,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB unavailable — return static pages only
   }
 
-  return [...staticPages, ...vendorPages];
+  const blogPages: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
+    url: `${appUrl}/blog/${p.slug}`,
+    lastModified: new Date(p.date),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...vendorPages, ...blogPages];
 }
