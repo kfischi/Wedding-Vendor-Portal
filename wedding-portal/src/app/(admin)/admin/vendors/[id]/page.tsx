@@ -33,10 +33,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "text-amber-700 bg-amber-50 border-amber-200",
-  active: "text-emerald-700 bg-emerald-50 border-emerald-200",
-  suspended: "text-red-700 bg-red-50 border-red-200",
-  rejected: "text-stone bg-champagne/50 border-champagne",
+  pending: "color:#fbbf24;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3)",
+  active: "color:#34d399;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3)",
+  suspended: "color:#f87171;background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3)",
+  rejected: "color:#9ca3af;background:rgba(156,163,175,0.12);border:1px solid rgba(156,163,175,0.3)",
 };
 
 const LEAD_STATUS_LABELS: Record<string, string> = {
@@ -76,6 +76,13 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+const card = {
+  background: "#1a1a1a",
+  border: "1px solid rgba(184,147,90,0.15)",
+  borderRadius: "16px",
+  padding: "20px",
+} as const;
+
 export default async function AdminVendorDetailPage({ params }: Props) {
   const { id } = await params;
   let vendor: typeof vendors.$inferSelect | null = null;
@@ -108,55 +115,48 @@ export default async function AdminVendorDetailPage({ params }: Props) {
       {/* Breadcrumb */}
       <Link
         href="/admin/vendors"
-        className="inline-flex items-center gap-1 text-sm text-stone hover:text-obsidian transition-colors"
+        style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", display: "inline-flex", alignItems: "center", gap: "4px" }}
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight style={{ width: "16px", height: "16px" }} />
         ניהול ספקים
       </Link>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl text-obsidian">
+          <h1 style={{ fontFamily: "var(--font-display, serif)", fontSize: "28px", color: "white", marginBottom: "8px" }}>
             {vendor.businessName}
           </h1>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs border ${STATUS_COLORS[vendor.status]}`}
-            >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            <span style={{ ...parseStyle(STATUS_COLORS[vendor.status]), display: "inline-flex", alignItems: "center", padding: "2px 10px", borderRadius: "999px", fontSize: "12px" }}>
               {STATUS_LABELS[vendor.status]}
             </span>
-            <span className="text-xs text-stone">
+            <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
               {CATEGORY_LABELS[vendor.category]} · {vendor.city}
             </span>
-            <span
-              className={`text-xs font-medium ${
-                vendor.plan === "premium"
-                  ? "text-gold"
-                  : vendor.plan === "standard"
-                  ? "text-blue-600"
-                  : "text-stone"
-              }`}
-            >
+            <span style={{
+              fontSize: "12px", fontWeight: 600,
+              color: vendor.plan === "premium" ? "#b8935a" : vendor.plan === "standard" ? "#60a5fa" : "rgba(255,255,255,0.4)"
+            }}>
               {PLAN_LABELS[vendor.plan]}
             </span>
           </div>
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
           <Link
             href={`/vendors/${vendor.slug}`}
             target="_blank"
-            className="flex items-center gap-1.5 px-3 py-2 text-sm bg-ivory border border-champagne rounded-xl text-obsidian hover:bg-champagne/30 transition-colors"
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 14px", fontSize: "13px", background: "#2a2a2a", border: "1px solid rgba(184,147,90,0.3)", borderRadius: "10px", color: "#b8935a" }}
           >
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink style={{ width: "14px", height: "14px" }} />
             צפה באתר
           </Link>
           <form action={impersonateAction}>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-obsidian text-white rounded-xl hover:bg-obsidian/80 transition-colors"
+              style={{ padding: "8px 14px", fontSize: "13px", background: "rgba(184,147,90,0.2)", border: "1px solid rgba(184,147,90,0.4)", borderRadius: "10px", color: "#b8935a", cursor: "pointer" }}
             >
               כנס בשמו
             </button>
@@ -165,7 +165,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
             <form action={approveVendor.bind(null, vendor.id)}>
               <button
                 type="submit"
-                className="px-3 py-2 text-sm bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                style={{ padding: "8px 14px", fontSize: "13px", background: "rgba(52,211,153,0.2)", border: "1px solid rgba(52,211,153,0.4)", borderRadius: "10px", color: "#34d399", cursor: "pointer" }}
               >
                 אשר ספק
               </button>
@@ -175,7 +175,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
             <form action={suspendVendor.bind(null, vendor.id)}>
               <button
                 type="submit"
-                className="px-3 py-2 text-sm bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+                style={{ padding: "8px 14px", fontSize: "13px", background: "rgba(248,113,113,0.2)", border: "1px solid rgba(248,113,113,0.4)", borderRadius: "10px", color: "#f87171", cursor: "pointer" }}
               >
                 השהה
               </button>
@@ -185,7 +185,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
             <form action={approveVendor.bind(null, vendor.id)}>
               <button
                 type="submit"
-                className="px-3 py-2 text-sm bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                style={{ padding: "8px 14px", fontSize: "13px", background: "rgba(52,211,153,0.2)", border: "1px solid rgba(52,211,153,0.4)", borderRadius: "10px", color: "#34d399", cursor: "pointer" }}
               >
                 הפעל מחדש
               </button>
@@ -201,7 +201,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
           >
             <button
               type="submit"
-              className="px-3 py-2 text-sm bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors border border-red-200"
+              style={{ padding: "8px 14px", fontSize: "13px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "10px", color: "#f87171", cursor: "pointer" }}
             >
               מחק ספק
             </button>
@@ -212,146 +212,118 @@ export default async function AdminVendorDetailPage({ params }: Props) {
       {/* Content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Right column: details + actions */}
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {/* Contact info */}
-          <div className="bg-cream-white rounded-2xl card-shadow p-5">
-            <h2 className="font-display text-xl text-obsidian mb-4">
+          <div style={card}>
+            <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white", marginBottom: "16px" }}>
               פרטי קשר
             </h2>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5 text-sm">
-                <Mail className="w-4 h-4 text-stone flex-shrink-0" />
-                <a
-                  href={`mailto:${vendor.email}`}
-                  className="text-obsidian hover:text-dusty-rose transition-colors truncate"
-                >
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px" }}>
+                <Mail style={{ width: "15px", height: "15px", color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+                <a href={`mailto:${vendor.email}`} style={{ color: "#b8935a" }}>
                   {vendor.email}
                 </a>
               </div>
               {vendor.phone && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <Phone className="w-4 h-4 text-stone flex-shrink-0" />
-                  <span className="text-obsidian" dir="ltr">
-                    {vendor.phone}
-                  </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px" }}>
+                  <Phone style={{ width: "15px", height: "15px", color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+                  <span style={{ color: "rgba(255,255,255,0.8)" }} dir="ltr">{vendor.phone}</span>
                 </div>
               )}
               {vendor.website && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <Globe className="w-4 h-4 text-stone flex-shrink-0" />
-                  <a
-                    href={vendor.website}
-                    target="_blank"
-                    className="text-gold hover:underline truncate"
-                  >
-                    {vendor.website}
-                  </a>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px" }}>
+                  <Globe style={{ width: "15px", height: "15px", color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+                  <a href={vendor.website} target="_blank" style={{ color: "#b8935a" }}>{vendor.website}</a>
                 </div>
               )}
               {vendor.instagram && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <Instagram className="w-4 h-4 text-stone flex-shrink-0" />
-                  <span className="text-obsidian">{vendor.instagram}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px" }}>
+                  <Instagram style={{ width: "15px", height: "15px", color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+                  <span style={{ color: "rgba(255,255,255,0.7)" }}>{vendor.instagram}</span>
                 </div>
               )}
               {vendor.facebook && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <Facebook className="w-4 h-4 text-stone flex-shrink-0" />
-                  <span className="text-obsidian">{vendor.facebook}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px" }}>
+                  <Facebook style={{ width: "15px", height: "15px", color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+                  <span style={{ color: "rgba(255,255,255,0.7)" }}>{vendor.facebook}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Stats */}
-          <div className="bg-cream-white rounded-2xl card-shadow p-5">
-            <h2 className="font-display text-xl text-obsidian mb-4">
+          <div style={card}>
+            <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white", marginBottom: "16px" }}>
               סטטיסטיקות
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               {[
-                {
-                  label: "לידים",
-                  value: vendor.leadCount,
-                  icon: MessageSquare,
-                },
-                { label: "צפיות", value: vendor.viewCount, icon: Eye },
-                {
-                  label: "ביקורות",
-                  value: vendor.reviewCount,
-                  icon: Star,
-                },
-                {
-                  label: "דירוג",
-                  value: vendor.rating ? vendor.rating.toFixed(1) : "—",
-                  icon: Star,
-                },
-              ].map(({ label, value }) => (
+                { label: "לידים", value: vendor.leadCount, icon: MessageSquare, color: "#b8935a" },
+                { label: "צפיות", value: vendor.viewCount, icon: Eye, color: "#60a5fa" },
+                { label: "ביקורות", value: vendor.reviewCount, icon: Star, color: "#a78bfa" },
+                { label: "דירוג", value: vendor.rating ? vendor.rating.toFixed(1) : "—", icon: Star, color: "#34d399" },
+              ].map(({ label, value, color }) => (
                 <div
                   key={label}
-                  className="bg-ivory rounded-xl p-3 text-center"
+                  style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "12px", textAlign: "center" }}
                 >
-                  <p className="text-xl font-semibold text-obsidian">
-                    {value}
-                  </p>
-                  <p className="text-xs text-stone mt-0.5">{label}</p>
+                  <p style={{ fontSize: "22px", fontWeight: 700, color }}>{value}</p>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{label}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Meta */}
-          <div className="bg-cream-white rounded-2xl card-shadow p-5">
-            <h2 className="font-display text-xl text-obsidian mb-4">
+          <div style={card}>
+            <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white", marginBottom: "16px" }}>
               מידע נוסף
             </h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-stone">נרשם</span>
-                <span className="text-obsidian">
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "13px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "rgba(255,255,255,0.4)" }}>נרשם</span>
+                <span style={{ color: "rgba(255,255,255,0.8)" }}>
                   {new Date(vendor.createdAt).toLocaleDateString("he-IL")}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-stone">עודכן</span>
-                <span className="text-obsidian">
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "rgba(255,255,255,0.4)" }}>עודכן</span>
+                <span style={{ color: "rgba(255,255,255,0.8)" }}>
                   {new Date(vendor.updatedAt).toLocaleDateString("he-IL")}
                 </span>
               </div>
               {vendor.stripeCustomerId && (
-                <div className="flex justify-between">
-                  <span className="text-stone">Stripe ID</span>
-                  <span className="font-mono text-xs text-obsidian truncate max-w-[120px]">
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "rgba(255,255,255,0.4)" }}>Stripe ID</span>
+                  <span style={{ fontFamily: "monospace", fontSize: "11px", color: "rgba(255,255,255,0.6)", maxWidth: "130px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {vendor.stripeCustomerId}
                   </span>
                 </div>
               )}
               {vendor.subscriptionStatus && (
-                <div className="flex justify-between">
-                  <span className="text-stone">מנוי</span>
-                  <span className="text-obsidian">
-                    {vendor.subscriptionStatus}
-                  </span>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "rgba(255,255,255,0.4)" }}>מנוי</span>
+                  <span style={{ color: "rgba(255,255,255,0.8)" }}>{vendor.subscriptionStatus}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Plan override */}
-          <div className="bg-cream-white rounded-2xl card-shadow p-5">
-            <h2 className="font-display text-xl text-obsidian mb-1">
+          <div style={card}>
+            <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white", marginBottom: "4px" }}>
               שינוי פלאן
             </h2>
-            <p className="text-xs text-stone mb-4">
-              פלאן נוכחי:{" "}
-              <strong className="text-obsidian">{PLAN_LABELS[vendor.plan]}</strong>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "16px" }}>
+              פלאן נוכחי: <strong style={{ color: "#b8935a" }}>{PLAN_LABELS[vendor.plan]}</strong>
             </p>
-            <form action={overridePlan} className="space-y-3">
+            <form action={overridePlan} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <input type="hidden" name="vendorId" value={vendor.id} />
               <select
                 name="plan"
                 defaultValue={vendor.plan}
-                className="w-full px-3 py-2.5 bg-ivory border border-champagne rounded-xl text-sm text-obsidian focus:outline-none focus:border-gold transition-colors"
+                style={{ width: "100%", padding: "10px 12px", background: "#111", border: "1px solid rgba(184,147,90,0.3)", borderRadius: "10px", fontSize: "13px", color: "rgba(255,255,255,0.8)", outline: "none" }}
               >
                 <option value="free">חינם</option>
                 <option value="standard">סטנדרטי (₪149/חודש)</option>
@@ -359,7 +331,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
               </select>
               <button
                 type="submit"
-                className="w-full py-2.5 bg-obsidian text-white text-sm rounded-xl hover:bg-obsidian/80 transition-colors"
+                style={{ width: "100%", padding: "10px", background: "linear-gradient(135deg,#b8935a,#9a7d46)", border: "none", borderRadius: "10px", fontSize: "13px", color: "white", fontWeight: 600, cursor: "pointer" }}
               >
                 עדכן פלאן
               </button>
@@ -368,11 +340,11 @@ export default async function AdminVendorDetailPage({ params }: Props) {
 
           {/* Description */}
           {vendor.description && (
-            <div className="bg-cream-white rounded-2xl card-shadow p-5">
-              <h2 className="font-display text-xl text-obsidian mb-3">
+            <div style={card}>
+              <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white", marginBottom: "12px" }}>
                 תיאור
               </h2>
-              <p className="text-sm text-stone leading-relaxed">
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: "1.6" }}>
                 {vendor.description}
               </p>
             </div>
@@ -381,12 +353,12 @@ export default async function AdminVendorDetailPage({ params }: Props) {
 
         {/* Left column: leads history */}
         <div className="lg:col-span-2">
-          <div className="bg-cream-white rounded-2xl card-shadow overflow-hidden">
-            <div className="px-6 py-4 border-b border-champagne">
-              <h2 className="font-display text-xl text-obsidian">
+          <div style={{ ...card, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(184,147,90,0.15)" }}>
+              <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white" }}>
                 היסטוריית לידים
               </h2>
-              <p className="text-xs text-stone mt-0.5">
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
                 {vendorLeads.length > 0
                   ? `${vendorLeads.length} לידים אחרונים`
                   : "אין לידים"}
@@ -394,68 +366,47 @@ export default async function AdminVendorDetailPage({ params }: Props) {
             </div>
 
             {vendorLeads.length === 0 ? (
-              <div className="p-16 text-center text-stone text-sm">
+              <div style={{ padding: "60px 24px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px" }}>
                 אין לידים עדיין
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", fontSize: "13px", borderCollapse: "collapse" }}>
                   <thead>
-                    <tr className="border-b border-champagne bg-ivory/50 text-right">
-                      <th className="px-6 py-3 text-xs font-medium text-stone">
-                        שם
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-stone hidden md:table-cell">
-                        אימייל
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-stone hidden sm:table-cell">
-                        טלפון
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-stone">
-                        סטטוס
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-stone hidden lg:table-cell">
-                        תאריך אירוע
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-stone hidden lg:table-cell">
-                        תקציב
-                      </th>
-                      <th className="px-6 py-3 text-xs font-medium text-stone">
-                        תאריך פנייה
-                      </th>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", textAlign: "right" }}>
+                      {["שם", "אימייל", "טלפון", "סטטוס", "תאריך אירוע", "תאריך פנייה"].map((h) => (
+                        <th key={h} style={{ padding: "10px 16px", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textAlign: "right" }}>
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-champagne/50">
+                  <tbody>
                     {vendorLeads.map((lead) => (
                       <tr
                         key={lead.id}
-                        className="hover:bg-ivory/60 transition-colors"
+                        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
                       >
-                        <td className="px-6 py-3.5 font-medium text-obsidian">
+                        <td style={{ padding: "12px 16px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
                           {lead.name}
                         </td>
-                        <td className="px-4 py-3.5 text-stone hidden md:table-cell truncate max-w-[150px]">
+                        <td className="hidden md:table-cell" style={{ padding: "12px 16px", color: "rgba(255,255,255,0.45)", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {lead.email}
                         </td>
-                        <td className="px-4 py-3.5 text-stone hidden sm:table-cell" dir="ltr">
+                        <td className="hidden sm:table-cell" style={{ padding: "12px 16px", color: "rgba(255,255,255,0.45)" }} dir="ltr">
                           {lead.phone ?? "—"}
                         </td>
-                        <td className="px-4 py-3.5">
-                          <span className="text-xs text-stone bg-champagne/50 px-2 py-0.5 rounded-full">
+                        <td style={{ padding: "12px 16px" }}>
+                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: "999px" }}>
                             {LEAD_STATUS_LABELS[lead.status]}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-stone text-xs hidden lg:table-cell">
+                        <td className="hidden lg:table-cell" style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
                           {lead.eventDate
-                            ? new Date(lead.eventDate).toLocaleDateString(
-                                "he-IL"
-                              )
+                            ? new Date(lead.eventDate).toLocaleDateString("he-IL")
                             : "—"}
                         </td>
-                        <td className="px-4 py-3.5 text-stone text-xs hidden lg:table-cell">
-                          {lead.budget ? `₪${lead.budget.toLocaleString()}` : "—"}
-                        </td>
-                        <td className="px-6 py-3.5 text-stone text-xs">
+                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
                           {new Date(lead.createdAt).toLocaleDateString("he-IL")}
                         </td>
                       </tr>
@@ -469,4 +420,15 @@ export default async function AdminVendorDetailPage({ params }: Props) {
       </div>
     </div>
   );
+}
+
+// Helper to convert CSS string to React style object
+function parseStyle(cssString: string): React.CSSProperties {
+  return Object.fromEntries(
+    cssString.split(";").filter(Boolean).map((s) => {
+      const [k, v] = s.split(":").map((x) => x.trim());
+      const camel = k.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+      return [camel, v];
+    })
+  ) as React.CSSProperties;
 }

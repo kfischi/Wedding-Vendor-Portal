@@ -5,6 +5,19 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
 
+// ── Parse DD/MM/YYYY date strings ─────────────────────────────────────────
+function parseDateString(dateStr: string): Date | null {
+  // Support DD/MM/YYYY (Israeli format from form) and ISO formats
+  const ddmmyyyy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr);
+  if (ddmmyyyy) {
+    const [, day, month, year] = ddmmyyyy;
+    const d = new Date(Number(year), Number(month) - 1, Number(day));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 // ── Rate limit: in-memory (3 leads / IP / 24h) ────────────────────────────
 const rateLimitStore = new Map<string, number[]>();
 
@@ -117,7 +130,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         email,
         phone: phone ?? null,
         message,
-        eventDate: eventDate ? new Date(eventDate) : null,
+        eventDate: eventDate ? parseDateString(eventDate) : null,
         status: "new",
         submitterIp: ip,
       })
@@ -136,8 +149,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY!);
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const eventDateFormatted = eventDate
-      ? new Intl.DateTimeFormat("he-IL").format(new Date(eventDate))
+    const parsedEventDate = eventDate ? parseDateString(eventDate) : null;
+    const eventDateFormatted = parsedEventDate
+      ? new Intl.DateTimeFormat("he-IL").format(parsedEventDate)
       : null;
 
     const leadTableRows = `
