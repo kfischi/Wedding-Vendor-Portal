@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { BLOG_POSTS } from "@/lib/blog";
+import { getAllPosts } from "@/lib/blog";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +102,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB unavailable — return static pages only
   }
 
-  const blogPages: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
+  const blogPages: MetadataRoute.Sitemap = getAllPosts().map((p) => ({
     url: `${appUrl}/blog/${p.slug}`,
     lastModified: new Date(p.date),
     changeFrequency: "monthly" as const,

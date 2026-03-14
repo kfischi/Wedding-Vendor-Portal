@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { BLOG_POSTS, BLOG_CATEGORIES, type BlogCategory } from "@/lib/blog";
+import { getAllPosts, getAllCategories } from "@/lib/blog";
 import { Footer } from "@/components/layout/Footer";
-import { Clock, Search, ChevronLeft } from "lucide-react";
+import { Clock, ChevronLeft } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "בלוג | WeddingPro",
@@ -11,37 +11,25 @@ export const metadata: Metadata = {
 };
 
 function formatDate(d: string) {
-  return new Intl.DateTimeFormat("he-IL", { day: "numeric", month: "long", year: "numeric" })
-    .format(new Date(d));
+  return new Intl.DateTimeFormat("he-IL", {
+    day: "numeric", month: "long", year: "numeric",
+  }).format(new Date(d));
 }
-
-const CATEGORY_COLORS: Record<BlogCategory, string> = {
-  "כללי":         "bg-stone/10 text-stone",
-  "טיפים לזוגות": "bg-blush/20 text-dusty-rose",
-  "מדריכים":      "bg-gold/10 text-gold",
-  "ספקים":        "bg-blue-50 text-blue-600",
-};
 
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }>;
+  searchParams: Promise<{ category?: string }>;
 }) {
-  const { category: catParam, q } = await searchParams;
-  const activeCategory = BLOG_CATEGORIES.find((c) => c === catParam) ?? null;
+  const { category: catParam } = await searchParams;
+  const allPosts = getAllPosts();
+  const categories = getAllCategories();
 
-  let posts = BLOG_POSTS;
-  if (activeCategory) posts = posts.filter((p) => p.category === activeCategory);
-  if (q) {
-    const lower = q.toLowerCase();
-    posts = posts.filter(
-      (p) =>
-        p.title.toLowerCase().includes(lower) ||
-        p.excerpt.toLowerCase().includes(lower)
-    );
-  }
+  const posts = catParam
+    ? allPosts.filter((p) => p.category === catParam)
+    : allPosts;
 
-  const featured = !activeCategory && !q ? posts[0] : null;
+  const featured = !catParam && posts.length > 0 ? posts[0] : null;
   const rest = featured ? posts.slice(1) : posts;
 
   return (
@@ -54,54 +42,39 @@ export default async function BlogPage({
             <h1 className="font-display text-4xl lg:text-5xl text-obsidian leading-tight mb-4">
               טיפים לחתונה המושלמת
             </h1>
-            <p className="text-stone/60 text-lg max-w-xl mx-auto">
-              מדריכים מעשיים, השראה, ורעיונות מהמומחים
-            </p>
+            <p className="text-stone/60 text-lg">מדריכים מעשיים, השראה, ורעיונות מהמומחים</p>
           </div>
         </section>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-          {/* Search + Category filter */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            {/* Search */}
-            <form method="get" className="relative w-full sm:w-72">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone/40" />
-              <input
-                name="q"
-                defaultValue={q ?? ""}
-                placeholder="חיפוש מאמרים..."
-                className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-champagne bg-white text-sm text-obsidian placeholder:text-stone/40 focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold"
-              />
-              {catParam && <input type="hidden" name="category" value={catParam} />}
-            </form>
-
-            {/* Category filter */}
+          {/* Category tabs */}
+          {categories.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/blog"
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
-                  !activeCategory
+                  !catParam
                     ? "bg-obsidian text-white border-obsidian"
-                    : "bg-white text-stone border-champagne hover:border-obsidian/40"
+                    : "bg-white text-stone border-champagne hover:border-obsidian/30"
                 }`}
               >
                 הכל
               </Link>
-              {BLOG_CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <Link
                   key={cat}
                   href={`/blog?category=${encodeURIComponent(cat)}`}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
-                    activeCategory === cat
+                    catParam === cat
                       ? "bg-obsidian text-white border-obsidian"
-                      : "bg-white text-stone border-champagne hover:border-obsidian/40"
+                      : "bg-white text-stone border-champagne hover:border-obsidian/30"
                   }`}
                 >
                   {cat}
                 </Link>
               ))}
             </div>
-          </div>
+          )}
 
           {/* Featured post */}
           {featured && (
@@ -110,21 +83,22 @@ export default async function BlogPage({
               className="group block bg-white rounded-3xl border border-champagne/60 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="grid lg:grid-cols-2">
-                <div className="relative h-64 lg:h-auto">
+                <div className="relative h-64 lg:h-auto min-h-[260px]">
                   <Image
                     src={featured.coverImage}
                     alt={featured.title}
                     fill
                     className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 </div>
                 <div className="p-8 lg:p-10 flex flex-col justify-center">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${CATEGORY_COLORS[featured.category]}`}>
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-gold/10 text-gold border border-gold/20">
                       {featured.category}
                     </span>
                     <span className="text-xs text-stone/50 flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {featured.readTime} דקות קריאה
+                      <Clock className="h-3 w-3" /> {featured.readTime}
                     </span>
                   </div>
                   <h2 className="font-display text-2xl lg:text-3xl text-obsidian leading-tight mb-3 group-hover:text-gold transition-colors">
@@ -162,9 +136,10 @@ export default async function BlogPage({
                       alt={post.title}
                       fill
                       className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-obsidian/30 to-transparent" />
-                    <span className={`absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full ${CATEGORY_COLORS[post.category]}`}>
+                    <span className="absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/90 text-obsidian">
                       {post.category}
                     </span>
                   </div>
@@ -178,7 +153,7 @@ export default async function BlogPage({
                     <div className="flex items-center justify-between text-xs text-stone/45">
                       <span>{formatDate(post.date)}</span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {post.readTime} דק׳
+                        <Clock className="h-3 w-3" /> {post.readTime}
                       </span>
                     </div>
                   </div>
@@ -186,9 +161,11 @@ export default async function BlogPage({
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-white rounded-2xl border border-champagne/60">
-              <p className="font-display text-2xl text-obsidian mb-2">לא נמצאו מאמרים</p>
-              <p className="text-stone/50 text-sm">נסו חיפוש אחר</p>
+            <div className="text-center py-20 bg-white rounded-2xl border border-champagne/60">
+              <p className="font-display text-2xl text-obsidian mb-2">אין מאמרים בקטגוריה זו</p>
+              <Link href="/blog" className="text-sm text-gold hover:underline">
+                חזרה לכל המאמרים
+              </Link>
             </div>
           )}
         </div>
