@@ -44,15 +44,10 @@ export default async function MediaPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
+    <div className="max-w-4xl mx-auto space-y-5">
+      <div>
         <p className="font-script text-xl text-gold">ניהול</p>
-        <h1 className="font-display text-4xl text-obsidian">גלריית מדיה</h1>
-        <p className="text-stone text-sm mt-2">
-          {vendor.plan === "premium"
-            ? "Premium: תמונות וסרטונים ללא הגבלה"
-            : "Standard: עד 20 תמונות"}
-        </p>
+        <h1 className="font-display text-3xl lg:text-4xl text-obsidian leading-tight">גלריית מדיה</h1>
       </div>
       <MediaManager
         initialMedia={media}

@@ -33,10 +33,10 @@ export default async function ContentPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-8">
+    <div className="max-w-3xl mx-auto space-y-5">
+      <div>
         <p className="font-script text-xl text-gold">עריכה</p>
-        <h1 className="font-display text-4xl text-obsidian">תוכן הפרופיל</h1>
+        <h1 className="font-display text-3xl lg:text-4xl text-obsidian leading-tight">תוכן הפרופיל</h1>
       </div>
       <ContentEditor vendor={vendor} />
     </div>
