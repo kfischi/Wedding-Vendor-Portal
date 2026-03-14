@@ -20,6 +20,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   lighting: "תאורה",
   planning: "תכנון",
   "wedding-dress-designers": "מעצבי שמלות כלה",
+  "bridal-preparation": "התארגנות כלות",
   other: "אחר",
 };
 

@@ -14,6 +14,7 @@ import {
   Headphones,
   Cake,
   Shirt,
+  Heart,
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -27,6 +28,7 @@ const CATEGORIES = [
   { slug: "planning", label: "תכנון אירועים", icon: Calendar, color: "bg-teal-50 text-teal-600" },
   { slug: "dj", label: "DJ", icon: Headphones, color: "bg-indigo-50 text-indigo-500" },
   { slug: "cake", label: "עוגות חתונה", icon: Cake, color: "bg-orange-50 text-orange-500" },
+  { slug: "bridal-preparation", label: "התארגנות כלות", icon: Heart, color: "bg-rose-50 text-rose-400" },
 ];
 
 export function AnimatedCategories() {

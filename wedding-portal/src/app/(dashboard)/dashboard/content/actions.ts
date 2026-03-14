@@ -13,7 +13,7 @@ const contentSchema = z.object({
   category: z.enum([
     "photography","videography","venue","catering","flowers",
     "music","dj","makeup","dress","suit","cake","invitation",
-    "transport","lighting","planning","wedding-dress-designers","other",
+    "transport","lighting","planning","wedding-dress-designers","bridal-preparation","other",
   ]),
   city: z.string().min(2, "נדרש שם עיר"),
   region: z.string().optional(),

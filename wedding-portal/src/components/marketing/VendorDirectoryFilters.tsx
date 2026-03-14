@@ -18,6 +18,7 @@ const CATEGORIES = [
   { value: "cake", label: "עוגות" },
   { value: "planning", label: "תכנון" },
   { value: "lighting", label: "תאורה" },
+  { value: "bridal-preparation", label: "התארגנות כלות" },
   { value: "other", label: "אחר" },
 ];
 

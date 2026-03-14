@@ -23,6 +23,7 @@ const CATEGORIES = [
   { value: "lighting", label: "תאורה" },
   { value: "planning", label: "מתכנן חתונות" },
   { value: "wedding-dress-designers", label: "מעצבי שמלות כלה" },
+  { value: "bridal-preparation", label: "התארגנות כלות" },
   { value: "other", label: "אחר" },
 ];
 
