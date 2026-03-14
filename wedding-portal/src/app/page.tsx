@@ -155,8 +155,37 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 
 export default async function HomePage() {
   const featuredVendors = await getFeaturedVendors();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "WeddingPro",
+    url: appUrl,
+    description: "הפלטפורמה המובילה לספקי חתונות בישראל — מצאו צלמים, אולמות, קייטרינג ועוד",
+    inLanguage: "he",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${appUrl}/vendors?q={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "WeddingPro",
+    url: appUrl,
+    logo: `${appUrl}/favicon.ico`,
+    description: "פלטפורמת ספקי חתונות בישראל",
+    areaServed: { "@type": "Country", name: "Israel" },
+    sameAs: [],
+  };
 
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
     <div className="min-h-screen bg-ivory" dir="rtl">
 
       {/* ── HERO (rotating images + animated text) ─────────────────────────────── */}
@@ -327,5 +356,6 @@ export default async function HomePage() {
       <Footer />
       <CookieBanner />
     </div>
+    </>
   );
 }

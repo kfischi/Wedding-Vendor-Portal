@@ -4,21 +4,23 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Trash2, Upload, GripVertical, Loader2, Video } from "lucide-react";
+import { Trash2, Upload, GripVertical, Loader2, Video, Star } from "lucide-react";
 import type { VendorMedia } from "@/lib/db/schema";
 
 interface MediaManagerProps {
   initialMedia: VendorMedia[];
   plan: "free" | "standard" | "premium";
   vendorId: string;
+  currentCoverImage?: string | null;
 }
 
 const MAX_STANDARD = 20;
 
-export function MediaManager({ initialMedia, plan, vendorId }: MediaManagerProps) {
+export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }: MediaManagerProps) {
   const [media, setMedia] = useState<VendorMedia[]>(initialMedia);
   const [uploading, setUploading] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(currentCoverImage ?? null);
 
   const isPremium = plan === "premium";
   const imageCount = media.filter((m) => m.type === "image").length;
@@ -94,6 +96,22 @@ export function MediaManager({ initialMedia, plan, vendorId }: MediaManagerProps
       toast.success("הקובץ נמחק");
     } catch {
       toast.error("שגיאה במחיקה");
+    }
+  }
+
+  // ── Set cover image ────────────────────────────────────────────────────────
+  async function handleSetCover(url: string) {
+    try {
+      const res = await fetch("/api/upload", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ setCoverUrl: url }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setCoverUrl(url);
+      toast.success("תמונת כריכה עודכנה");
+    } catch {
+      toast.error("שגיאה בעדכון תמונת כריכה");
     }
   }
 
@@ -214,9 +232,27 @@ export function MediaManager({ initialMedia, plan, vendorId }: MediaManagerProps
                 />
               )}
 
+              {/* Cover badge */}
+              {item.type === "image" && item.url === coverUrl && (
+                <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 bg-gold/90 text-white text-[10px] font-medium px-1.5 py-0.5 rounded-md">
+                  <Star className="h-2.5 w-2.5 fill-white" />
+                  כריכה
+                </div>
+              )}
+
               {/* Overlay */}
               <div className="absolute inset-0 bg-obsidian/0 group-hover:bg-obsidian/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                 <GripVertical className="h-5 w-5 text-cream-white" />
+                {item.type === "image" && item.url !== coverUrl && (
+                  <button
+                    onClick={() => handleSetCover(item.url)}
+                    className="p-1.5 rounded-lg bg-gold/80 hover:bg-gold text-white transition-colors"
+                    aria-label="הגדר כתמונת כריכה"
+                    title="הגדר כתמונת כריכה"
+                  >
+                    <Star className="h-4 w-4" />
+                  </button>
+                )}
                 <button
                   onClick={() => handleDelete(item.id, item.publicId)}
                   className="p-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors"

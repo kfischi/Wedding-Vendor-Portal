@@ -58,6 +58,7 @@ export default async function MediaPage() {
         initialMedia={media}
         plan={vendor.plan}
         vendorId={vendor.id}
+        currentCoverImage={vendor.coverImage}
       />
     </div>
   );

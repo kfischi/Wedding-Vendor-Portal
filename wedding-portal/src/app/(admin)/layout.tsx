@@ -34,28 +34,48 @@ export default async function AdminLayout({
   if (!isAdmin) redirect("/dashboard");
 
   return (
-    <div className="min-h-screen flex flex-row-reverse" dir="rtl">
+    <div
+      className="min-h-screen flex flex-row-reverse"
+      dir="rtl"
+      style={{ background: "#0a0a0a" }}
+    >
       <AdminSidebar adminEmail={user.email ?? ""} />
-      <div
-        className="flex-1 flex flex-col min-w-0"
-        style={{ background: "rgb(244 242 239)" }}
-      >
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-obsidian border-b border-white/10 px-6 py-4 flex items-center justify-between lg:pr-6 pr-16">
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <header
+          className="sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between lg:pr-6 pr-16"
+          style={{
+            background: "#0a0a0a",
+            borderBottom: "1px solid rgba(184,147,90,0.2)",
+          }}
+        >
           <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-wider">
+            <p className="text-[10px] text-white/30 uppercase tracking-widest">
               ניהול מערכת
             </p>
-            <h2 className="font-display text-xl text-gold leading-tight">
-              Wedding Vendor Portal
+            <h2
+              className="font-script leading-tight"
+              style={{ color: "#b8935a", fontSize: "1.35rem" }}
+            >
+              WeddingPro Admin
             </h2>
           </div>
-          <span className="hidden sm:block text-xs text-white/50 bg-white/10 px-3 py-1.5 rounded-full">
+          <span
+            className="hidden sm:block text-xs px-3 py-1.5 rounded-full"
+            style={{
+              color: "rgba(255,255,255,0.4)",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
             {user.email}
           </span>
         </header>
 
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6" style={{ background: "#111111" }}>
+          {children}
+        </main>
       </div>
     </div>
   );

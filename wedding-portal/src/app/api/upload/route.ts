@@ -155,13 +155,27 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
   const body = (await request.json()) as {
     order?: { id: string; sortOrder: number }[];
+    setCoverUrl?: string;
   };
 
-  if (!body.order?.length) {
-    return NextResponse.json({ error: "order required" }, { status: 400 });
-  }
-
   try {
+    const vendor = await getVendor(user.id);
+    if (!vendor) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+
+    // Set cover image
+    if (body.setCoverUrl) {
+      await db
+        .update(vendors)
+        .set({ coverImage: body.setCoverUrl, updatedAt: new Date() })
+        .where(eq(vendors.id, vendor.id));
+      return NextResponse.json({ ok: true, coverImage: body.setCoverUrl });
+    }
+
+    // Reorder
+    if (!body.order?.length) {
+      return NextResponse.json({ error: "order or setCoverUrl required" }, { status: 400 });
+    }
+
     await Promise.all(
       body.order.map(({ id, sortOrder }) =>
         db

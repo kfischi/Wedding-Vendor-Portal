@@ -42,26 +42,38 @@ export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
   };
 
   const Nav = () => (
-    <div className="flex flex-col h-full bg-obsidian">
+    <div
+      className="flex flex-col h-full"
+      style={{ background: "#0a0a0a" }}
+    >
       {/* Logo */}
-      <div className="p-6 border-b border-white/10">
+      <div
+        className="p-6"
+        style={{ borderBottom: "1px solid rgba(184,147,90,0.2)" }}
+      >
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
-              background: "rgba(184,147,90,0.15)",
+              background: "rgba(184,147,90,0.12)",
               border: "1px solid rgba(184,147,90,0.3)",
             }}
           >
-            <Shield className="w-5 h-5 text-gold" />
+            <Shield className="w-5 h-5" style={{ color: "#b8935a" }} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] text-white/40 leading-none mb-0.5 uppercase tracking-wider">
+            <h1
+              className="font-script leading-none"
+              style={{ color: "#b8935a", fontSize: "1.4rem" }}
+            >
+              WeddingPro
+            </h1>
+            <p
+              className="text-[10px] uppercase tracking-widest mt-0.5"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
               Admin Panel
             </p>
-            <h1 className="font-display text-base text-gold leading-none truncate">
-              Wedding Portal
-            </h1>
           </div>
         </div>
       </div>
@@ -76,26 +88,33 @@ export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
               href={href}
               onClick={() => setOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all",
-                active
-                  ? "text-gold"
-                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
+                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all relative",
               )}
               style={
                 active
                   ? {
                       background: "rgba(184,147,90,0.12)",
-                      border: "1px solid rgba(184,147,90,0.25)",
+                      color: "#b8935a",
+                      borderRight: "3px solid #b8935a",
                     }
-                  : {}
+                  : {
+                      color: "rgba(255,255,255,0.45)",
+                    }
               }
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.85)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.45)";
+                }
+              }}
             >
-              <Icon
-                className={cn(
-                  "w-4 h-4 flex-shrink-0",
-                  active ? "text-gold" : ""
-                )}
-              />
+              <Icon className="w-4 h-4 flex-shrink-0" />
               <span>{label}</span>
             </Link>
           );
@@ -103,11 +122,28 @@ export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/10 space-y-1">
-        <p className="text-xs text-white/30 px-4 truncate">{adminEmail}</p>
+      <div
+        className="p-4 space-y-1"
+        style={{ borderTop: "1px solid rgba(184,147,90,0.15)" }}
+      >
+        <p
+          className="text-xs px-4 truncate"
+          style={{ color: "rgba(255,255,255,0.25)" }}
+        >
+          {adminEmail}
+        </p>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-white/50 hover:text-red-400 hover:bg-white/5 transition-all"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all"
+          style={{ color: "rgba(255,255,255,0.4)" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#ef4444";
+            e.currentTarget.style.background = "rgba(239,68,68,0.08)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "rgba(255,255,255,0.4)";
+            e.currentTarget.style.background = "";
+          }}
         >
           <LogOut className="w-4 h-4" />
           <span>יציאה</span>
@@ -120,7 +156,8 @@ export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
     <>
       {/* Mobile toggle */}
       <button
-        className="lg:hidden fixed top-4 right-4 z-50 w-10 h-10 rounded-lg flex items-center justify-center text-white bg-obsidian shadow-lg"
+        className="lg:hidden fixed top-4 right-4 z-50 w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
+        style={{ background: "#0a0a0a", color: "white", border: "1px solid rgba(184,147,90,0.3)" }}
         onClick={() => setOpen(!open)}
         aria-label="תפריט ניהול"
       >
@@ -130,7 +167,7 @@ export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
       {/* Mobile overlay */}
       {open && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 z-40"
+          className="lg:hidden fixed inset-0 bg-black/70 z-40"
           onClick={() => setOpen(false)}
         />
       )}
