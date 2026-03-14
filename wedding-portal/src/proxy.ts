@@ -53,8 +53,11 @@ export async function proxy(request: NextRequest) {
       redirectUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(redirectUrl);
     }
+    // Allow if: role=admin in user_metadata OR email matches ADMIN_EMAIL env var
     const role = user.user_metadata?.role as string | undefined;
-    if (role !== "admin") {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const isAdmin = role === "admin" || (adminEmail && user.email === adminEmail);
+    if (!isAdmin) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

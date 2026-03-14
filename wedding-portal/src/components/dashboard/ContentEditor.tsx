@@ -306,32 +306,6 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
           </div>
         </div>
 
-        {/* Hidden fields for non-active tabs so the form still submits them */}
-        {tab !== 0 && (
-          <>
-            <input type="hidden" name="businessName" value={vendor.businessName} />
-            <input type="hidden" name="shortDescription" value={vendor.shortDescription ?? ""} />
-            <input type="hidden" name="category" value={vendor.category} />
-            <input type="hidden" name="city" value={vendor.city} />
-            <input type="hidden" name="region" value={vendor.region ?? ""} />
-            <input type="hidden" name="description" value={vendor.description ?? ""} />
-          </>
-        )}
-        {tab !== 1 && (
-          <>
-            <input type="hidden" name="phone" value={vendor.phone ?? ""} />
-            <input type="hidden" name="email" value={vendor.email} />
-            <input type="hidden" name="website" value={vendor.website ?? ""} />
-          </>
-        )}
-        {tab !== 2 && (
-          <>
-            <input type="hidden" name="instagram" value={vendor.instagram ?? ""} />
-            <input type="hidden" name="seoTitle" value={vendor.seoTitle ?? ""} />
-            <input type="hidden" name="seoDescription" value={vendor.seoDescription ?? ""} />
-          </>
-        )}
-
         {/* ── Sticky save button ── */}
         <div className="sticky bottom-4 mt-5 flex items-center gap-4 bg-white/90 backdrop-blur-sm px-5 py-4 rounded-2xl border border-champagne/60 shadow-lg">
           <button
