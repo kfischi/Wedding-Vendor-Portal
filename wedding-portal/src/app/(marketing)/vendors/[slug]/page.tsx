@@ -239,7 +239,23 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
     console.log(`[vendor-page] DB query result: ${vendor ? `found vendor id=${vendor.id} status=${vendor.status}` : "no rows returned"}`);
 
     if (!vendor) {
-      console.log(`[vendor-page] No vendor found — slug="${slug}" isMockFallback=${slug === "demo"}`);
+      // Distinguish between "doesn't exist" and "exists but not active"
+      const [anyStatus] = await db
+        .select({ id: vendors.id, status: vendors.status })
+        .from(vendors)
+        .where(eq(vendors.slug, slug))
+        .limit(1);
+
+      if (anyStatus) {
+        console.error(
+          `[vendor-page] VENDOR_NOT_ACTIVE slug="${slug}" id=${anyStatus.id} status="${anyStatus.status}" — vendor exists but filtered out by status=active check`
+        );
+      } else {
+        console.error(
+          `[vendor-page] VENDOR_NOT_FOUND slug="${slug}" — no row in vendors table with this slug`
+        );
+      }
+
       return slug === "demo" ? MOCK_FALLBACK() : null;
     }
 
