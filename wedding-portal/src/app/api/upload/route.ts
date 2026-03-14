@@ -57,6 +57,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const maxSize = isPremium ? MAX_FILE_SIZE_PREMIUM : MAX_FILE_SIZE_STANDARD;
   const isVideo = file.type.startsWith("video/");
 
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  if (!isVideo && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return NextResponse.json(
+      { error: "פורמט לא נתמך. השתמש ב-JPG, PNG, או WebP" },
+      { status: 400 }
+    );
+  }
+
   if (file.size > maxSize) {
     return NextResponse.json(
       { error: `קובץ גדול מדי. מקסימום ${isPremium ? "100" : "10"}MB` },
@@ -92,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   let uploadResult;
   try {
     uploadResult = await uploadToCloudinary(buffer, {
-      folder: `vendors/${vendor.slug}`,
+      folder: `wedding-portal/vendors/${vendor.slug}`,
       resourceType: isVideo ? "video" : "image",
     });
   } catch (err) {

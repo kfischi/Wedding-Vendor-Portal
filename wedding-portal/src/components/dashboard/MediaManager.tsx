@@ -68,7 +68,9 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: isPremium ? { "image/*": [], "video/*": [] } : { "image/*": [] },
+    accept: isPremium
+      ? { "image/jpeg": [], "image/png": [], "image/webp": [], "video/*": [] }
+      : { "image/jpeg": [], "image/png": [], "image/webp": [] },
     disabled: uploading || atLimit,
     maxSize: isPremium ? 100 * 1024 * 1024 : 10 * 1024 * 1024,
   });
