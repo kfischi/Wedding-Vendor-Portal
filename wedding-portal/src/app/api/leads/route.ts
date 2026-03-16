@@ -1,65 +1,79 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, count, eq, gte } from "drizzle-orm";
+import { and, count, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
+import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
+import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, N8N_WEBHOOK_URL } from "@/lib/env";
 
-// ── Parse DD/MM/YYYY date strings ─────────────────────────────────────────
+// ── Parse DD/MM/YYYY date strings ──────────────────────────────────────────────
 function parseDateString(dateStr: string): Date | null {
-  // Support DD/MM/YYYY (Israeli format from form) and ISO formats
+  // Support DD/MM/YYYY (Israeli format) and ISO formats
   const ddmmyyyy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr);
   if (ddmmyyyy) {
-    const [, day, month, year] = ddmmyyyy;
-    const d = new Date(Number(year), Number(month) - 1, Number(day));
-    return isNaN(d.getTime()) ? null : d;
+    const day = Number(ddmmyyyy[1]);
+    const month = Number(ddmmyyyy[2]);
+    const year = Number(ddmmyyyy[3]);
+    // Strict validation: check bounds and that the date doesn't overflow
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const d = new Date(year, month - 1, day);
+    // Verify no overflow (e.g. Feb 31 → March 2)
+    if (
+      d.getFullYear() !== year ||
+      d.getMonth() !== month - 1 ||
+      d.getDate() !== day
+    ) {
+      return null;
+    }
+    return d;
   }
   const d = new Date(dateStr);
   return isNaN(d.getTime()) ? null : d;
 }
 
-// ── Rate limit: in-memory (3 leads / IP / 24h) ────────────────────────────
-const rateLimitStore = new Map<string, number[]>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const windowMs = 24 * 60 * 60 * 1000;
-  const maxRequests = 3;
-
-  const timestamps = rateLimitStore.get(ip) ?? [];
-  const recent = timestamps.filter((t) => now - t < windowMs);
-
-  if (recent.length >= maxRequests) return false;
-
-  rateLimitStore.set(ip, [...recent, now]);
-  return true;
-}
-
-// ── Schema ────────────────────────────────────────────────────────────────
+// ── Schema ────────────────────────────────────────────────────────────────────
 const leadSchema = z.object({
   vendorId: z.string().min(1),
-  name: z.string().min(2, "שם נדרש"),
-  email: z.string().email("אימייל לא תקין"),
-  phone: z.string().optional(),
-  message: z.string().min(10, "הודעה קצרה מדי"),
-  eventDate: z.string().optional(),
+  name: z.string().min(2, "שם נדרש").max(100),
+  email: z.string().email("אימייל לא תקין").max(255),
+  phone: z.string().max(20).optional(),
+  message: z.string().min(10, "הודעה קצרה מדי").max(2000),
+  eventDate: z.string().max(20).optional(),
 });
 
-// ── POST ──────────────────────────────────────────────────────────────────
+// ── POST ──────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Rate limiting by IP
+  // ── 1. IP-based rate limiting (DB-backed — survives restarts & multi-instance) ─
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     request.headers.get("x-real-ip") ??
     "unknown";
 
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json(
-      { error: "יותר מדי פניות — נסה שוב מחר" },
-      { status: 429 }
-    );
+  try {
+    const windowStart = new Date(Date.now() - RATE_LIMIT.WINDOW_MS);
+    const [{ value: ipCount }] = await db
+      .select({ value: count() })
+      .from(leads)
+      .where(
+        and(
+          eq(leads.submitterIp, ip),
+          gte(leads.createdAt, windowStart)
+        )
+      );
+
+    if (Number(ipCount) >= RATE_LIMIT.LEADS_PER_IP_PER_DAY) {
+      return NextResponse.json(
+        { error: "יותר מדי פניות — נסה שוב מחר" },
+        { status: 429 }
+      );
+    }
+  } catch {
+    // DB rate-limit check failed — continue (fail open, log warning)
+    console.warn("[leads] IP rate-limit DB check failed, proceeding");
   }
 
+  // ── 2. Parse & validate body ───────────────────────────────────────────────
   let body: unknown;
   try {
     body = await request.json();
@@ -77,7 +91,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { vendorId, name, email, phone, message, eventDate } = parsed.data;
 
-  // אימות שהספק קיים ופעיל
+  // ── 3. Verify vendor exists and is active ─────────────────────────────────
   let vendor;
   try {
     const [v] = await db
@@ -94,31 +108,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
   }
 
-  // DB rate limiting: max 3 leads מאותו אימייל לאותו ספק ב-24 שעות
+  // ── 4. Per-email-per-vendor rate limiting (DB-backed) ─────────────────────
   try {
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const [{ value: recentLeads }] = await db
+    const windowStart = new Date(Date.now() - RATE_LIMIT.WINDOW_MS);
+    const [{ value: emailCount }] = await db
       .select({ value: count() })
       .from(leads)
       .where(
         and(
           eq(leads.vendorId, vendorId),
           eq(leads.email, email),
-          gte(leads.createdAt, yesterday)
+          gte(leads.createdAt, windowStart)
         )
       );
 
-    if (Number(recentLeads) >= 3) {
+    if (Number(emailCount) >= RATE_LIMIT.LEADS_PER_EMAIL_PER_VENDOR_PER_DAY) {
       return NextResponse.json(
         { error: "יותר מדי פניות מאותו אימייל" },
         { status: 429 }
       );
     }
   } catch {
-    // DB error — ממשיכים
+    // Fail open — do not block legitimate leads due to DB issue
+    console.warn("[leads] email rate-limit DB check failed, proceeding");
   }
 
-  // שמירה ב-DB
+  // ── 5. Insert lead + atomically increment lead counter ────────────────────
   let newLead;
   try {
     [newLead] = await db
@@ -136,58 +151,65 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning();
 
-    // עדכון מונה לידים
+    // Atomic increment — prevents race condition under concurrent requests
     await db
       .update(vendors)
-      .set({ leadCount: (vendor.leadCount ?? 0) + 1 })
+      .set({ leadCount: sql`${vendors.leadCount} + 1` })
       .where(eq(vendors.id, vendorId));
   } catch {
     return NextResponse.json({ error: "שגיאה בשמירה" }, { status: 500 });
   }
 
-  // שליחת מיילים
+  // ── 6. Send notification emails (non-blocking) ────────────────────────────
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY!);
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const resend = new Resend(RESEND_API_KEY);
+    const baseUrl = NEXT_PUBLIC_APP_URL;
     const parsedEventDate = eventDate ? parseDateString(eventDate) : null;
     const eventDateFormatted = parsedEventDate
       ? new Intl.DateTimeFormat("he-IL").format(parsedEventDate)
       : null;
 
+    // ── HTML-escape all user-supplied values before inserting into HTML ──────
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safePhone = phone ? escapeHtml(phone) : null;
+    const safeMessage = escapeHtmlMultiline(message);
+    const safeVendorName = escapeHtml(vendor.businessName);
+
     const leadTableRows = `
       <tr>
         <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">שם</td>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; color:#1a1614;">${name}</td>
+        <td style="padding:8px; border-bottom:1px solid #e8ddd0; color:#1a1614;">${safeName}</td>
       </tr>
       <tr>
         <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">אימייל</td>
         <td style="padding:8px; border-bottom:1px solid #e8ddd0;">
-          <a href="mailto:${email}" style="color:#b8976a;">${email}</a>
+          <a href="mailto:${safeEmail}" style="color:#b8976a;">${safeEmail}</a>
         </td>
       </tr>
-      ${phone ? `<tr>
+      ${safePhone ? `<tr>
         <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">טלפון</td>
         <td style="padding:8px; border-bottom:1px solid #e8ddd0;">
-          <a href="tel:${phone}" style="color:#b8976a;">${phone}</a>
+          <a href="tel:${safePhone}" style="color:#b8976a;">${safePhone}</a>
         </td>
       </tr>` : ""}
       ${eventDateFormatted ? `<tr>
         <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">תאריך אירוע</td>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; color:#1a1614;">${eventDateFormatted}</td>
+        <td style="padding:8px; border-bottom:1px solid #e8ddd0; color:#1a1614;">${escapeHtml(eventDateFormatted)}</td>
       </tr>` : ""}
       <tr>
         <td style="padding:8px; font-weight:bold; vertical-align:top; color:#5a4a42;">הודעה</td>
-        <td style="padding:8px; color:#1a1614;">${message.replace(/\n/g, "<br>")}</td>
+        <td style="padding:8px; color:#1a1614;">${safeMessage}</td>
       </tr>
     `;
 
-    const emailWrapper = (body: string) => `
+    const emailWrapper = (bodyHtml: string) => `
       <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#faf8f5; border-radius:12px; overflow:hidden;">
         <div style="background: linear-gradient(135deg, #1a1614 0%, #2d2420 100%); padding: 28px 32px;">
           <p style="margin:0; font-size:22px; color:#b8976a; font-weight:bold;">WeddingPro</p>
         </div>
         <div style="padding: 28px 32px; background:#ffffff;">
-          ${body}
+          ${bodyHtml}
         </div>
         <div style="padding: 16px 32px; background:#faf8f5; text-align:center; font-size:12px; color:#9e8e86;">
           WeddingPro — פלטפורמת ספקי חתונות בישראל
@@ -197,7 +219,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const ctaButton = (href: string, label: string) => `
       <div style="margin-top: 24px; text-align:center;">
-        <a href="${href}" style="
+        <a href="${escapeHtml(href)}" style="
           display: inline-block;
           background: linear-gradient(135deg, #b8976a 0%, #9a7d56 100%);
           color: white;
@@ -206,13 +228,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           text-decoration: none;
           font-weight: bold;
           font-size: 14px;
-        ">${label}</a>
+        ">${escapeHtml(label)}</a>
       </div>
     `;
 
-    // מייל לספק
+    const fromAddress = `WeddingPro <noreply@${new URL(baseUrl).hostname}>`;
+
+    // Email to vendor
     await resend.emails.send({
-      from: `WeddingPro <noreply@${new URL(baseUrl).hostname}>`,
+      from: fromAddress,
       to: vendor.email,
       subject: `פנייה חדשה התקבלה — ${name}`,
       html: emailWrapper(`
@@ -225,33 +249,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       `),
     });
 
-    // מייל לאדמין
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail) {
+    // Email to admin (optional)
+    if (ADMIN_EMAIL) {
       await resend.emails.send({
-        from: `WeddingPro <noreply@${new URL(baseUrl).hostname}>`,
-        to: adminEmail,
+        from: fromAddress,
+        to: ADMIN_EMAIL,
         subject: `פנייה חדשה: ${vendor.businessName} ← ${name}`,
         html: emailWrapper(`
           <h2 style="margin:0 0 6px; font-size:22px; color:#1a1614;">פנייה חדשה במערכת</h2>
-          <p style="margin:0 0 20px; color:#5a4a42; font-size:14px;">ספק: <strong>${vendor.businessName}</strong></p>
+          <p style="margin:0 0 20px; color:#5a4a42; font-size:14px;">ספק: <strong>${safeVendorName}</strong></p>
           <table style="width:100%; border-collapse:collapse; border: 1px solid #e8ddd0; border-radius:8px; overflow:hidden;">
             ${leadTableRows}
           </table>
-          ${ctaButton(`${baseUrl}/admin/vendors/${vendorId}`, "צפה בספק במערכת האדמין")}
+          ${ctaButton(`${baseUrl}/admin/vendors/${escapeHtml(vendorId)}`, "צפה בספק במערכת האדמין")}
         `),
       });
     }
   } catch (err) {
-    // מייל נכשל — לא חוזרים שגיאה, הליד נשמר
-    console.error("[leads] Email error:", err);
+    // Email failure — lead is already saved, do not surface error to user
+    console.error("[leads] Email send error:", err);
   }
 
-  // טריגר n8n webhook
-  try {
-    const n8nUrl = process.env.N8N_WEBHOOK_URL;
-    if (n8nUrl) {
-      await fetch(n8nUrl, {
+  // ── 7. Trigger n8n webhook (optional WhatsApp notification) ───────────────
+  if (N8N_WEBHOOK_URL) {
+    try {
+      await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -265,9 +287,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           timestamp: new Date().toISOString(),
         }),
       });
+    } catch (err) {
+      console.error("[leads] n8n webhook error:", err);
     }
-  } catch (err) {
-    console.error("[leads] n8n webhook error:", err);
   }
 
   return NextResponse.json({ ok: true, leadId: newLead?.id }, { status: 201 });

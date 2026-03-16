@@ -5,14 +5,27 @@ export async function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // בסביבת פיתוח ללא Supabase — מחזיר client מדומה
   if (!supabaseUrl || !supabaseKey) {
+    if (process.env.NODE_ENV === "production") {
+      // In production these variables are mandatory — fail loudly so the issue
+      // is caught immediately rather than silently bypassing authentication.
+      throw new Error(
+        "[supabase] NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY " +
+          "must be set in production. Check your environment configuration."
+      );
+    }
+
+    // Development / CI without Supabase — return a no-op client so the dev
+    // server boots, but log a clear warning.
+    console.warn(
+      "[supabase] ⚠  Supabase env vars not set — using placeholder client. " +
+        "Auth calls will return null users."
+    );
+
     return createServerClient(
       "https://placeholder.supabase.co",
       "placeholder-key",
-      {
-        cookies: { getAll: () => [], setAll: () => {} },
-      }
+      { cookies: { getAll: () => [], setAll: () => {} } }
     );
   }
 
@@ -29,7 +42,7 @@ export async function createClient() {
             cookieStore.set(name, value, options)
           );
         } catch {
-          // Server Component — cookies can only be set in middleware or route handlers
+          // Server Components cannot set cookies — handled by middleware instead
         }
       },
     },

@@ -7,7 +7,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
-import { CheckCircle2, Crown, Zap, CreditCard, AlertCircle } from "lucide-react";
+import { CheckCircle2, Crown, Zap, AlertCircle } from "lucide-react";
+import { PortalButton } from "@/components/dashboard/PortalButton";
 
 export const metadata: Metadata = { title: "חיוב | WeddingPro" };
 
@@ -138,15 +139,7 @@ export default async function BillingPage() {
               </span>
             )}
             {vendor.stripeCustomerId && (
-              <a
-                href="https://billing.stripe.com/p/login/test_00000"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs font-medium text-stone/60 border border-champagne/60 bg-white px-3 py-1.5 rounded-lg hover:bg-champagne/20 transition-colors"
-              >
-                <CreditCard className="h-3.5 w-3.5" />
-                נהל חיוב
-              </a>
+              <PortalButton />
             )}
           </div>
         </div>
@@ -214,10 +207,9 @@ export default async function BillingPage() {
   );
 }
 
-// ── Client checkout button ─────────────────────────────────────────────────────
+// ── Client components ─────────────────────────────────────────────────────────
 
 function CheckoutButton({ plan, email }: { plan: "standard" | "premium"; email: string }) {
-  // Server-rendered link to pricing page with plan pre-selected
   return (
     <Link
       href={`/pricing?plan=${plan}&email=${encodeURIComponent(email)}`}
@@ -227,3 +219,4 @@ function CheckoutButton({ plan, email }: { plan: "standard" | "premium"; email: 
     </Link>
   );
 }
+

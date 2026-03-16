@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, count } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db/db";
 import { vendors, vendorMedia } from "@/lib/db/schema";
 import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary/upload";
+import { PLAN_LIMITS } from "@/lib/env";
 
 export const runtime = "nodejs";
 
-const MAX_STANDARD_IMAGES = 20;
-const MAX_FILE_SIZE_STANDARD = 10 * 1024 * 1024; // 10MB
-const MAX_FILE_SIZE_PREMIUM = 100 * 1024 * 1024; // 100MB
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
-async function getVendor(userId: string) {
+async function getAuthenticatedVendor(userId: string) {
   const rows = await db
     .select()
     .from(vendors)
@@ -20,11 +20,13 @@ async function getVendor(userId: string) {
   return rows[0] ?? null;
 }
 
-// ── POST: Upload file ──────────────────────────────────────────────────────
+// ── POST: Upload file ──────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   let vendor;
   try {
-    vendor = await getVendor(user.id);
+    vendor = await getAuthenticatedVendor(user.id);
   } catch {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
@@ -54,20 +56,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const isPremium = vendor.plan === "premium";
-  const maxSize = isPremium ? MAX_FILE_SIZE_PREMIUM : MAX_FILE_SIZE_STANDARD;
   const isVideo = file.type.startsWith("video/");
+  const maxSizeBytes = isPremium
+    ? PLAN_LIMITS.MAX_FILE_SIZE_PREMIUM_MB * 1024 * 1024
+    : PLAN_LIMITS.MAX_FILE_SIZE_STANDARD_MB * 1024 * 1024;
 
-  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-  if (!isVideo && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+  if (!isVideo && !ALLOWED_IMAGE_TYPES.includes(file.type as typeof ALLOWED_IMAGE_TYPES[number])) {
     return NextResponse.json(
       { error: "פורמט לא נתמך. השתמש ב-JPG, PNG, או WebP" },
       { status: 400 }
     );
   }
 
-  if (file.size > maxSize) {
+  if (file.size > maxSizeBytes) {
     return NextResponse.json(
-      { error: `קובץ גדול מדי. מקסימום ${isPremium ? "100" : "10"}MB` },
+      {
+        error: `קובץ גדול מדי. מקסימום ${
+          isPremium
+            ? PLAN_LIMITS.MAX_FILE_SIZE_PREMIUM_MB
+            : PLAN_LIMITS.MAX_FILE_SIZE_STANDARD_MB
+        }MB`,
+      },
       { status: 400 }
     );
   }
@@ -79,24 +88,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // בדיקת מגבלת תמונות ל-Standard
+  // Enforce image count limit for Standard plan
   if (!isPremium && !isVideo) {
-    const [{ value: imgCount }] = await db
-      .select({ value: count() })
-      .from(vendorMedia)
-      .where(eq(vendorMedia.vendorId, vendor.id));
+    try {
+      const [{ value: imgCount }] = await db
+        .select({ value: count() })
+        .from(vendorMedia)
+        .where(eq(vendorMedia.vendorId, vendor.id));
 
-    if (Number(imgCount) >= MAX_STANDARD_IMAGES) {
-      return NextResponse.json(
-        { error: `הגעת למגבלה של ${MAX_STANDARD_IMAGES} תמונות` },
-        { status: 403 }
-      );
+      if (Number(imgCount) >= PLAN_LIMITS.MAX_IMAGES_STANDARD) {
+        return NextResponse.json(
+          { error: `הגעת למגבלה של ${PLAN_LIMITS.MAX_IMAGES_STANDARD} תמונות` },
+          { status: 403 }
+        );
+      }
+    } catch {
+      return NextResponse.json({ error: "DB error" }, { status: 500 });
     }
   }
 
-  // העלאה ל-Cloudinary
+  // Upload to Cloudinary
   const buffer = Buffer.from(await file.arrayBuffer());
-
   let uploadResult;
   try {
     uploadResult = await uploadToCloudinary(buffer, {
@@ -108,44 +120,86 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "שגיאה בהעלאה" }, { status: 500 });
   }
 
-  // שמירה ב-DB
-  const [newMedia] = await db
-    .insert(vendorMedia)
-    .values({
-      id: crypto.randomUUID(),
-      vendorId: vendor.id,
-      url: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      type: isVideo ? "video" : "image",
-      sortOrder: 999,
-    })
-    .returning();
+  // Persist to DB
+  try {
+    const [newMedia] = await db
+      .insert(vendorMedia)
+      .values({
+        id: crypto.randomUUID(),
+        vendorId: vendor.id,
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        type: isVideo ? "video" : "image",
+        sortOrder: 999,
+      })
+      .returning();
 
-  return NextResponse.json(newMedia, { status: 201 });
+    return NextResponse.json(newMedia, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
 }
 
-// ── DELETE: Remove file ────────────────────────────────────────────────────
+// ── DELETE: Remove file ────────────────────────────────────────────────────────
+
+const deleteSchema = z.object({
+  mediaId: z.string().min(1),
+  publicId: z.string().nullable().optional(),
+});
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const body = (await request.json()) as { mediaId?: string; publicId?: string | null };
-  const { mediaId, publicId } = body;
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  if (!mediaId) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = deleteSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json({ error: "mediaId required" }, { status: 400 });
   }
 
-  try {
-    const vendor = await getVendor(user.id);
-    if (!vendor) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+  const { mediaId, publicId } = parsed.data;
 
+  try {
+    const vendor = await getAuthenticatedVendor(user.id);
+    if (!vendor) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
+
+    // ── Authorization: verify the media item belongs to THIS vendor ───────────
+    const [mediaItem] = await db
+      .select()
+      .from(vendorMedia)
+      .where(and(eq(vendorMedia.id, mediaId), eq(vendorMedia.vendorId, vendor.id)))
+      .limit(1);
+
+    if (!mediaItem) {
+      return NextResponse.json(
+        { error: "Media not found or access denied" },
+        { status: 404 }
+      );
+    }
+
+    // Delete from DB first
     await db.delete(vendorMedia).where(eq(vendorMedia.id, mediaId));
 
-    if (publicId) {
-      await deleteFromCloudinary(publicId).catch(console.error);
+    // Then remove from Cloudinary (best-effort)
+    const pid = publicId ?? mediaItem.publicId;
+    if (pid) {
+      await deleteFromCloudinary(pid).catch((err) =>
+        console.error("[upload] Cloudinary delete error:", err)
+      );
     }
 
     return NextResponse.json({ ok: true });
@@ -154,44 +208,86 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// ── PATCH: Reorder ─────────────────────────────────────────────────────────
+// ── PATCH: Reorder / set cover ─────────────────────────────────────────────────
+
+const patchSchema = z.union([
+  z.object({
+    setCoverUrl: z.string().url(),
+    order: z.undefined().optional(),
+  }),
+  z.object({
+    setCoverUrl: z.undefined().optional(),
+    order: z.array(z.object({ id: z.string(), sortOrder: z.number().int() })).min(1),
+  }),
+]);
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const body = (await request.json()) as {
-    order?: { id: string; sortOrder: number }[];
-    setCoverUrl?: string;
-  };
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "order or setCoverUrl required" },
+      { status: 400 }
+    );
+  }
 
   try {
-    const vendor = await getVendor(user.id);
-    if (!vendor) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
-
-    // Set cover image
-    if (body.setCoverUrl) {
-      await db
-        .update(vendors)
-        .set({ coverImage: body.setCoverUrl, updatedAt: new Date() })
-        .where(eq(vendors.id, vendor.id));
-      return NextResponse.json({ ok: true, coverImage: body.setCoverUrl });
+    const vendor = await getAuthenticatedVendor(user.id);
+    if (!vendor) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }
 
-    // Reorder
-    if (!body.order?.length) {
-      return NextResponse.json({ error: "order or setCoverUrl required" }, { status: 400 });
+    if (parsed.data.setCoverUrl) {
+      await db
+        .update(vendors)
+        .set({ coverImage: parsed.data.setCoverUrl, updatedAt: new Date() })
+        .where(eq(vendors.id, vendor.id));
+
+      return NextResponse.json({ ok: true, coverImage: parsed.data.setCoverUrl });
+    }
+
+    // Reorder — verify every ID belongs to this vendor before updating
+    const order = parsed.data.order!;
+    const ids = order.map((o) => o.id);
+
+    const owned = await db
+      .select({ id: vendorMedia.id })
+      .from(vendorMedia)
+      .where(eq(vendorMedia.vendorId, vendor.id));
+
+    const ownedSet = new Set(owned.map((m) => m.id));
+    const unauthorized = ids.filter((id) => !ownedSet.has(id));
+    if (unauthorized.length > 0) {
+      return NextResponse.json(
+        { error: "Access denied for one or more media items" },
+        { status: 403 }
+      );
     }
 
     await Promise.all(
-      body.order.map(({ id, sortOrder }) =>
+      order.map(({ id, sortOrder }) =>
         db
           .update(vendorMedia)
           .set({ sortOrder })
           .where(eq(vendorMedia.id, id))
       )
     );
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
