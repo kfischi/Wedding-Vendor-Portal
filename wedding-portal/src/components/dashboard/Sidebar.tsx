@@ -114,8 +114,8 @@ function NavItem({
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 group border",
         isActive
-          ? "bg-gold/10 text-gold border-gold/20 shadow-sm"
-          : "text-stone border-transparent hover:bg-champagne/40 hover:text-obsidian"
+          ? "bg-gradient-to-l from-gold/15 to-gold/5 text-gold border-gold/25 shadow-[0_1px_8px_rgb(184_151_106/0.15)]"
+          : "text-stone border-transparent hover:bg-white/60 hover:text-obsidian hover:shadow-sm"
       )}
     >
       <Icon
@@ -161,13 +161,13 @@ function SidebarContent({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Logo + vendor identity */}
-      <div className="px-4 pt-6 pb-5 border-b border-champagne/60">
+      <div className="px-4 pt-6 pb-5 border-b border-champagne/40">
         <Link href="/dashboard" onClick={onClose} className="block mb-5">
-          <span className="font-script text-2xl text-gold leading-none">WeddingPro</span>
+          <span className="font-script text-2xl text-gold leading-none drop-shadow-sm">WeddingPro</span>
         </Link>
         <div className="flex items-center gap-3">
           {/* Gold avatar with initials */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-gold/60 flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold via-gold/80 to-gold/50 flex items-center justify-center shrink-0 shadow-[0_2px_12px_rgb(184_151_106/0.4)] ring-2 ring-white">
             <span className="text-sm font-bold text-white">{initials}</span>
           </div>
           <div className="min-w-0 flex-1">
@@ -263,7 +263,7 @@ export function Sidebar({ businessName, plan, newLeadsCount }: SidebarProps) {
       {/* Mobile slide-in drawer */}
       <aside
         className={cn(
-          "lg:hidden fixed top-0 right-0 z-50 h-full w-72 bg-white border-l border-champagne/70 shadow-2xl transition-transform duration-300 ease-out",
+          "lg:hidden fixed top-0 right-0 z-50 h-full w-72 bg-white/90 backdrop-blur-xl border-l border-white/60 shadow-2xl transition-transform duration-300 ease-out",
           mobileOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -283,12 +283,12 @@ export function Sidebar({ businessName, plan, newLeadsCount }: SidebarProps) {
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-l border-champagne/60 h-screen sticky top-0 shadow-[2px_0_20px_rgb(26_22_20/0.04)]">
+      <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white/80 backdrop-blur-xl border-l border-white/60 h-screen sticky top-0 shadow-[2px_0_30px_rgb(26_22_20/0.06)]">
         <SidebarContent businessName={businessName} plan={plan} newLeadsCount={newLeadsCount} />
       </aside>
 
       {/* Mobile bottom nav bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-champagne/60">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/80 backdrop-blur-xl border-t border-white/60 shadow-[0_-4px_24px_rgb(26_22_20/0.06)]">
         <div className="flex items-center justify-around px-2 py-1">
           {MOBILE_NAV.map((item) => {
             const isActive = item.exact

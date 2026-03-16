@@ -5,10 +5,13 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { vendors, coupons, adminLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { escapeHtml } from "@/lib/security/sanitize";
+import { RESEND_API_KEY, NEXT_PUBLIC_APP_URL } from "@/lib/env";
 
 // ─── Admin Guard ──────────────────────────────────────────────────────────────
 
@@ -45,10 +48,19 @@ function createAdminSupabaseClient() {
 
 export async function approveVendor(vendorId: string) {
   const admin = await requireAdmin();
+
+  // Fetch vendor before updating so we can send the email
+  const [vendor] = await db
+    .select({ email: vendors.email, businessName: vendors.businessName, slug: vendors.slug })
+    .from(vendors)
+    .where(eq(vendors.id, vendorId))
+    .limit(1);
+
   await db
     .update(vendors)
     .set({ status: "active", updatedAt: new Date() })
     .where(eq(vendors.id, vendorId));
+
   await db.insert(adminLogs).values({
     id: crypto.randomUUID(),
     adminId: admin.id,
@@ -56,9 +68,71 @@ export async function approveVendor(vendorId: string) {
     targetType: "vendor",
     targetId: vendorId,
   });
+
+  // Send "you're live!" email to vendor
+  if (vendor && RESEND_API_KEY) {
+    try {
+      const resend = new Resend(RESEND_API_KEY);
+      const baseUrl = NEXT_PUBLIC_APP_URL;
+      const hostname = new URL(baseUrl).hostname;
+      const profileUrl = `${baseUrl}/vendors/${vendor.slug}`;
+
+      await resend.emails.send({
+        from: `WeddingPro <noreply@${hostname}>`,
+        to: vendor.email,
+        subject: "🎉 הפרופיל שלך פעיל! — WeddingPro",
+        html: `
+          <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#faf8f5; border-radius:12px; overflow:hidden;">
+            <div style="background: linear-gradient(135deg, #1a1614 0%, #2d2420 100%); padding: 28px 32px;">
+              <p style="margin:0; font-size:22px; color:#b8976a; font-weight:bold;">WeddingPro</p>
+            </div>
+            <div style="padding: 32px; background:#ffffff;">
+              <h2 style="margin:0 0 8px; font-size:26px; color:#1a1614;">הפרופיל שלך פעיל! 🎉</h2>
+              <p style="margin:0 0 20px; color:#5a4a42; line-height:1.7;">
+                שלום <strong>${escapeHtml(vendor.businessName)}</strong>,<br>
+                הפרופיל שלך אושר ועכשיו הוא פעיל ומופיע בדירקטורי WeddingPro.
+                זוגות מתחתנים יכולים למצוא אותך ולשלוח פניות!
+              </p>
+
+              <div style="text-align:center; margin: 24px 0;">
+                <a href="${escapeHtml(profileUrl)}"
+                   style="display:inline-block; background:linear-gradient(135deg,#b8976a,#9a7d56); color:white; padding:14px 32px; border-radius:10px; text-decoration:none; font-weight:bold; font-size:15px;">
+                  צפה בפרופיל שלך ←
+                </a>
+              </div>
+
+              <div style="background:#faf9f7; border-radius:10px; border:1px solid #e8ddd0; padding:20px; margin-top:20px;">
+                <p style="margin:0 0 12px; font-size:14px; font-weight:bold; color:#1a1614;">הצעדים הבאים:</p>
+                <ul style="margin:0; padding-right:16px; color:#5a4a42; font-size:14px; line-height:2;">
+                  <li>העלה תמונות מקצועיות לגלריה</li>
+                  <li>הוסף תיאור מפורט ומושך</li>
+                  <li>הגדר את פרטי הקשר שלך</li>
+                  <li>שתף את קישור הפרופיל ברשתות החברתיות</li>
+                </ul>
+              </div>
+
+              <div style="text-align:center; margin-top:24px;">
+                <a href="${escapeHtml(baseUrl)}/dashboard"
+                   style="display:inline-block; border:1px solid #e8ddd0; color:#5a4a42; padding:10px 24px; border-radius:8px; text-decoration:none; font-size:13px;">
+                  לוח הבקרה שלי
+                </a>
+              </div>
+            </div>
+            <div style="padding:16px 32px; background:#faf8f5; text-align:center; font-size:11px; color:#9e8e86;">
+              WeddingPro — פלטפורמת ספקי חתונות בישראל
+            </div>
+          </div>
+        `,
+      });
+    } catch (err) {
+      console.error("[approveVendor] Email error:", err);
+    }
+  }
+
   revalidatePath("/admin");
   revalidatePath("/admin/vendors");
   revalidatePath(`/admin/vendors/${vendorId}`);
+  revalidatePath(`/vendors/${vendor?.slug ?? ""}`);
 }
 
 export async function suspendVendor(vendorId: string) {

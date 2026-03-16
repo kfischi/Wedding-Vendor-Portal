@@ -1,4 +1,5 @@
-export const dynamic = "force-dynamic";
+// ISR: revalidate vendor pages every hour — fresh data without SSR overhead
+export const revalidate = 3600;
 
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
@@ -13,8 +14,10 @@ import { MasonryGallery } from "@/components/vendor/MasonryGallery";
 import { PricingSection } from "@/components/vendor/PricingSection";
 import { HowItWorks } from "@/components/vendor/HowItWorks";
 import { ReviewsSection } from "@/components/vendor/ReviewsSection";
+import { ReviewSubmitForm } from "@/components/vendor/ReviewSubmitForm";
 import { LeadCaptureForm } from "@/components/vendor/LeadCaptureForm";
 import { WhatsAppButton } from "@/components/vendor/WhatsAppButton";
+import { ViewCountTracker } from "@/components/vendor/ViewCountTracker";
 import { Footer } from "@/components/layout/Footer";
 
 // ─── Mock data (for /vendors/demo and DB-fallback during development) ──────────
@@ -223,43 +226,16 @@ const MOCK_FALLBACK = () => ({
 });
 
 async function getVendorData(slug: string): Promise<VendorData | null> {
-  console.log(`[vendor-page] getVendorData called with slug="${slug}"`);
-  console.log(`[vendor-page] DATABASE_URL set: ${!!process.env.DATABASE_URL}`);
-  console.log(`[vendor-page] DATABASE_URL prefix: ${process.env.DATABASE_URL?.slice(0, 30) ?? "MISSING"}`);
-
   try {
-    console.log(`[vendor-page] Running DB query: SELECT * FROM vendors WHERE slug='${slug}' AND status='active'`);
-
     const [vendor] = await db
       .select()
       .from(vendors)
       .where(and(eq(vendors.slug, slug), eq(vendors.status, "active")))
       .limit(1);
 
-    console.log(`[vendor-page] DB query result: ${vendor ? `found vendor id=${vendor.id} status=${vendor.status}` : "no rows returned"}`);
-
     if (!vendor) {
-      // Distinguish between "doesn't exist" and "exists but not active"
-      const [anyStatus] = await db
-        .select({ id: vendors.id, status: vendors.status })
-        .from(vendors)
-        .where(eq(vendors.slug, slug))
-        .limit(1);
-
-      if (anyStatus) {
-        console.error(
-          `[vendor-page] VENDOR_NOT_ACTIVE slug="${slug}" id=${anyStatus.id} status="${anyStatus.status}" — vendor exists but filtered out by status=active check`
-        );
-      } else {
-        console.error(
-          `[vendor-page] VENDOR_NOT_FOUND slug="${slug}" — no row in vendors table with this slug`
-        );
-      }
-
       return slug === "demo" ? MOCK_FALLBACK() : null;
     }
-
-    console.log(`[vendor-page] Vendor found: id=${vendor.id} businessName="${vendor.businessName}" status=${vendor.status} plan=${vendor.plan}`);
 
     const [media, pricing, vendorReviews] = await Promise.all([
       db
@@ -287,17 +263,9 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
         .orderBy(reviews.createdAt),
     ]);
 
-    console.log(`[vendor-page] Related data: media=${media.length} pricing=${pricing.length} reviews=${vendorReviews.length}`);
-    console.log(`[vendor-page] Code path: DB_FOUND → returning real data`);
-
     return { vendor, media, pricing, reviews: vendorReviews };
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    const errorStack = err instanceof Error ? err.stack : undefined;
-    console.error(`[vendor-page] ERROR for slug="${slug}": ${errorMessage}`);
-    console.error(`[vendor-page] Full error:`, err);
-    if (errorStack) console.error(`[vendor-page] Stack: ${errorStack}`);
-    console.log(`[vendor-page] Code path: CATCH → isMockFallback=${slug === "demo"}`);
+    console.error(`[vendor-page] Error for slug="${slug}":`, err);
     return slug === "demo" ? MOCK_FALLBACK() : null;
   }
 }
@@ -350,12 +318,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function VendorPage({ params }: Props) {
   const { slug } = await params;
-  console.log(`[vendor-page] VendorPage render for slug="${slug}"`);
   const data = await getVendorData(slug);
-  if (!data) {
-    console.log(`[vendor-page] No data returned → calling notFound() for slug="${slug}"`);
-    notFound();
-  }
+  if (!data) notFound();
 
   const { vendor, media, pricing, reviews: vendorReviews } = data;
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
@@ -459,18 +423,22 @@ export default async function VendorPage({ params }: Props) {
                 <HowItWorks />
               </div>
 
-              {vendorReviews.length > 0 && (
-                <div id="reviews">
+              <div id="reviews">
+                {vendorReviews.length > 0 && (
                   <ReviewsSection reviews={vendorReviews} />
-                </div>
-              )}
+                )}
+                <ReviewSubmitForm
+                  vendorId={vendor.id}
+                  vendorName={vendor.businessName}
+                />
+              </div>
             </div>
 
             {/* ── Sidebar (1/3) — sticky lead form ── */}
             <aside className="lg:col-span-1">
               <div
                 id="contact-form"
-                className="lg:sticky lg:top-24 bg-cream-white rounded-2xl card-shadow gold-border p-6"
+                className="lg:sticky lg:top-24 bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_4px_32px_rgb(26_22_20/0.1)] border border-white/60 ring-1 ring-champagne/30 p-6"
               >
                 <LeadCaptureForm vendorId={vendor.id} vendorName={vendor.businessName} />
               </div>
@@ -483,6 +451,9 @@ export default async function VendorPage({ params }: Props) {
 
         {/* ── Floating WhatsApp ── */}
         <WhatsAppButton phone={vendor.phone} />
+
+        {/* ── View count tracker (client-side, fire-and-forget) ── */}
+        {vendor.id !== "mock-001" && <ViewCountTracker vendorId={vendor.id} />}
       </div>
     </>
   );

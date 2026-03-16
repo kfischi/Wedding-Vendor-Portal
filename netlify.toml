@@ -1,11 +1,26 @@
 [build]
   base    = "wedding-portal"
-  command = "pnpm build"
+  command = "pnpm install --frozen-lockfile && pnpm build"
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "20"
-  NEXT_TELEMETRY_DISABLED = "1"
+  NODE_VERSION              = "20"
+  NEXT_TELEMETRY_DISABLED   = "1"
+  PNPM_VERSION              = "9"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# ─── Redirects ────────────────────────────────────────────────────────────────
+[[redirects]]
+  from   = "/*"
+  to     = "/.netlify/functions/___netlify-handler"
+  status = 200
+
+# ─── Headers ──────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"
