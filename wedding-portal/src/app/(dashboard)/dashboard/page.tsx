@@ -19,6 +19,7 @@ import {
   TrendingUp,
   CheckCircle2,
   Circle,
+  Rocket,
 } from "lucide-react";
 import type { Lead } from "@/lib/db/schema";
 
@@ -78,17 +79,24 @@ function StatCard({
   accent?: boolean;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-champagne/60 p-5 shadow-[0_1px_8px_rgb(26_22_20/0.06)]">
+    <div className={`relative rounded-2xl border p-5 overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+      accent
+        ? "bg-gradient-to-br from-gold/10 via-gold/5 to-transparent border-gold/25 shadow-[0_2px_16px_rgb(184_151_106/0.12)]"
+        : "bg-white/80 backdrop-blur-sm border-champagne/50 shadow-[0_1px_8px_rgb(26_22_20/0.05)]"
+    }`}>
+      {accent && (
+        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+      )}
       <div className="flex items-start justify-between mb-3">
-        <p className="text-xs font-medium text-stone/70 leading-snug">{label}</p>
-        <div className={`p-2 rounded-xl ${accent ? "bg-gold/10" : "bg-champagne/40"}`}>
-          <Icon className={`h-4 w-4 ${accent ? "text-gold" : "text-stone/60"}`} />
+        <p className="text-xs font-semibold text-stone/60 leading-snug tracking-wide">{label}</p>
+        <div className={`p-2 rounded-xl ${accent ? "bg-gold/15 shadow-[0_1px_6px_rgb(184_151_106/0.25)]" : "bg-champagne/50"}`}>
+          <Icon className={`h-4 w-4 ${accent ? "text-gold" : "text-stone/50"}`} />
         </div>
       </div>
       <p className={`font-display text-3xl leading-none ${accent ? "text-gold" : "text-obsidian"}`}>
         {value}
       </p>
-      {sub && <p className="text-xs text-stone/50 mt-1.5">{sub}</p>}
+      {sub && <p className="text-[11px] text-stone/45 mt-1.5">{sub}</p>}
     </div>
   );
 }
@@ -147,7 +155,7 @@ export default async function DashboardPage({
   const completion = vendor ? calcCompletion(vendor) : null;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 relative">
 
       {/* ── Hero greeting ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
@@ -199,16 +207,19 @@ export default async function DashboardPage({
       )}
 
       {status === "active" && publicUrl && (
-        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-champagne shadow-sm">
+        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-l from-gold/8 to-transparent border border-gold/20 shadow-[0_2px_12px_rgb(184_151_106/0.1)] backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-green-500 shrink-0 animate-pulse" />
-            <p className="text-sm font-medium text-obsidian">הפרופיל שלך פעיל</p>
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            </span>
+            <p className="text-sm font-semibold text-obsidian">הפרופיל שלך פעיל וחי</p>
           </div>
           <Link
             href={publicUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-sm text-gold hover:underline font-medium"
+            className="flex items-center gap-1.5 text-sm text-gold hover:text-gold/80 font-semibold transition-colors"
           >
             צפה באתר החי
             <ExternalLink className="h-3.5 w-3.5" />
@@ -247,7 +258,7 @@ export default async function DashboardPage({
 
       {/* ── Profile completion ────────────────────────────────────────────── */}
       {completion && completion.percent < 100 && (
-        <div className="bg-white rounded-2xl border border-champagne/60 p-5 shadow-sm">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-champagne/50 p-5 shadow-[0_2px_16px_rgb(26_22_20/0.05)]">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="font-semibold text-obsidian text-sm">השלמת פרופיל</h3>
@@ -288,7 +299,7 @@ export default async function DashboardPage({
       )}
 
       {/* ── Quick actions ─────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-champagne/60 p-5 shadow-sm">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-champagne/50 p-5 shadow-[0_2px_16px_rgb(26_22_20/0.05)]">
         <h3 className="font-semibold text-obsidian text-sm mb-4">פעולות מהירות</h3>
         <div className="grid sm:grid-cols-3 gap-3">
           {[
@@ -317,7 +328,7 @@ export default async function DashboardPage({
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center gap-3 p-4 rounded-xl bg-champagne/20 hover:bg-champagne/40 transition-colors group"
+              className="flex items-center gap-3 p-4 rounded-xl bg-white/60 border border-champagne/40 hover:bg-white/90 hover:border-champagne/70 hover:shadow-md transition-all duration-200 group hover:-translate-y-0.5"
             >
               <div className={`p-2 rounded-xl ${action.color} shrink-0`}>
                 <action.icon className="h-4 w-4" />
@@ -331,9 +342,22 @@ export default async function DashboardPage({
         </div>
       </div>
 
+      {/* ── Floating profile link (active vendors) ────────────────────────── */}
+      {status === "active" && publicUrl && (
+        <Link
+          href={publicUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-20 left-4 lg:bottom-6 lg:left-6 z-20 flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-l from-gold to-gold/80 text-white text-sm font-semibold shadow-[0_4px_20px_rgb(184_151_106/0.50)] hover:shadow-[0_6px_28px_rgb(184_151_106/0.65)] hover:-translate-y-0.5 transition-all duration-200 backdrop-blur-sm"
+        >
+          <Rocket className="h-4 w-4 shrink-0" />
+          צפה בפרופיל
+        </Link>
+      )}
+
       {/* ── Recent leads ──────────────────────────────────────────────────── */}
       {recentLeads.length > 0 && (
-        <div className="bg-white rounded-2xl border border-champagne/60 shadow-sm overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-champagne/50 shadow-[0_2px_16px_rgb(26_22_20/0.05)] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-champagne/40">
             <h3 className="font-semibold text-obsidian text-sm">לידים אחרונים</h3>
             <Link href="/dashboard/leads" className="text-xs text-gold hover:underline font-medium">

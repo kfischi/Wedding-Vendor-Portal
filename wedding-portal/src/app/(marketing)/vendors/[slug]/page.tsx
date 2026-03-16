@@ -17,6 +17,7 @@ import { ReviewsSection } from "@/components/vendor/ReviewsSection";
 import { ReviewSubmitForm } from "@/components/vendor/ReviewSubmitForm";
 import { LeadCaptureForm } from "@/components/vendor/LeadCaptureForm";
 import { WhatsAppButton } from "@/components/vendor/WhatsAppButton";
+import { ViewCountTracker } from "@/components/vendor/ViewCountTracker";
 import { Footer } from "@/components/layout/Footer";
 
 // ─── Mock data (for /vendors/demo and DB-fallback during development) ──────────
@@ -437,7 +438,7 @@ export default async function VendorPage({ params }: Props) {
             <aside className="lg:col-span-1">
               <div
                 id="contact-form"
-                className="lg:sticky lg:top-24 bg-cream-white rounded-2xl card-shadow gold-border p-6"
+                className="lg:sticky lg:top-24 bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_4px_32px_rgb(26_22_20/0.1)] border border-white/60 ring-1 ring-champagne/30 p-6"
               >
                 <LeadCaptureForm vendorId={vendor.id} vendorName={vendor.businessName} />
               </div>
@@ -450,6 +451,9 @@ export default async function VendorPage({ params }: Props) {
 
         {/* ── Floating WhatsApp ── */}
         <WhatsAppButton phone={vendor.phone} />
+
+        {/* ── View count tracker (client-side, fire-and-forget) ── */}
+        {vendor.id !== "mock-001" && <ViewCountTracker vendorId={vendor.id} />}
       </div>
     </>
   );

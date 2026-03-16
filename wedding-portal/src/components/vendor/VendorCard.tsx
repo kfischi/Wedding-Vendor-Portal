@@ -54,9 +54,10 @@ export function VendorCard({
     <Link
       href={`/vendors/${slug}`}
       className={cn(
-        "group block bg-cream-white rounded-2xl overflow-hidden card-shadow",
-        "hover:shadow-lg transition-shadow duration-300",
-        featured && "ring-1 ring-gold/30"
+        "group block bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden",
+        "shadow-[0_2px_16px_rgb(26_22_20/0.07)] border border-white/70",
+        "hover:shadow-[0_8px_32px_rgb(26_22_20/0.12)] hover:-translate-y-1 transition-all duration-300",
+        featured && "ring-1 ring-gold/30 shadow-[0_2px_16px_rgb(184_151_106/0.12)]"
       )}
     >
       {/* Cover image */}

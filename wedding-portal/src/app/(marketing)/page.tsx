@@ -294,7 +294,7 @@ export default async function HomePage() {
             ].map(({ step, icon: Icon, title, description, color }) => (
               <div
                 key={step}
-                className="bg-cream-white rounded-2xl p-7 card-shadow text-center flex flex-col items-center gap-4"
+                className="bg-white/70 backdrop-blur-sm rounded-2xl p-7 shadow-[0_4px_24px_rgb(26_22_20/0.06)] border border-white/80 hover:shadow-[0_8px_32px_rgb(26_22_20/0.1)] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col items-center gap-4"
               >
                 <span className="text-xs font-medium text-stone/40 tracking-widest uppercase">
                   שלב {step}
@@ -332,8 +332,8 @@ export default async function HomePage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/auth/login"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gold text-obsidian font-semibold text-sm hover:bg-gold/90 transition-colors shadow-lg"
+              href="/join/free"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gold text-obsidian font-semibold text-sm hover:bg-gold/90 transition-colors shadow-lg shadow-gold/25"
             >
               הצטרפו בחינם
               <ChevronLeft className="w-4 h-4" />
