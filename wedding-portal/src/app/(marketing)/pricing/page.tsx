@@ -19,7 +19,8 @@ async function startCheckout(plan: PaidPlan, email: string, coupon: string) {
 
 const FEATURES_STANDARD = [
   "פרופיל ספק מלא",
-  "גלריה עד 20 תמונות",
+  "גלריה עד 50 תמונות",
+  "כפתור WhatsApp ישיר",
   "קישורי רשתות חברתיות (אינסטגרם, טיקטוק, יוטיוב)",
   "קבלת לידים ללא הגבלה",
   "אנליטיקס בסיסי",
@@ -28,7 +29,7 @@ const FEATURES_STANDARD = [
 
 const FEATURES_PREMIUM = [
   "כל מה שב-Standard",
-  "גלריה עד 100 תמונות + וידאו",
+  "גלריה ללא הגבלת תמונות + וידאו",
   "הופעה ראשונה בחיפוש",
   "תג 'מומלץ' על הפרופיל",
   "אנליטיקס מתקדם",
