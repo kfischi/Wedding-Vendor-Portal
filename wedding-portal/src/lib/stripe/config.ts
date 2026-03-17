@@ -15,7 +15,7 @@ export const PLANS = {
   premium: {
     name: "Premium",
     priceId: process.env.STRIPE_PREMIUM_PRICE_ID!,
-    amount: 34900, // אגורות — ₪349
+    amount: 17900, // אגורות — ₪179
   },
 } as const;
 
@@ -24,7 +24,7 @@ export type PaidPlan = keyof typeof PLANS;
 // ─── Plan feature limits ────────────────────────────────────────────────────
 
 export const PLAN_LIMITS = {
-  free:    { maxImages: 5,  hasWhatsApp: false, hasVideo: false, hasHero: false },
+  free:    { maxImages: 10, hasWhatsApp: false, hasVideo: false, hasHero: false },
   premium: { maxImages: 20, hasWhatsApp: true,  hasVideo: true,  hasHero: true  },
 } as const satisfies Record<"free" | "premium", { maxImages: number; hasWhatsApp: boolean; hasVideo: boolean; hasHero: boolean }>;
 

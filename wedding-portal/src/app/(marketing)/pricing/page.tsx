@@ -18,7 +18,7 @@ async function startCheckout(plan: PaidPlan, email: string, coupon: string) {
 
 const FEATURES_FREE = [
   "פרופיל בסיסי",
-  "גלריה עד 5 תמונות",
+  "גלריה עד 10 תמונות",
   "טופס יצירת קשר",
   "הופעה בדירקטורי (ממתין לאישור)",
 ];
@@ -143,7 +143,7 @@ export default function PricingPage() {
                 Premium
               </h2>
               <div className="flex items-baseline gap-1 mt-3">
-                <span className="font-display text-4xl text-obsidian">₪349</span>
+                <span className="font-display text-4xl text-obsidian">₪179</span>
                 <span className="text-stone text-sm">/ חודש</span>
               </div>
               <p className="text-stone text-sm mt-2">

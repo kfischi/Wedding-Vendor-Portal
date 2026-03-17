@@ -21,7 +21,7 @@ const PLANS = [
     color: "border-champagne",
     features: [
       "פרופיל בסיסי",
-      "עד 5 תמונות",
+      "עד 10 תמונות",
       "טופס יצירת קשר",
       "ממתין לאישור ידני",
     ],
@@ -29,7 +29,7 @@ const PLANS = [
   {
     key: "premium",
     label: "Premium",
-    price: "₪349",
+    price: "₪179",
     period: "לחודש",
     color: "border-gold",
     badge: "מומלץ",
