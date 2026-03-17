@@ -32,14 +32,14 @@ export const NEXT_PUBLIC_SUPABASE_ANON_KEY = requireEnv(
 );
 
 // ── Server-only ───────────────────────────────────────────────────────────────
-export const DATABASE_URL = requireEnv("DATABASE_URL");
-export const SUPABASE_SERVICE_ROLE_KEY = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+export const DATABASE_URL = process.env.DATABASE_URL ?? "";
+export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 // Stripe — optional (migrating to Payme; remove once fully replaced)
 export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? "";
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 export const STRIPE_STANDARD_PRICE_ID = process.env.STRIPE_STANDARD_PRICE_ID ?? "";
 export const STRIPE_PREMIUM_PRICE_ID = process.env.STRIPE_PREMIUM_PRICE_ID ?? "";
-export const RESEND_API_KEY = requireEnv("RESEND_API_KEY");
+export const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 
 // Optional — no throw if missing
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "";
