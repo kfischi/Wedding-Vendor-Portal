@@ -1,6 +1,6 @@
 [build]
   base    = "wedding-portal"
-  command = "pnpm install --frozen-lockfile && pnpm build"
+  command = "pnpm install --frozen-lockfile && npx tsc --noEmit && pnpm build"
   publish = ".next"
 
 [[plugins]]
