@@ -56,6 +56,7 @@ const MOCK_VENDOR: Vendor = {
   stripeSubscriptionId: null,
   subscriptionStatus: null,
   subscriptionCurrentPeriodEnd: null,
+  trialEndsAt: null,
   createdAt: new Date("2022-03-15"),
   updatedAt: new Date("2024-11-01"),
 };
