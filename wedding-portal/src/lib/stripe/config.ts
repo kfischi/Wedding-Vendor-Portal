@@ -12,11 +12,6 @@ export function getStripe(): Stripe {
 }
 
 export const PLANS = {
-  standard: {
-    name: "Standard",
-    priceId: process.env.STRIPE_STANDARD_PRICE_ID!,
-    amount: 14900, // אגורות — ₪149
-  },
   premium: {
     name: "Premium",
     priceId: process.env.STRIPE_PREMIUM_PRICE_ID!,
@@ -29,10 +24,9 @@ export type PaidPlan = keyof typeof PLANS;
 // ─── Plan feature limits ────────────────────────────────────────────────────
 
 export const PLAN_LIMITS = {
-  free:     { maxImages: 0,  hasWhatsApp: false, hasVideo: false, hasHero: false },
-  standard: { maxImages: 10, hasWhatsApp: true,  hasVideo: false, hasHero: false },
-  premium:  { maxImages: 20, hasWhatsApp: true,  hasVideo: true,  hasHero: true  },
-} as const satisfies Record<"free" | "standard" | "premium", { maxImages: number; hasWhatsApp: boolean; hasVideo: boolean; hasHero: boolean }>;
+  free:    { maxImages: 5,  hasWhatsApp: false, hasVideo: false, hasHero: false },
+  premium: { maxImages: 20, hasWhatsApp: true,  hasVideo: true,  hasHero: true  },
+} as const satisfies Record<"free" | "premium", { maxImages: number; hasWhatsApp: boolean; hasVideo: boolean; hasHero: boolean }>;
 
 export async function createCheckoutSession(
   plan: PaidPlan,

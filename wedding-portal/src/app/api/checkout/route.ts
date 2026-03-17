@@ -3,7 +3,7 @@ import { createCheckoutSession, type PaidPlan } from "@/lib/stripe/config";
 import { z } from "zod";
 
 const schema = z.object({
-  plan: z.enum(["standard", "premium"]),
+  plan: z.enum(["premium"]),
   email: z.string().email(),
   coupon: z.string().optional(),
 });

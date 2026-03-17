@@ -62,7 +62,7 @@ const MOBILE_NAV = [
 
 export interface SidebarProps {
   businessName: string;
-  plan: "free" | "standard" | "premium";
+  plan: "free" | "premium";
   newLeadsCount: number;
 }
 
@@ -80,9 +80,8 @@ function getInitials(name: string): string {
 }
 
 const PLAN_CONFIG: Record<string, { label: string; cls: string }> = {
-  free:     { label: "חינמי",     cls: "text-stone bg-champagne/60 border-champagne" },
-  standard: { label: "Standard",  cls: "text-dusty-rose bg-dusty-rose/10 border-dusty-rose/20" },
-  premium:  { label: "Premium ✦", cls: "text-gold bg-gold/10 border-gold/25" },
+  free:    { label: "חינמי",     cls: "text-stone bg-champagne/60 border-champagne" },
+  premium: { label: "Premium ✦", cls: "text-gold bg-gold/10 border-gold/25" },
 };
 
 // ── NavItem ───────────────────────────────────────────────────────────────────
@@ -143,7 +142,7 @@ function SidebarContent({
   onClose,
 }: {
   businessName: string;
-  plan: "free" | "standard" | "premium";
+  plan: "free" | "premium";
   newLeadsCount: number;
   onClose?: () => void;
 }) {

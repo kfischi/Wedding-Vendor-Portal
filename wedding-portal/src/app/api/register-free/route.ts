@@ -37,7 +37,7 @@ function getSupabaseAdmin() {
  *
  * Creates a 3-month trial vendor account via coupon code.
  * The coupon is validated against the DB; on success the vendor is
- * immediately active (plan: "standard") with a trialEndsAt 90 days out.
+ * immediately active (plan: "premium") with a trialEndsAt 90 days out.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let body: unknown;
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: { role: "vendor", plan: "standard" },
+      user_metadata: { role: "vendor", plan: "premium" },
     });
 
   if (userError && !userError.message.includes("already registered")) {
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     city,
     phone: phone ?? null,
     email,
-    plan: "standard",
+    plan: "premium",
     status: "active",
     role: "vendor",
     trialEndsAt,

@@ -113,7 +113,7 @@ async function handleCheckoutCompleted(
       category: "other",
       city: "",
       email: vendorEmail,
-      plan: plan as "standard" | "premium",
+      plan: plan as "premium",
       status: "pending",
       role: "vendor",
       stripeCustomerId: session.customer as string | null,

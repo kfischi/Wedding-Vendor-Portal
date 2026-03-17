@@ -18,7 +18,6 @@ const STATUS_LABELS: Record<string, string> = {
 
 const PLAN_LABELS: Record<string, string> = {
   free: "חינם",
-  standard: "סטנדרטי",
   premium: "פרמיום",
 };
 
@@ -68,7 +67,7 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
   try {
     const filters: SQL[] = [];
     if (statusFilter) filters.push(eq(vendors.status, statusFilter as "pending" | "active" | "suspended" | "rejected"));
-    if (planFilter) filters.push(eq(vendors.plan, planFilter as "free" | "standard" | "premium"));
+    if (planFilter) filters.push(eq(vendors.plan, planFilter as "free" | "premium"));
     if (query) filters.push(ilike(vendors.businessName, `%${query}%`));
     const where = filters.length > 0 ? and(...filters) : undefined;
 
@@ -102,7 +101,6 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
   const planTabs = [
     { value: "all", label: "כל הפלאנים" },
     { value: "free", label: "חינם" },
-    { value: "standard", label: "סטנדרטי" },
     { value: "premium", label: "פרמיום" },
   ];
 
@@ -230,7 +228,7 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
                     </td>
                     <td className="px-4 py-4">
                       <span className="text-xs font-medium" style={{
-                        color: v.plan === "premium" ? "#b8935a" : v.plan === "standard" ? "#60a5fa" : "rgba(255,255,255,0.35)",
+                        color: v.plan === "premium" ? "#b8935a" : "rgba(255,255,255,0.35)",
                       }}>
                         {PLAN_LABELS[v.plan]}
                       </span>

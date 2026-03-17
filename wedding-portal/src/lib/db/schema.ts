@@ -12,7 +12,7 @@ import {
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export const planEnum = pgEnum("plan", ["free", "standard", "premium"]);
+export const planEnum = pgEnum("plan", ["free", "premium"]);
 
 export const statusEnum = pgEnum("status", [
   "pending",

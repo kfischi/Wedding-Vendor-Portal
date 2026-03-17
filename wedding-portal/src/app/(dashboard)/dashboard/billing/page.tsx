@@ -27,20 +27,6 @@ const PLANS = [
     ],
   },
   {
-    key: "standard",
-    label: "Standard",
-    price: "₪149",
-    period: "לחודש",
-    color: "border-dusty-rose",
-    features: [
-      "פרופיל מלא עם גלריה",
-      "עד 20 תמונות",
-      "לידים ישירים ללא הגבלה",
-      "אישור מהיר תוך 24 שעות",
-      "הופעה בדירקטורי",
-    ],
-  },
-  {
     key: "premium",
     label: "Premium",
     price: "₪349",
@@ -48,11 +34,11 @@ const PLANS = [
     color: "border-gold",
     badge: "מומלץ",
     features: [
-      "הכול ב-Standard",
-      "תמונות וסרטוני וידאו ללא הגבלה",
-      "חבילות מחירים מותאמות",
+      "פרופיל מלא עם גלריה עד 20 תמונות",
+      "תמונת הירו + וידאו",
+      "כפתור WhatsApp ישיר",
+      "קישורי רשתות חברתיות",
       "הופעה מובלטת בראש הרשימות",
-      "SEO מתקדם (Meta Title/Description)",
       "אנליטיקס מלא",
     ],
   },
@@ -145,7 +131,7 @@ export default async function BillingPage() {
             <div>
               <p className="text-xs text-stone/60 font-medium">התוכנית הנוכחית</p>
               <p className="font-display text-xl text-obsidian capitalize">
-                {currentPlan === "premium" ? "Premium ✦" : currentPlan === "standard" ? "Standard" : "חינמי"}
+                {currentPlan === "premium" ? "Premium ✦" : "חינמי"}
               </p>
             </div>
           </div>

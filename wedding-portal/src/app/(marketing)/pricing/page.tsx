@@ -5,7 +5,6 @@ import { Check, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { PaidPlan } from "@/lib/stripe/config";
 
-// Server action לניתוב ל-Stripe (מוגדר כאן כ-API call פשוט)
 async function startCheckout(plan: PaidPlan, email: string, coupon: string) {
   const res = await fetch("/api/checkout", {
     method: "POST",
@@ -17,21 +16,20 @@ async function startCheckout(plan: PaidPlan, email: string, coupon: string) {
   return url;
 }
 
-const FEATURES_STANDARD = [
-  "פרופיל ספק מלא",
-  "גלריה עד 10 תמונות",
-  "כפתור WhatsApp ישיר",
-  "קישורי רשתות חברתיות (אינסטגרם, טיקטוק, יוטיוב)",
-  "קבלת לידים ללא הגבלה",
-  "אנליטיקס בסיסי",
-  "תמיכה באימייל",
+const FEATURES_FREE = [
+  "פרופיל בסיסי",
+  "גלריה עד 5 תמונות",
+  "טופס יצירת קשר",
+  "הופעה בדירקטורי (ממתין לאישור)",
 ];
 
 const FEATURES_PREMIUM = [
-  "כל מה שב-Standard",
+  "פרופיל מלא + תמונת הירו",
   "גלריה עד 20 תמונות + וידאו",
-  "תמונת הירו (Hero) מותאמת אישית",
-  "הופעה ראשונה בחיפוש",
+  "כפתור WhatsApp ישיר",
+  "קישורי רשתות חברתיות (אינסטגרם, טיקטוק, יוטיוב)",
+  "קבלת לידים ללא הגבלה",
+  "הופעה מובלטת בראש הרשימות",
   "תג 'מומלץ' על הפרופיל",
   "אנליטיקס מתקדם",
   "תמיכה בעדיפות",
@@ -41,21 +39,18 @@ export default function PricingPage() {
   const [email, setEmail] = useState("");
   const [coupon, setCoupon] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [selectedPlan, setSelectedPlan] = useState<PaidPlan | null>(null);
 
   function handleCheckout(plan: PaidPlan) {
     if (!email) {
       toast.error("יש להזין כתובת אימייל");
       return;
     }
-    setSelectedPlan(plan);
     startTransition(async () => {
       try {
         const url = await startCheckout(plan, email, coupon);
         window.location.href = url;
       } catch {
         toast.error("שגיאה ביצירת תשלום — נסה שוב");
-        setSelectedPlan(null);
       }
     });
   }
@@ -97,58 +92,45 @@ export default function PricingPage() {
 
         {/* כרטיסי מחיר */}
         <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {/* Standard */}
+          {/* Free */}
           <div className="bg-cream-white rounded-2xl card-shadow border border-champagne p-8 flex flex-col">
             <div className="mb-6">
               <h2 className="font-display text-2xl text-obsidian mb-1">
-                Standard
+                חינמי
               </h2>
               <div className="flex items-baseline gap-1 mt-3">
-                <span className="font-display text-4xl text-obsidian">
-                  ₪149
-                </span>
-                <span className="text-stone text-sm">/ חודש</span>
+                <span className="font-display text-4xl text-obsidian">₪0</span>
+                <span className="text-stone text-sm">/ לתמיד</span>
               </div>
               <p className="text-stone text-sm mt-2">
-                מתאים לספקים שמתחילים את דרכם
+                להתחיל ולהכיר את המערכת
               </p>
             </div>
 
             <ul className="space-y-3 mb-8 flex-1">
-              {FEATURES_STANDARD.map((f) => (
+              {FEATURES_FREE.map((f) => (
                 <li key={f} className="flex items-center gap-2.5 text-sm text-obsidian">
-                  <Check className="h-4 w-4 text-dusty-rose shrink-0" />
+                  <Check className="h-4 w-4 text-stone/50 shrink-0" />
                   {f}
                 </li>
               ))}
             </ul>
 
-            <button
-              onClick={() => handleCheckout("standard")}
-              disabled={isPending}
+            <a
+              href="/auth/register"
               className="
-                w-full py-3 rounded-xl text-sm font-medium
-                border-2 border-dusty-rose text-dusty-rose
-                hover:bg-dusty-rose hover:text-cream-white
-                disabled:opacity-50 disabled:cursor-not-allowed
+                w-full py-3 rounded-xl text-sm font-medium text-center
+                border-2 border-champagne text-stone
+                hover:bg-champagne/40
                 transition-all duration-150
-                flex items-center justify-center gap-2
               "
             >
-              {isPending && selectedPlan === "standard" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  מעבד...
-                </>
-              ) : (
-                "התחל עכשיו"
-              )}
-            </button>
+              הירשם חינם
+            </a>
           </div>
 
           {/* Premium */}
           <div className="bg-cream-white rounded-2xl card-shadow gold-border p-8 flex flex-col relative overflow-hidden">
-            {/* תג מומלץ */}
             <div className="absolute top-4 left-4">
               <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-gold/10 text-gold border border-gold/30">
                 <Sparkles className="h-3 w-3" />
@@ -161,9 +143,7 @@ export default function PricingPage() {
                 Premium
               </h2>
               <div className="flex items-baseline gap-1 mt-3">
-                <span className="font-display text-4xl text-obsidian">
-                  ₪349
-                </span>
+                <span className="font-display text-4xl text-obsidian">₪349</span>
                 <span className="text-stone text-sm">/ חודש</span>
               </div>
               <p className="text-stone text-sm mt-2">
@@ -192,7 +172,7 @@ export default function PricingPage() {
                 flex items-center justify-center gap-2
               "
             >
-              {isPending && selectedPlan === "premium" ? (
+              {isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   מעבד...

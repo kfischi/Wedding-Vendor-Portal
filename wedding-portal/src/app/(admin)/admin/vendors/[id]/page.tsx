@@ -69,7 +69,6 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const PLAN_LABELS: Record<string, string> = {
   free: "חינם",
-  standard: "סטנדרטי",
   premium: "פרמיום",
 };
 
@@ -137,7 +136,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
             </span>
             <span style={{
               fontSize: "12px", fontWeight: 600,
-              color: vendor.plan === "premium" ? "#b8935a" : vendor.plan === "standard" ? "#60a5fa" : "rgba(255,255,255,0.4)"
+              color: vendor.plan === "premium" ? "#b8935a" : "rgba(255,255,255,0.4)"
             }}>
               {PLAN_LABELS[vendor.plan]}
             </span>
@@ -327,7 +326,6 @@ export default async function AdminVendorDetailPage({ params }: Props) {
                 style={{ width: "100%", padding: "10px 12px", background: "#111", border: "1px solid rgba(184,147,90,0.3)", borderRadius: "10px", fontSize: "13px", color: "rgba(255,255,255,0.8)", outline: "none" }}
               >
                 <option value="free">חינם</option>
-                <option value="standard">סטנדרטי (₪149/חודש)</option>
                 <option value="premium">פרמיום (₪349/חודש)</option>
               </select>
               <button

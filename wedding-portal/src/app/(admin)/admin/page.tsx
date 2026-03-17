@@ -18,7 +18,7 @@ import {
 import { approveVendor, suspendVendor } from "./actions";
 import { formatPrice } from "@/lib/utils";
 
-const PLAN_MRR = { standard: 149, premium: 349 };
+const PLAN_MRR = { premium: 349 };
 
 const CATEGORY_LABELS: Record<string, string> = {
   photography: "צילום",
@@ -70,14 +70,13 @@ export default async function AdminDashboardPage() {
 
     const [
       totalRes, activeRes, pendingRes, leadsRes,
-      standardRes, premiumRes, recentRes,
+      premiumRes, recentRes,
       newVendorsRes, newLeadsRes, topVendorsRes,
     ] = await Promise.all([
       db.select({ c: count() }).from(vendors),
       db.select({ c: count() }).from(vendors).where(eq(vendors.status, "active")),
       db.select({ c: count() }).from(vendors).where(eq(vendors.status, "pending")),
       db.select({ c: count() }).from(leads).where(gte(leads.createdAt, firstOfMonth)),
-      db.select({ c: count() }).from(vendors).where(and(eq(vendors.status, "active"), eq(vendors.plan, "standard"))),
       db.select({ c: count() }).from(vendors).where(and(eq(vendors.status, "active"), eq(vendors.plan, "premium"))),
       db.select().from(vendors).orderBy(desc(vendors.createdAt)).limit(10),
       db.select({ c: count() }).from(vendors).where(gte(vendors.createdAt, sevenDaysAgo)),
@@ -91,9 +90,7 @@ export default async function AdminDashboardPage() {
       active: Number(activeRes[0]?.c ?? 0),
       pending: Number(pendingRes[0]?.c ?? 0),
       leadsThisMonth: Number(leadsRes[0]?.c ?? 0),
-      mrr:
-        Number(standardRes[0]?.c ?? 0) * PLAN_MRR.standard +
-        Number(premiumRes[0]?.c ?? 0) * PLAN_MRR.premium,
+      mrr: Number(premiumRes[0]?.c ?? 0) * PLAN_MRR.premium,
     };
     recentVendors = recentRes;
     newVendorsThisWeek = Number(newVendorsRes[0]?.c ?? 0);
@@ -279,7 +276,7 @@ export default async function AdminDashboardPage() {
                         <span
                           className="text-xs font-medium"
                           style={{
-                            color: v.plan === "premium" ? "#b8935a" : v.plan === "standard" ? "#60a5fa" : "rgba(255,255,255,0.35)",
+                            color: v.plan === "premium" ? "#b8935a" : "rgba(255,255,255,0.35)",
                           }}
                         >
                           {v.plan}

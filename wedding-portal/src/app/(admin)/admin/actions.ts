@@ -157,7 +157,7 @@ export async function overridePlan(formData: FormData) {
   const admin = await requireAdmin();
   const schema = z.object({
     vendorId: z.string().min(1),
-    plan: z.enum(["free", "standard", "premium"]),
+    plan: z.enum(["free", "premium"]),
   });
   const parsed = schema.safeParse({
     vendorId: formData.get("vendorId"),

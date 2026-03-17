@@ -1,6 +1,6 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type Plan = "free" | "standard" | "premium";
+export type Plan = "free" | "premium";
 
 export type Status = "pending" | "active" | "suspended" | "rejected";
 
