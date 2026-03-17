@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { db } from "@/lib/db/db";
 import { vendors, vendorMedia, vendorPricing, reviews } from "@/lib/db/schema";
+import { PLAN_LIMITS } from "@/lib/stripe/config";
 import type { Vendor, VendorMedia, VendorPricing, Review } from "@/lib/db/schema";
 import { VendorHero } from "@/components/vendor/VendorHero";
 import { VendorNavbar } from "@/components/vendor/VendorNavbar";
@@ -36,7 +37,10 @@ const MOCK_VENDOR: Vendor = {
   phone: "050-1234567",
   email: "niv@studio-example.co.il",
   website: "https://example.co.il",
+  whatsapp: null,
   instagram: "niv.studio",
+  tiktok: null,
+  youtube: null,
   facebook: null,
   coverImage:
     "https://images.unsplash.com/photo-1519741497674-611481863552?w=1920&q=85&fit=crop",
@@ -56,6 +60,7 @@ const MOCK_VENDOR: Vendor = {
   stripeSubscriptionId: null,
   subscriptionStatus: null,
   subscriptionCurrentPeriodEnd: null,
+  trialEndsAt: null,
   createdAt: new Date("2022-03-15"),
   updatedAt: new Date("2024-11-01"),
 };
@@ -334,12 +339,15 @@ export default async function VendorPage({ params }: Props) {
       : null
     : null;
 
-  const heroVideo =
-    vendor.plan === "premium" ? (media.find((m) => m.type === "video") ?? null) : null;
+  const planLimits = PLAN_LIMITS[vendor.plan];
+
+  const heroVideo = planLimits.hasVideo
+    ? (media.find((m) => m.type === "video") ?? null)
+    : null;
 
   const galleryImages = media
     .filter((m) => m.type === "image")
-    .slice(0, vendor.plan === "premium" ? undefined : 20);
+    .slice(0, planLimits.maxImages === Infinity ? undefined : planLimits.maxImages);
 
   // JSON-LD structured data
   const jsonLd = {
@@ -359,6 +367,8 @@ export default async function VendorPage({ params }: Props) {
     },
     sameAs: [
       vendor.instagram && `https://instagram.com/${vendor.instagram.replace("@", "")}`,
+      vendor.tiktok && `https://tiktok.com/@${vendor.tiktok.replace("@", "")}`,
+      vendor.youtube,
       vendor.facebook,
       vendor.website,
     ].filter(Boolean),
@@ -449,8 +459,10 @@ export default async function VendorPage({ params }: Props) {
         {/* ── Footer ── */}
         <Footer />
 
-        {/* ── Floating WhatsApp ── */}
-        <WhatsAppButton phone={vendor.phone} />
+        {/* ── Floating WhatsApp (standard/premium only) ── */}
+        {planLimits.hasWhatsApp && (
+          <WhatsAppButton phone={vendor.whatsapp ?? vendor.phone} />
+        )}
 
         {/* ── View count tracker (client-side, fire-and-forget) ── */}
         {vendor.id !== "mock-001" && <ViewCountTracker vendorId={vendor.id} />}

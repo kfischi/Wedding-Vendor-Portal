@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, ChevronLeft } from "lucide-react";
+import { Loader2, CheckCircle2, Gift } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
 
 const CATEGORIES = [
@@ -32,7 +31,6 @@ const inputCls =
 const labelCls = "block text-sm font-semibold text-obsidian mb-1.5";
 
 export default function JoinFreePage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +41,7 @@ export default function JoinFreePage() {
     phone: "",
     category: "",
     city: "",
+    couponCode: "",
   });
 
   function set(key: keyof typeof form, value: string) {
@@ -52,6 +51,7 @@ export default function JoinFreePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.category) { setError("בחר קטגוריה"); return; }
+    if (!form.couponCode.trim()) { setError("קוד קופון נדרש"); return; }
 
     setLoading(true);
     setError(null);
@@ -60,7 +60,7 @@ export default function JoinFreePage() {
       const res = await fetch("/api/register-free", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, couponCode: form.couponCode.trim().toUpperCase() }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
 
@@ -86,8 +86,8 @@ export default function JoinFreePage() {
             שלחנו לך אימייל עם קישור להגדרת סיסמה.
           </p>
           <p className="text-stone/70 text-sm leading-relaxed mb-8">
-            לאחר הגדרת הסיסמה תוכל להיכנס ללוח הבקרה ולמלא את הפרופיל שלך.
-            הפרופיל יפורסם לאחר אישור קצר מצוות WeddingPro.
+            לאחר הגדרת הסיסמה הפרופיל שלך יהיה פעיל מיד ויופיע בדירקטורי.
+            תקופת הניסיון שלך (3 חודשים) כבר מתחילה לרוץ!
           </p>
           <Link
             href="/auth/login"
@@ -108,11 +108,10 @@ export default function JoinFreePage() {
           <div className="max-w-lg mx-auto flex items-center justify-between">
             <Link href="/" className="font-script text-2xl text-gold">WeddingPro</Link>
             <Link
-              href="/pricing"
-              className="text-xs text-stone/60 hover:text-gold transition-colors flex items-center gap-1"
+              href="/auth/login"
+              className="text-xs text-stone/60 hover:text-gold transition-colors"
             >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              לתוכניות בתשלום
+              כבר יש לך חשבון? כניסה
             </Link>
           </div>
         </header>
@@ -120,24 +119,24 @@ export default function JoinFreePage() {
         <div className="max-w-lg mx-auto px-4 py-12">
           {/* Hero */}
           <div className="text-center mb-10">
-            <p className="font-script text-xl text-gold mb-1">הצטרפות חינמית</p>
+            <p className="font-script text-xl text-gold mb-1">הצטרפות עם קוד קופון</p>
             <h1 className="font-display text-4xl text-obsidian leading-tight mb-3">
-              פרסם את העסק שלך
+              3 חודשים ניסיון בחינם
             </h1>
             <p className="text-stone/70 leading-relaxed">
-              הרשמה חינמית — ללא כרטיס אשראי. הפרופיל שלך יהיה פעיל לאחר אישור קצר.
+              הכנס קוד קופון ותקבל גישה מלאה לפלטפורמה למשך 3 חודשים — ללא כרטיס אשראי.
             </p>
           </div>
 
-          {/* Free plan features */}
+          {/* Trial features */}
           <div className="bg-white rounded-2xl border border-champagne/60 p-5 mb-8 shadow-sm">
-            <p className="text-sm font-semibold text-obsidian mb-3">מה כולל התוכנית החינמית:</p>
+            <p className="text-sm font-semibold text-obsidian mb-3">מה כולל תקופת הניסיון:</p>
             <ul className="space-y-2">
               {[
-                "פרופיל בסיסי עם תיאור ופרטי קשר",
-                "קבלת פניות (לידים) מלקוחות",
-                "הופעה בדירקטורי ספקים",
-                "לוח בקרה לניהול פניות",
+                "פרופיל מלא עם גלריה עד 20 תמונות",
+                "קבלת לידים ישירים ללא הגבלה",
+                "הופעה בדירקטורי — פרסום מיידי, ללא אישור",
+                "לוח בקרה לניהול פניות ואנליטיקס",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-stone">
                   <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
@@ -146,12 +145,34 @@ export default function JoinFreePage() {
               ))}
             </ul>
             <p className="text-xs text-stone/50 mt-4 pt-3 border-t border-champagne/40">
-              ניתן לשדרג לתוכנית Standard (₪149/חודש) או Premium (₪349/חודש) בכל עת מלוח הבקרה.
+              לאחר 3 חודשים תוכל לבחור תוכנית Standard (₪149/חודש) או Premium (₪349/חודש).
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Coupon code — prominent at top */}
+            <div className="bg-gold/5 rounded-2xl border-2 border-gold/30 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Gift className="h-4 w-4 text-gold" />
+                <h2 className="font-display text-lg text-obsidian">קוד קופון</h2>
+              </div>
+              <label className={labelCls}>קוד קופון *</label>
+              <input
+                type="text"
+                required
+                maxLength={50}
+                value={form.couponCode}
+                onChange={(e) => set("couponCode", e.target.value.toUpperCase())}
+                placeholder="WEDDING2025"
+                dir="ltr"
+                className={inputCls + " font-mono tracking-widest uppercase"}
+              />
+              <p className="text-xs text-stone/50 mt-1.5">
+                קיבלת קוד קופון? הכנס אותו כאן כדי להפעיל את תקופת הניסיון.
+              </p>
+            </div>
+
             <div className="bg-white rounded-2xl border border-champagne/60 p-6 shadow-sm space-y-5">
               <h2 className="font-display text-xl text-obsidian">פרטי העסק</h2>
 
@@ -245,7 +266,7 @@ export default function JoinFreePage() {
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-dusty-rose text-white font-semibold text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shadow-md"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {loading ? "יוצר חשבון..." : "הרשמה חינמית ←"}
+              {loading ? "יוצר חשבון..." : "הפעל ניסיון של 3 חודשים ←"}
             </button>
 
             <p className="text-center text-xs text-stone/50 leading-relaxed">
@@ -255,13 +276,6 @@ export default function JoinFreePage() {
               <Link href="/privacy" className="text-gold hover:underline mx-1">מדיניות הפרטיות</Link>
               של WeddingPro.
             </p>
-
-            <div className="text-center">
-              <span className="text-xs text-stone/50">כבר יש לך חשבון? </span>
-              <Link href="/auth/login" className="text-xs text-gold hover:underline font-medium">
-                כניסה
-              </Link>
-            </div>
           </form>
         </div>
       </div>

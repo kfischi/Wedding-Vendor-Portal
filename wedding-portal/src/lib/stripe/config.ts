@@ -26,6 +26,14 @@ export const PLANS = {
 
 export type PaidPlan = keyof typeof PLANS;
 
+// ─── Plan feature limits ────────────────────────────────────────────────────
+
+export const PLAN_LIMITS = {
+  free:     { maxImages: 10,       hasWhatsApp: false, hasVideo: false },
+  standard: { maxImages: 50,       hasWhatsApp: true,  hasVideo: false },
+  premium:  { maxImages: Infinity, hasWhatsApp: true,  hasVideo: true  },
+} as const satisfies Record<"free" | "standard" | "premium", { maxImages: number; hasWhatsApp: boolean; hasVideo: boolean }>;
+
 export async function createCheckoutSession(
   plan: PaidPlan,
   vendorEmail: string,

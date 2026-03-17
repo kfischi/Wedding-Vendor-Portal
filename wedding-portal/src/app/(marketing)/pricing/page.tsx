@@ -20,6 +20,7 @@ async function startCheckout(plan: PaidPlan, email: string, coupon: string) {
 const FEATURES_STANDARD = [
   "פרופיל ספק מלא",
   "גלריה עד 20 תמונות",
+  "קישורי רשתות חברתיות (אינסטגרם, טיקטוק, יוטיוב)",
   "קבלת לידים ללא הגבלה",
   "אנליטיקס בסיסי",
   "תמיכה באימייל",

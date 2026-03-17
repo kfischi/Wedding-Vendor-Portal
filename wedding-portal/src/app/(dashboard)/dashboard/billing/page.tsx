@@ -7,7 +7,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
-import { CheckCircle2, Crown, Zap, AlertCircle } from "lucide-react";
+import { CheckCircle2, Crown, Zap, AlertCircle, Clock } from "lucide-react";
 import { PortalButton } from "@/components/dashboard/PortalButton";
 
 export const metadata: Metadata = { title: "חיוב | WeddingPro" };
@@ -86,6 +86,15 @@ export default async function BillingPage() {
   const currentPlan = vendor.plan;
   const periodEnd = vendor.subscriptionCurrentPeriodEnd;
   const subStatus = vendor.subscriptionStatus;
+  const trialEndsAt = vendor.trialEndsAt ? new Date(vendor.trialEndsAt) : null;
+  const now = new Date();
+  const trialActive = trialEndsAt && now < trialEndsAt && !vendor.stripeSubscriptionId;
+  const trialDaysLeft = trialActive
+    ? Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const trialEndDisplay = trialEndsAt
+    ? new Intl.DateTimeFormat("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" }).format(trialEndsAt)
+    : null;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -94,6 +103,31 @@ export default async function BillingPage() {
         <p className="font-script text-xl text-gold">חשבון</p>
         <h1 className="font-display text-3xl lg:text-4xl text-obsidian leading-tight">חיוב ותוכנית</h1>
       </div>
+
+      {/* Trial banner */}
+      {trialActive && (
+        <div className={`rounded-2xl border p-4 flex items-start gap-3 ${
+          trialDaysLeft <= 14
+            ? "bg-amber-50 border-amber-200"
+            : "bg-green-50 border-green-200"
+        }`}>
+          <Clock className={`h-5 w-5 mt-0.5 shrink-0 ${trialDaysLeft <= 14 ? "text-amber-500" : "text-green-500"}`} />
+          <div>
+            <p className={`font-semibold text-sm ${trialDaysLeft <= 14 ? "text-amber-800" : "text-green-800"}`}>
+              {trialDaysLeft <= 14
+                ? `⚠️ תקופת הניסיון מסתיימת בעוד ${trialDaysLeft} ימים (${trialEndDisplay})`
+                : `✓ תקופת ניסיון פעילה — ${trialDaysLeft} ימים נותרו (עד ${trialEndDisplay})`
+              }
+            </p>
+            <p className={`text-xs mt-1 ${trialDaysLeft <= 14 ? "text-amber-700" : "text-green-700"}`}>
+              {trialDaysLeft <= 14
+                ? "כדי שהפרופיל ימשיך להופיע בדירקטורי — בחר תוכנית מנוי לפני שהניסיון מסתיים."
+                : "הפרופיל שלך פעיל ומופיע בדירקטורי. לאחר הניסיון תצטרך לבחור תוכנית מנוי."
+              }
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Current plan summary */}
       <div className="bg-white rounded-2xl border border-champagne/60 p-5 shadow-sm">

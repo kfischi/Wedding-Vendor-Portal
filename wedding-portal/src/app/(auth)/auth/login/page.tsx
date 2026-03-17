@@ -128,10 +128,10 @@ function LoginForm() {
         <p className="text-center text-sm text-stone mt-6">
           עדיין אין לך חשבון?{" "}
           <Link
-            href="/pricing"
+            href="/join/free"
             className="text-gold hover:underline font-medium"
           >
-            התחל עכשיו
+            הצטרף עם קוד קופון
           </Link>
         </p>
       </div>

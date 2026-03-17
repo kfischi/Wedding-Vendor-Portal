@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and, lte, gte, or, isNull } from "drizzle-orm";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { db } from "@/lib/db/db";
-import { vendors, vendorCategoryEnum, type NewVendor } from "@/lib/db/schema";
+import { vendors, coupons, vendorCategoryEnum, type NewVendor } from "@/lib/db/schema";
 import { slugify } from "@/lib/utils";
 import {
   NEXT_PUBLIC_APP_URL,
@@ -21,6 +21,7 @@ const schema = z.object({
   category: z.enum(VALID_CATEGORIES, { error: "קטגוריה לא תקינה" }),
   city: z.string().min(1, "עיר נדרשת").max(100),
   phone: z.string().max(20).optional(),
+  couponCode: z.string().min(1, "קוד קופון נדרש").max(50),
 });
 
 function getSupabaseAdmin() {
@@ -34,9 +35,9 @@ function getSupabaseAdmin() {
 /**
  * POST /api/register-free
  *
- * Creates a free-plan vendor account without Stripe.
- * The vendor receives a password-setup email and is placed in "pending" status
- * until approved by an admin.
+ * Creates a 3-month trial vendor account via coupon code.
+ * The coupon is validated against the DB; on success the vendor is
+ * immediately active (plan: "standard") with a trialEndsAt 90 days out.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let body: unknown;
@@ -54,7 +55,37 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { email, businessName, category, city, phone } = parsed.data;
+  const { email, businessName, category, city, phone, couponCode } = parsed.data;
+  const now = new Date();
+
+  // ── Validate coupon ──────────────────────────────────────────────────────────
+  let coupon: typeof coupons.$inferSelect | undefined;
+  try {
+    const [found] = await db
+      .select()
+      .from(coupons)
+      .where(
+        and(
+          eq(coupons.code, couponCode.toUpperCase()),
+          eq(coupons.isActive, true),
+          lte(coupons.validFrom, now),
+          or(isNull(coupons.validUntil), gte(coupons.validUntil, now))
+        )
+      )
+      .limit(1);
+    coupon = found;
+  } catch {
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
+  if (!coupon) {
+    return NextResponse.json({ error: "קוד קופון לא תקין או שפג תוקפו" }, { status: 400 });
+  }
+
+  // Check max uses
+  if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
+    return NextResponse.json({ error: "קוד הקופון הגיע למגבלת השימוש" }, { status: 400 });
+  }
 
   // Check if vendor with this email already exists
   try {
@@ -85,7 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: { role: "vendor", plan: "free" },
+      user_metadata: { role: "vendor", plan: "standard" },
     });
 
   if (userError && !userError.message.includes("already registered")) {
@@ -113,9 +144,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
   const resetUrl = resetData?.properties?.action_link ?? `${baseUrl}/auth/login`;
 
-  // Create vendor record
-  const slug =
-    slugify(businessName) + "-" + userId.slice(0, 6);
+  // Compute trial end date (90 days from now)
+  const trialEndsAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+  // Format trial end for display
+  const trialEndDisplay = new Intl.DateTimeFormat("he-IL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(trialEndsAt);
+
+  // Create vendor record — active immediately, standard plan, 3-month trial
+  const slug = slugify(businessName) + "-" + userId.slice(0, 6);
 
   const newVendor: NewVendor = {
     id: crypto.randomUUID(),
@@ -126,9 +166,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     city,
     phone: phone ?? null,
     email,
-    plan: "free",
-    status: "pending",
+    plan: "standard",
+    status: "active",
     role: "vendor",
+    trialEndsAt,
   };
 
   try {
@@ -136,6 +177,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error("[register-free] DB insert error:", err);
     return NextResponse.json({ error: "שגיאה בשמירת נתונים" }, { status: 500 });
+  }
+
+  // Increment coupon usage
+  try {
+    await db
+      .update(coupons)
+      .set({ usedCount: coupon.usedCount + 1 })
+      .where(eq(coupons.id, coupon.id));
+  } catch (err) {
+    console.error("[register-free] Coupon increment error:", err);
+    // Non-fatal — vendor is already created
   }
 
   // Send welcome email with password setup link
@@ -156,9 +208,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             <p style="margin:0 0 16px; color:#5a4a42; line-height:1.6;">
               פרופיל הספק שלך נוצר בהצלחה עבור <strong>${escapeHtml(businessName)}</strong>.
             </p>
-            <p style="margin:0 0 20px; color:#5a4a42; line-height:1.6;">
-              הפרופיל שלך <strong>ממתין לאישור</strong> מצוות WeddingPro. לאחר האישור הוא יופיע בדירקטורי.
-            </p>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px 18px; margin:0 0 20px;">
+              <p style="margin:0; color:#166534; font-weight:bold; font-size:14px;">✓ תקופת ניסיון של 3 חודשים פעילה</p>
+              <p style="margin:6px 0 0; color:#166534; font-size:13px;">
+                הפרופיל שלך פעיל ומופיע בדירקטורי עד <strong>${trialEndDisplay}</strong>.
+              </p>
+            </div>
             <p style="margin:0 0 20px; color:#5a4a42; line-height:1.6;">
               כדי להתחיל למלא את הפרופיל, הגדר תחילה סיסמה:
             </p>
@@ -180,7 +235,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (err) {
     console.error("[register-free] Welcome email error:", err);
-    // Don't fail the request — account was created successfully
   }
 
   // Notify admin
@@ -190,20 +244,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await resend.emails.send({
         from: `WeddingPro <noreply@${hostname}>`,
         to: ADMIN_EMAIL,
-        subject: `[WeddingPro] ספק חינמי חדש מחכה לאישור — ${businessName}`,
+        subject: `[WeddingPro] ספק ניסיון חדש — ${businessName}`,
         html: `
           <div dir="rtl" style="font-family: Arial, sans-serif;">
-            <h3>ספק חינמי חדש נרשם</h3>
+            <h3>ספק ניסיון חדש נרשם</h3>
             <ul>
               <li><strong>שם עסק:</strong> ${escapeHtml(businessName)}</li>
               <li><strong>אימייל:</strong> ${escapeHtml(email)}</li>
               <li><strong>עיר:</strong> ${escapeHtml(city)}</li>
               <li><strong>קטגוריה:</strong> ${escapeHtml(category)}</li>
-              <li><strong>תוכנית:</strong> חינמי</li>
+              <li><strong>קוד קופון:</strong> ${escapeHtml(couponCode.toUpperCase())}</li>
+              <li><strong>ניסיון עד:</strong> ${trialEndDisplay}</li>
             </ul>
             <a href="${baseUrl}/admin/vendors"
                style="display:inline-block; background:#8c5f58; color:white; padding:10px 20px; border-radius:6px; text-decoration:none;">
-              עבור לאדמין לאישור
+              עבור לאדמין
             </a>
           </div>
         `,
