@@ -77,8 +77,8 @@ async function withAuthGuard(
   return response;
 }
 
-// ── Middleware entrypoint ─────────────────────────────────────────────────────
-export async function middleware(request: NextRequest): Promise<NextResponse> {
+// ── Proxy entrypoint (Next.js 16 — replaces middleware) ───────────────────────
+export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Start with a pass-through response so we can attach headers/cookies
