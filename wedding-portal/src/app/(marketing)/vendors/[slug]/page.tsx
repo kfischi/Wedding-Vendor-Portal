@@ -39,6 +39,8 @@ const MOCK_VENDOR: Vendor = {
   website: "https://example.co.il",
   whatsapp: null,
   instagram: "niv.studio",
+  tiktok: null,
+  youtube: null,
   facebook: null,
   coverImage:
     "https://images.unsplash.com/photo-1519741497674-611481863552?w=1920&q=85&fit=crop",
@@ -365,6 +367,8 @@ export default async function VendorPage({ params }: Props) {
     },
     sameAs: [
       vendor.instagram && `https://instagram.com/${vendor.instagram.replace("@", "")}`,
+      vendor.tiktok && `https://tiktok.com/@${vendor.tiktok.replace("@", "")}`,
+      vendor.youtube,
       vendor.facebook,
       vendor.website,
     ].filter(Boolean),

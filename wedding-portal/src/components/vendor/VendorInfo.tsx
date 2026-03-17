@@ -1,7 +1,15 @@
-import { Phone, Globe, Instagram, Mail, Facebook } from "lucide-react";
+import { Phone, Globe, Instagram, Mail, Facebook, Youtube } from "lucide-react";
 import type { Vendor } from "@/lib/db/schema";
 import { PLAN_LIMITS } from "@/lib/stripe/config";
 import { WhatsAppButton } from "@/components/vendor/WhatsAppButton";
+
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z" />
+    </svg>
+  );
+}
 
 export function VendorInfo({ vendor }: { vendor: Vendor }) {
   const planLimits = PLAN_LIMITS[vendor.plan];
@@ -83,6 +91,36 @@ export function VendorInfo({ vendor }: { vendor: Vendor }) {
               <span className="text-sm">
                 @{vendor.instagram.replace("@", "")}
               </span>
+            </a>
+          )}
+
+          {vendor.tiktok && (
+            <a
+              href={`https://tiktok.com/@${vendor.tiktok.replace("@", "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 text-stone hover:text-dusty-rose transition-colors group"
+            >
+              <span className="p-2 rounded-xl bg-champagne/40 group-hover:bg-dusty-rose/10 transition-colors">
+                <TikTokIcon className="h-4 w-4" />
+              </span>
+              <span className="text-sm">
+                @{vendor.tiktok.replace("@", "")}
+              </span>
+            </a>
+          )}
+
+          {vendor.youtube && (
+            <a
+              href={vendor.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 text-stone hover:text-dusty-rose transition-colors group"
+            >
+              <span className="p-2 rounded-xl bg-champagne/40 group-hover:bg-dusty-rose/10 transition-colors">
+                <Youtube className="h-4 w-4" />
+              </span>
+              <span className="text-sm">YouTube</span>
             </a>
           )}
 
