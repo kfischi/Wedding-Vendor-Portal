@@ -75,6 +75,7 @@ export const vendors = pgTable(
     phone: text("phone"),
     email: text("email").notNull(),
     website: text("website"),
+    whatsapp: text("whatsapp"),
     instagram: text("instagram"),
     facebook: text("facebook"),
     coverImage: text("cover_image"),
