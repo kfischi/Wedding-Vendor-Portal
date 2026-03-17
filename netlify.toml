@@ -4,15 +4,11 @@
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION              = "20"
-  NEXT_TELEMETRY_DISABLED   = "1"
+  NODE_VERSION            = "20"
+  NEXT_TELEMETRY_DISABLED = "1"
 
-
-# ─── Redirects ────────────────────────────────────────────────────────────────
-[[redirects]]
-  from   = "/*"
-  to     = "/.netlify/functions/___netlify-handler"
-  status = 200
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # ─── Headers ──────────────────────────────────────────────────────────────────
 [[headers]]
