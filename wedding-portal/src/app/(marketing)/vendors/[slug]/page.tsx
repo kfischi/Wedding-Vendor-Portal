@@ -37,6 +37,7 @@ const MOCK_VENDOR: Vendor = {
   phone: "050-1234567",
   email: "niv@studio-example.co.il",
   website: "https://example.co.il",
+  whatsapp: null,
   instagram: "niv.studio",
   facebook: null,
   coverImage:
