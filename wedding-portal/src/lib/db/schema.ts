@@ -89,6 +89,7 @@ export const vendors = pgTable(
     reviewCount: integer("review_count").notNull().default(0),
     seoTitle: text("seo_title"),
     seoDescription: text("seo_description"),
+    trialEndsAt: timestamp("trial_ends_at"),
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
     subscriptionStatus: text("subscription_status"),

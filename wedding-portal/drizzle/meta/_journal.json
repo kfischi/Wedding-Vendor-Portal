@@ -9,5 +9,12 @@
       "tag": "0000_eager_ted_forrester",
       "breakpoints": true
     }
+    ,{
+      "idx": 1,
+      "version": "7",
+      "when": 1742169600000,
+      "tag": "0001_trial_ends_at",
+      "breakpoints": true
+    }
   ]
 }

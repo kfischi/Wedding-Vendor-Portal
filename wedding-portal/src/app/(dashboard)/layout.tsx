@@ -6,7 +6,7 @@ import { vendors, leads } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { ImpersonationBanner } from "@/components/dashboard/ImpersonationBanner";
-import { ShieldX } from "lucide-react";
+import { ShieldX, Clock } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardLayout({
@@ -79,6 +79,57 @@ export default async function DashboardLayout({
             >
               חזור לדף הכניסה
             </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Trial expired gate — show before rendering the dashboard
+  const hasActiveStripe = !!vendor?.stripeSubscriptionId &&
+    vendor?.subscriptionStatus === "active";
+  const trialExpired =
+    vendor?.trialEndsAt &&
+    new Date() > new Date(vendor.trialEndsAt) &&
+    !hasActiveStripe;
+
+  if (trialExpired) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center px-4" dir="rtl">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center mx-auto">
+            <Clock className="h-9 w-9 text-amber-500" />
+          </div>
+          <div>
+            <h1 className="font-display text-3xl text-obsidian mb-2">תקופת הניסיון הסתיימה</h1>
+            <p className="text-stone/70 leading-relaxed">
+              תקופת הניסיון החינמית שלך הסתיימה.
+              כדי להמשיך להופיע בדירקטורי ולקבל לידים — בחר תוכנית מנוי.
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl border border-amber-100 p-5 text-sm text-stone text-right space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-obsidian">Standard</span>
+              <span className="text-gold font-display text-lg">₪149<span className="text-xs text-stone/60">/חודש</span></span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-obsidian">Premium</span>
+              <span className="text-gold font-display text-lg">₪349<span className="text-xs text-stone/60">/חודש</span></span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/pricing"
+              className="inline-block px-8 py-3 rounded-xl bg-dusty-rose text-white font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              בחר תוכנית מנוי
+            </Link>
+            <a
+              href="mailto:support@weddingpro.co.il"
+              className="text-sm text-stone/50 hover:text-gold transition-colors"
+            >
+              יש שאלות? פנה לתמיכה
+            </a>
           </div>
         </div>
       </div>
