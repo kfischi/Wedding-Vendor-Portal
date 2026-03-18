@@ -168,7 +168,7 @@ export default async function BillingPage() {
       {/* Plan comparison */}
       <div>
         <h2 className="font-semibold text-obsidian text-sm mb-4">השוו תוכניות</h2>
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 gap-4 max-w-2xl">
           {PLANS.map((plan) => {
             const isCurrent = currentPlan === plan.key;
             return (
@@ -208,7 +208,7 @@ export default async function BillingPage() {
                     התוכנית הנוכחית
                   </div>
                 ) : plan.key !== "free" ? (
-                  <CheckoutButton plan={plan.key as "standard" | "premium"} email={user.email ?? ""} />
+                  <CheckoutButton plan={plan.key as "premium"} email={user.email ?? ""} />
                 ) : null}
               </div>
             );
@@ -229,13 +229,13 @@ export default async function BillingPage() {
 
 // ── Client components ─────────────────────────────────────────────────────────
 
-function CheckoutButton({ plan, email }: { plan: "standard" | "premium"; email: string }) {
+function CheckoutButton({ plan, email }: { plan: "premium"; email: string }) {
   return (
     <Link
       href={`/pricing?plan=${plan}&email=${encodeURIComponent(email)}`}
       className="w-full py-2 text-center text-xs font-semibold text-white bg-dusty-rose hover:opacity-90 rounded-xl transition-opacity block"
     >
-      שדרג ל-{plan === "premium" ? "Premium" : "Standard"}
+      שדרג ל-Premium
     </Link>
   );
 }

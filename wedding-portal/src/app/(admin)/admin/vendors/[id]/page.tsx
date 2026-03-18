@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db/db";
-import { vendors, leads } from "@/lib/db/schema";
+import { vendors, leads, reviews } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import {
@@ -21,6 +21,8 @@ import {
   overridePlan,
   impersonateVendor,
   deleteVendor,
+  approveReview,
+  rejectReview,
 } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -87,6 +89,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
   const { id } = await params;
   let vendor: typeof vendors.$inferSelect | null = null;
   let vendorLeads: (typeof leads.$inferSelect)[] = [];
+  let vendorReviews: (typeof reviews.$inferSelect)[] = [];
 
   try {
     const rows = await db
@@ -96,12 +99,19 @@ export default async function AdminVendorDetailPage({ params }: Props) {
       .limit(1);
     vendor = rows[0] ?? null;
     if (vendor) {
-      vendorLeads = await db
-        .select()
-        .from(leads)
-        .where(eq(leads.vendorId, id))
-        .orderBy(desc(leads.createdAt))
-        .limit(20);
+      [vendorLeads, vendorReviews] = await Promise.all([
+        db
+          .select()
+          .from(leads)
+          .where(eq(leads.vendorId, id))
+          .orderBy(desc(leads.createdAt))
+          .limit(20),
+        db
+          .select()
+          .from(reviews)
+          .where(eq(reviews.vendorId, id))
+          .orderBy(desc(reviews.createdAt)),
+      ]);
     }
   } catch {}
 
@@ -326,7 +336,7 @@ export default async function AdminVendorDetailPage({ params }: Props) {
                 style={{ width: "100%", padding: "10px 12px", background: "#111", border: "1px solid rgba(184,147,90,0.3)", borderRadius: "10px", fontSize: "13px", color: "rgba(255,255,255,0.8)", outline: "none" }}
               >
                 <option value="free">חינם</option>
-                <option value="premium">פרמיום (₪349/חודש)</option>
+                <option value="premium">פרמיום (₪179/חודש)</option>
               </select>
               <button
                 type="submit"
@@ -350,8 +360,99 @@ export default async function AdminVendorDetailPage({ params }: Props) {
           )}
         </div>
 
-        {/* Left column: leads history */}
-        <div className="lg:col-span-2">
+        {/* Left column: leads + reviews */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* Reviews moderation */}
+          <div style={{ ...card, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(184,147,90,0.15)" }}>
+              <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white" }}>
+                ביקורות
+              </h2>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+                {vendorReviews.length > 0 ? `${vendorReviews.length} ביקורות` : "אין ביקורות"}
+              </p>
+            </div>
+            {vendorReviews.length === 0 ? (
+              <div style={{ padding: "40px 24px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px" }}>
+                אין ביקורות עדיין
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {vendorReviews.map((review) => {
+                  const approveAction = approveReview.bind(null, review.id, id);
+                  const rejectAction = rejectReview.bind(null, review.id, id);
+                  const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
+                  return (
+                    <div
+                      key={review.id}
+                      style={{
+                        padding: "16px 24px",
+                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        display: "flex",
+                        gap: "16px",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
+                            {review.authorName}
+                          </span>
+                          <span style={{ fontSize: "14px", color: "#c9a84c", letterSpacing: "1px" }}>{stars}</span>
+                          <span style={{
+                            fontSize: "11px",
+                            padding: "2px 8px",
+                            borderRadius: "999px",
+                            ...(review.isPublished && review.isVerified
+                              ? { background: "rgba(52,211,153,0.12)", color: "#34d399", border: "1px solid rgba(52,211,153,0.3)" }
+                              : { background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)" }),
+                          }}>
+                            {review.isPublished && review.isVerified ? "מאושר" : "ממתין"}
+                          </span>
+                        </div>
+                        {review.title && (
+                          <p style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: "2px" }}>
+                            {review.title}
+                          </p>
+                        )}
+                        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: "1.5", margin: 0 }}>
+                          {review.body}
+                        </p>
+                        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginTop: "6px" }}>
+                          {review.authorEmail} · {new Date(review.createdAt).toLocaleDateString("he-IL")}
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                        {!(review.isPublished && review.isVerified) && (
+                          <form action={approveAction}>
+                            <button
+                              type="submit"
+                              style={{ padding: "6px 12px", fontSize: "12px", background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.4)", borderRadius: "8px", color: "#34d399", cursor: "pointer", whiteSpace: "nowrap" }}
+                            >
+                              אשר
+                            </button>
+                          </form>
+                        )}
+                        {(review.isPublished || review.isVerified) && (
+                          <form action={rejectAction}>
+                            <button
+                              type="submit"
+                              style={{ padding: "6px 12px", fontSize: "12px", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: "8px", color: "#f87171", cursor: "pointer", whiteSpace: "nowrap" }}
+                            >
+                              בטל
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Leads history */}
           <div style={{ ...card, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(184,147,90,0.15)" }}>
               <h2 style={{ fontFamily: "var(--font-display, serif)", fontSize: "18px", color: "white" }}>

@@ -7,8 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { db } from "@/lib/db/db";
-import { vendors, coupons, adminLogs } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { vendors, reviews, coupons, adminLogs } from "@/lib/db/schema";
+import { avg, count, eq } from "drizzle-orm";
 import { z } from "zod";
 import { escapeHtml } from "@/lib/security/sanitize";
 import { RESEND_API_KEY, NEXT_PUBLIC_APP_URL } from "@/lib/env";
@@ -226,6 +226,45 @@ export async function stopImpersonation() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/auth/login");
+}
+
+// ─── Review Actions ───────────────────────────────────────────────────────────
+
+async function recalcVendorRating(vendorId: string) {
+  const [stats] = await db
+    .select({ avg: avg(reviews.rating), cnt: count() })
+    .from(reviews)
+    .where(eq(reviews.vendorId, vendorId) && eq(reviews.isPublished, true) && eq(reviews.isVerified, true));
+
+  await db
+    .update(vendors)
+    .set({
+      rating: stats?.avg != null ? Number(Number(stats.avg).toFixed(2)) : null,
+      reviewCount: Number(stats?.cnt ?? 0),
+      updatedAt: new Date(),
+    })
+    .where(eq(vendors.id, vendorId));
+}
+
+export async function approveReview(reviewId: string, vendorId: string) {
+  await requireAdmin();
+  await db
+    .update(reviews)
+    .set({ isVerified: true, isPublished: true })
+    .where(eq(reviews.id, reviewId));
+  await recalcVendorRating(vendorId);
+  revalidatePath(`/admin/vendors/${vendorId}`);
+  revalidatePath(`/vendors`);
+}
+
+export async function rejectReview(reviewId: string, vendorId: string) {
+  await requireAdmin();
+  await db
+    .update(reviews)
+    .set({ isVerified: false, isPublished: false })
+    .where(eq(reviews.id, reviewId));
+  await recalcVendorRating(vendorId);
+  revalidatePath(`/admin/vendors/${vendorId}`);
 }
 
 // ─── Coupon Actions ───────────────────────────────────────────────────────────
