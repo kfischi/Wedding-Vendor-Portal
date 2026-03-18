@@ -5,7 +5,8 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
-import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, N8N_WEBHOOK_URL } from "@/lib/env";
+import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL } from "@/lib/env";
+import { n8nLeadNew } from "@/lib/n8n";
 
 // ── Parse DD/MM/YYYY date strings ──────────────────────────────────────────────
 function parseDateString(dateStr: string): Date | null {
@@ -270,27 +271,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("[leads] Email send error:", err);
   }
 
-  // ── 7. Trigger n8n webhook (optional WhatsApp notification) ───────────────
-  if (N8N_WEBHOOK_URL) {
-    try {
-      await fetch(N8N_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor_phone: vendor.phone,
-          vendor_name: vendor.businessName,
-          lead_name: name,
-          lead_phone: phone ?? null,
-          lead_email: email,
-          event_date: eventDate ?? null,
-          message,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (err) {
-      console.error("[leads] n8n webhook error:", err);
-    }
-  }
+  // ── 7. Trigger n8n webhook (non-blocking) ─────────────────────────────────
+  void n8nLeadNew({
+    lead_id: newLead?.id ?? "",
+    vendor_id: vendorId,
+    vendor_name: vendor.businessName,
+    vendor_phone: vendor.phone ?? null,
+    vendor_email: vendor.email,
+    lead_name: name,
+    lead_email: email,
+    lead_phone: phone ?? null,
+    event_date: eventDate ?? null,
+    message,
+  });
 
   return NextResponse.json({ ok: true, leadId: newLead?.id }, { status: 201 });
 }
