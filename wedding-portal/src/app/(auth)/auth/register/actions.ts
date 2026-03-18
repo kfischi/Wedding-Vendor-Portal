@@ -67,7 +67,7 @@ export async function registerAction(
       phone: phone ?? null,
       email,
       plan: "free",
-      status: "pending",
+      status: "active",
       role: "vendor",
     };
     await db.insert(vendors).values(newVendor);
