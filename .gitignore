@@ -1,2 +1,5 @@
 # Local Netlify folder
 .netlify
+
+# Claude Code local settings (contains sensitive API keys)
+.claude/settings.local.json
