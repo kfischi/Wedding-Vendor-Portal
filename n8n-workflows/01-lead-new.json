@@ -138,17 +138,32 @@
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
-        "phoneNumberId": "YOUR_WHATSAPP_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "={{ $json.vendor_phone.replace(/[^0-9]/g, '').replace(/^0/, '972') }}",
-        "textBody": "={{ $json.whatsapp_message }}",
-        "additionalFields": {}
+        "method": "POST",
+        "url": "http://localhost:3001/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.WA_SERVICE_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.vendor_phone }}" },
+            { "name": "message", "value": "={{ $json.whatsapp_message }}" }
+          ]
+        },
+        "options": {}
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000005",
       "name": "WhatsApp לספק",
-      "type": "n8n-nodes-base.whatsApp",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [1120, 200]
     },
     {
