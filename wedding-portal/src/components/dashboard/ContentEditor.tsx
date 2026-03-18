@@ -2,7 +2,7 @@
 
 import { useEffect, useActionState, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, User, Phone, Globe, Check } from "lucide-react";
+import { Loader2, User, Phone, Globe, Check, Instagram, Youtube, Facebook } from "lucide-react";
 import { updateContentAction, type ContentFormState } from "@/app/(dashboard)/dashboard/content/actions";
 import type { Vendor } from "@/lib/db/schema";
 
@@ -247,8 +247,13 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
           <div className="bg-white rounded-2xl border border-champagne/60 p-5 shadow-sm space-y-5">
             <h2 className="font-display text-xl text-obsidian">רשתות חברתיות</h2>
 
+            {/* Instagram */}
             <div>
-              <label className={labelCls}>אינסטגרם</label>
+              <label className={labelCls}>
+                <span className="flex items-center gap-1.5">
+                  <Instagram className="h-3.5 w-3.5" /> אינסטגרם
+                </span>
+              </label>
               <div className="relative">
                 <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone/40 text-sm select-none font-medium">@</span>
                 <input
@@ -259,6 +264,58 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
                   className={`${inputCls} pr-8`}
                 />
               </div>
+            </div>
+
+            {/* TikTok */}
+            <div>
+              <label className={labelCls}>
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/></svg>
+                  TikTok
+                </span>
+              </label>
+              <div className="relative">
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone/40 text-sm select-none font-medium">@</span>
+                <input
+                  name="tiktok"
+                  dir="ltr"
+                  defaultValue={vendor.tiktok?.replace("@", "") ?? ""}
+                  placeholder="yourusername"
+                  className={`${inputCls} pr-8`}
+                />
+              </div>
+            </div>
+
+            {/* YouTube */}
+            <div>
+              <label className={labelCls}>
+                <span className="flex items-center gap-1.5">
+                  <Youtube className="h-3.5 w-3.5" /> YouTube
+                </span>
+              </label>
+              <input
+                name="youtube"
+                dir="ltr"
+                defaultValue={vendor.youtube ?? ""}
+                placeholder="https://youtube.com/@yourchannel"
+                className={inputCls}
+              />
+            </div>
+
+            {/* Facebook */}
+            <div>
+              <label className={labelCls}>
+                <span className="flex items-center gap-1.5">
+                  <Facebook className="h-3.5 w-3.5" /> Facebook
+                </span>
+              </label>
+              <input
+                name="facebook"
+                dir="ltr"
+                defaultValue={vendor.facebook ?? ""}
+                placeholder="https://facebook.com/yourpage"
+                className={inputCls}
+              />
             </div>
           </div>
 
