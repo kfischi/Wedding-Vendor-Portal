@@ -145,7 +145,7 @@ export default function JoinFreePage() {
               ))}
             </ul>
             <p className="text-xs text-stone/50 mt-4 pt-3 border-t border-champagne/40">
-              לאחר 3 חודשים תוכל לבחור תוכנית Standard (₪149/חודש) או Premium (₪349/חודש).
+              לאחר 3 חודשים תוכל לעבור לתוכנית Premium (₪179/חודש) או להמשיך בחינמי.
             </p>
           </div>
 

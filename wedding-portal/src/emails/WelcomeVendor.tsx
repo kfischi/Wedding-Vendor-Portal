@@ -7,7 +7,7 @@ interface WelcomeVendorProps {
   businessName: string;
   profileUrl: string;
   dashboardUrl: string;
-  plan: "free" | "standard" | "premium";
+  plan: "free" | "premium";
 }
 
 export function WelcomeVendor({
@@ -23,7 +23,7 @@ export function WelcomeVendor({
   const stone = "#6b6460";
 
   const planLabel =
-    plan === "premium" ? "פרמיום" : plan === "standard" ? "סטנדרט" : "חינמי";
+    plan === "premium" ? "פרמיום" : "חינמי";
 
   const steps = [
     { num: "01", title: "עדכנו את פרופילכם", desc: "הוסיפו תיאור, תמונות, חבילות מחיר ופרטי קשר" },

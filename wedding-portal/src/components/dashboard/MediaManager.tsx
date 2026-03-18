@@ -11,12 +11,12 @@ import type { VendorMedia } from "@/lib/db/schema";
 
 interface MediaManagerProps {
   initialMedia: VendorMedia[];
-  plan: "free" | "standard" | "premium";
+  plan: "free" | "premium";
   vendorId: string;
   currentCoverImage?: string | null;
 }
 
-const MAX_STANDARD = 20;
+const MAX_FREE = 10;
 
 export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }: MediaManagerProps) {
   const [media, setMedia] = useState<VendorMedia[]>(initialMedia);
@@ -26,21 +26,22 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
 
   const isPremium = plan === "premium";
   const imageCount = media.filter((m) => m.type === "image").length;
-  const atLimit = !isPremium && imageCount >= MAX_STANDARD;
-  const usagePercent = isPremium ? null : Math.round((imageCount / MAX_STANDARD) * 100);
+  const atLimit = !isPremium && imageCount >= MAX_FREE;
+  const usagePercent = isPremium ? null : Math.round((imageCount / MAX_FREE) * 100);
 
   // ── Upload ──────────────────────────────────────────────────────────────────
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (atLimit) {
-        toast.error(`הגעת למגבלה של ${MAX_STANDARD} תמונות (Standard)`);
+        toast.error(`הגעת למגבלה של ${MAX_FREE} תמונות (חינמי)`);
+
         return;
       }
       setUploading(true);
       let successCount = 0;
 
       for (const file of acceptedFiles) {
-        if (!isPremium && imageCount + successCount >= MAX_STANDARD) break;
+        if (!isPremium && imageCount + successCount >= MAX_FREE) break;
 
         const formData = new FormData();
         formData.append("file", file);
@@ -187,7 +188,7 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
                 />
               </div>
               <span className={`text-xs font-medium ${atLimit ? "text-red-500" : "text-stone/60"}`}>
-                {imageCount}/{MAX_STANDARD} תמונות
+                {imageCount}/{MAX_FREE} תמונות
               </span>
             </div>
           )}
@@ -225,7 +226,7 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
                 <p className="text-stone/50 text-xs mt-1">
                   {isPremium
                     ? "תמונות וסרטוני וידאו · עד 100MB לקובץ"
-                    : `תמונות בלבד · עד 10MB · ${MAX_STANDARD - imageCount} נותרו`}
+                    : `תמונות בלבד · עד 10MB · ${MAX_FREE - imageCount} נותרו`}
                 </p>
               </div>
               <button

@@ -7,20 +7,22 @@ import { Check, X, Megaphone, Users, CreditCard, Zap } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 const PLAN_FEATURES = [
-  { feature: "מיני-סייט ציבורי", free: true, standard: true, premium: true },
-  { feature: "טופס ליד", free: true, standard: true, premium: true },
-  { feature: "גלריית תמונות (מקסימום)", free: "5 תמונות", standard: "30 תמונות", premium: "ללא הגבלה" },
-  { feature: "חבילות מחיר", free: false, standard: true, premium: true },
-  { feature: "אנליטיקס מתקדם", free: false, standard: false, premium: true },
-  { feature: "תגית Featured", free: false, standard: false, premium: true },
-  { feature: "SEO מותאם אישית", free: false, standard: true, premium: true },
-  { feature: "תמיכה מועדפת", free: false, standard: false, premium: true },
+  { feature: "מיני-סייט ציבורי",          free: true,          premium: true },
+  { feature: "טופס ליד",                  free: true,          premium: true },
+  { feature: "גלריית תמונות (מקסימום)",   free: "10 תמונות",  premium: "20 תמונות" },
+  { feature: "וידאו בגלריה",              free: false,         premium: true },
+  { feature: "תמונת הירו",                free: false,         premium: true },
+  { feature: "כפתור WhatsApp",            free: false,         premium: true },
+  { feature: "חבילות מחיר",               free: false,         premium: true },
+  { feature: "אנליטיקס מתקדם",            free: false,         premium: true },
+  { feature: "SEO מותאם אישית",           free: false,         premium: true },
+  { feature: "מיקום מועדף בחיפוש",        free: false,         premium: true },
+  { feature: "תמיכה בעדיפות",             free: false,         premium: true },
 ];
 
 const PLAN_PRICES = [
-  { plan: "free", label: "חינמי", price: null, accent: "rgba(255,255,255,0.4)" },
-  { plan: "standard", label: "סטנדרט", price: 149, accent: "#60a5fa" },
-  { plan: "premium", label: "פרימיום", price: 349, accent: "#b8935a" },
+  { plan: "free",    label: "חינמי",   price: null, accent: "rgba(255,255,255,0.4)" },
+  { plan: "premium", label: "פרימיום", price: 179,  accent: "#b8935a" },
 ];
 
 function FeatureCell({ value }: { value: boolean | string }) {
@@ -92,7 +94,7 @@ export default async function AdminSettingsPage() {
         </div>
 
         <div className="p-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {PLAN_PRICES.map(({ plan, label, price, accent }) => (
               <div
                 key={plan}
@@ -138,14 +140,11 @@ export default async function AdminSettingsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <th className="px-6 py-3 text-right text-xs font-medium w-1/2" style={{ color: "rgba(255,255,255,0.4)" }}>
+                <th className="px-6 py-3 text-right text-xs font-medium w-2/3" style={{ color: "rgba(255,255,255,0.4)" }}>
                   תכונה
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
                   חינמי
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium" style={{ color: "#60a5fa" }}>
-                  סטנדרט
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium" style={{ color: "#b8935a" }}>
                   פרימיום
@@ -153,7 +152,7 @@ export default async function AdminSettingsPage() {
               </tr>
             </thead>
             <tbody>
-              {PLAN_FEATURES.map(({ feature, free, standard, premium }, i) => (
+              {PLAN_FEATURES.map(({ feature, free, premium }, i) => (
                 <tr
                   key={feature}
                   style={{
@@ -164,7 +163,6 @@ export default async function AdminSettingsPage() {
                     {feature}
                   </td>
                   <td className="px-4 py-3.5 text-center"><FeatureCell value={free} /></td>
-                  <td className="px-4 py-3.5 text-center"><FeatureCell value={standard} /></td>
                   <td className="px-4 py-3.5 text-center"><FeatureCell value={premium} /></td>
                 </tr>
               ))}

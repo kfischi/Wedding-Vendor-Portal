@@ -47,39 +47,39 @@ const BENEFITS = [
 
 const PLANS = [
   {
-    name: "Standard",
-    price: "₪149",
-    period: "לחודש",
+    name: "חינמי",
+    price: "₪0",
+    period: "לתמיד",
     color: "border-champagne",
     features: [
       "פרופיל בסיסי",
-      "עד 20 תמונות",
-      "קבלת לידים",
-      "ניהול ביקורות",
-      "דף מחירים",
-      "סטטיסטיקות בסיסיות",
+      "גלריה עד 10 תמונות",
+      "טופס יצירת קשר",
+      "הופעה בדירקטורי",
+      "לידים ישירים",
     ],
-    cta: "התחילו Standard",
+    cta: "הירשם חינם",
     ctaCls: "bg-obsidian text-white hover:bg-obsidian/90",
+    href: "/auth/register",
   },
   {
     name: "Premium",
-    price: "₪349",
+    price: "₪179",
     period: "לחודש",
     popular: true,
     color: "border-gold",
     features: [
-      "הכל ב-Standard",
-      "גלריה ללא הגבלה",
-      "עליית וידאו",
-      "SEO מתקדם",
+      "גלריה עד 20 תמונות + וידאו",
+      "תמונת הירו מותאמת",
+      "כפתור WhatsApp ישיר",
       "מיקום מועדף בחיפוש",
-      "WhatsApp ישיר",
-      "תמיכה עדיפות",
+      "SEO מתקדם",
       "אנליטיקס מלא",
+      "תמיכה בעדיפות",
     ],
     cta: "התחילו Premium",
     ctaCls: "bg-gold text-white hover:bg-gold/90",
+    href: "/pricing",
   },
 ];
 
@@ -231,7 +231,7 @@ export default function JoinPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/pricing"
+                  href={plan.href}
                   className={`flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl font-semibold transition-all ${plan.ctaCls}`}
                 >
                   {plan.cta} <ChevronLeft className="h-4 w-4" />
