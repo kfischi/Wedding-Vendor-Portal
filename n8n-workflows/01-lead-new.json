@@ -1,0 +1,205 @@
+{
+  "name": "WeddingPro — ליד חדש (lead.new)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "weddingpro-lead",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Webhook — קבלת ליד",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "weddingpro-lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-lead",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "lead.new",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000002",
+      "name": "אמת event = lead.new",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "vendor_phone",
+              "value": "={{ $json.vendor_phone }}",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "vendor_name",
+              "value": "={{ $json.vendor_name }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "lead_name",
+              "value": "={{ $json.lead_name }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "lead_phone",
+              "value": "={{ $json.lead_phone }}",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "lead_email",
+              "value": "={{ $json.lead_email }}",
+              "type": "string"
+            },
+            {
+              "id": "f6",
+              "name": "event_date",
+              "value": "={{ $json.event_date ?? 'לא צוין' }}",
+              "type": "string"
+            },
+            {
+              "id": "f7",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "f8",
+              "name": "whatsapp_message",
+              "value": "=🎉 פנייה חדשה ב-WeddingPro!\n\n👤 *שם הלקוח:* {{ $json.lead_name }}\n📱 *טלפון:* {{ $json.lead_phone ?? 'לא צוין' }}\n📧 *אימייל:* {{ $json.lead_email }}\n📅 *תאריך אירוע:* {{ $json.event_date ?? 'לא צוין' }}\n\n💬 *הודעה:*\n{{ $json.message }}\n\n🔗 לצפייה בכל הלידים:\nhttps://weddingpro.co.il/dashboard/leads",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000003",
+      "name": "הכן נתוני ליד",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-phone",
+              "leftValue": "={{ $json.vendor_phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000004",
+      "name": "יש מספר טלפון?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_WHATSAPP_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.vendor_phone.replace(/[^0-9]/g, '').replace(/^0/, '972') }}",
+        "textBody": "={{ $json.whatsapp_message }}",
+        "additionalFields": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000005",
+      "name": "WhatsApp לספק",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true }) }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000006",
+      "name": "תגובה 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 420]
+    }
+  ],
+  "connections": {
+    "Webhook — קבלת ליד": {
+      "main": [
+        [{ "node": "אמת event = lead.new", "type": "main", "index": 0 }]
+      ]
+    },
+    "אמת event = lead.new": {
+      "main": [
+        [{ "node": "הכן נתוני ליד", "type": "main", "index": 0 }]
+      ]
+    },
+    "הכן נתוני ליד": {
+      "main": [
+        [{ "node": "יש מספר טלפון?", "type": "main", "index": 0 }]
+      ]
+    },
+    "יש מספר טלפון?": {
+      "main": [
+        [{ "node": "WhatsApp לספק", "type": "main", "index": 0 }],
+        [{ "node": "תגובה 200 OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "WhatsApp לספק": {
+      "main": [
+        [{ "node": "תגובה 200 OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["weddingpro"],
+  "triggerCount": 0,
+  "updatedAt": "2026-03-18T00:00:00.000Z",
+  "versionId": "v1"
+}
