@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -90,13 +89,27 @@ export function Navbar() {
               </Link>
             </div>
 
-            {/* Mobile hamburger */}
+            {/* Mobile hamburger — animated */}
             <button
-              onClick={() => setOpen(true)}
+              onClick={() => setOpen((v) => !v)}
               className="md:hidden p-2 rounded-xl text-obsidian hover:bg-champagne/40 transition-colors"
-              aria-label="פתח תפריט"
+              aria-label={open ? "סגור תפריט" : "פתח תפריט"}
+              aria-expanded={open}
             >
-              <Menu className="h-5 w-5" />
+              <span className="flex flex-col justify-center items-center w-5 h-5 gap-[5px]">
+                <span className={cn(
+                  "block h-[1.5px] w-5 bg-current rounded-full origin-center transition-all duration-300",
+                  open && "translate-y-[6.5px] rotate-45"
+                )} />
+                <span className={cn(
+                  "block h-[1.5px] bg-current rounded-full transition-all duration-200",
+                  open ? "w-0 opacity-0" : "w-5 opacity-100"
+                )} />
+                <span className={cn(
+                  "block h-[1.5px] w-5 bg-current rounded-full origin-center transition-all duration-300",
+                  open && "-translate-y-[6.5px] -rotate-45"
+                )} />
+              </span>
             </button>
           </div>
         </div>
@@ -128,7 +141,11 @@ export function Navbar() {
             className="p-1.5 rounded-lg hover:bg-champagne/50 text-stone transition-colors"
             aria-label="סגור תפריט"
           >
-            <X className="h-5 w-5" />
+            <span className="flex flex-col justify-center items-center w-5 h-5 gap-[5px]">
+              <span className="block h-[1.5px] w-5 bg-current rounded-full origin-center translate-y-[6.5px] rotate-45 transition-none" />
+              <span className="block h-[1.5px] w-0 bg-current rounded-full opacity-0 transition-none" />
+              <span className="block h-[1.5px] w-5 bg-current rounded-full origin-center -translate-y-[6.5px] -rotate-45 transition-none" />
+            </span>
           </button>
         </div>
 

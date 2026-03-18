@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter, Great_Vibes } from "next/font/google";
+import { Frank_Ruhl_Libre, Heebo, Great_Vibes } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
+const frankRuhl = Frank_Ruhl_Libre({
   variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
+  subsets: ["latin", "hebrew"],
+  weight: ["300", "400", "500", "700", "900"],
   display: "swap",
 });
 
-const inter = Inter({
+const heebo = Heebo({
   variable: "--font-inter",
-  subsets: ["latin"],
+  subsets: ["latin", "hebrew"],
   weight: ["300", "400", "500", "600"],
   display: "swap",
 });
@@ -50,7 +49,7 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${cormorant.variable} ${inter.variable} ${greatVibes.variable}`}
+      className={`${frankRuhl.variable} ${heebo.variable} ${greatVibes.variable}`}
     >
       <body className="antialiased">
         {children}

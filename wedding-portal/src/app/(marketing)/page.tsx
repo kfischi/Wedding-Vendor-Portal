@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   ChevronLeft,
 } from "lucide-react";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, count } from "drizzle-orm";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import type { Vendor } from "@/lib/db/schema";
@@ -19,14 +19,19 @@ import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
 import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
 
-// ─── Stats data ────────────────────────────────────────────────────────────────
+// ─── Stats (vendor count fetched live from DB) ──────────────────────────────
 
-const STATS = [
-  { value: "500+", label: "ספקים מובחרים" },
-  { value: "10,000+", label: "זוגות מאושרים" },
-  { value: "15", label: "קטגוריות" },
-  { value: "4.9★", label: "דירוג ממוצע" },
-];
+async function getVendorCount(): Promise<number> {
+  try {
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return Number(value ?? 0);
+  } catch {
+    return 0;
+  }
+}
 
 // ─── Mock featured vendors (fallback when DB is unavailable) ──────────────────
 
@@ -166,7 +171,19 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const featuredVendors = await getFeaturedVendors();
+  const [featuredVendors, vendorCount] = await Promise.all([
+    getFeaturedVendors(),
+    getVendorCount(),
+  ]);
+
+  const displayCount = vendorCount > 0 ? `${vendorCount}+` : "50+";
+
+  const STATS = [
+    { value: displayCount,  label: "ספקים מובחרים" },
+    { value: "500+",        label: "זוגות מאושרים" },
+    { value: "18",          label: "קטגוריות" },
+    { value: "4.9★",        label: "דירוג ממוצע" },
+  ];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
 
   const websiteJsonLd = {
