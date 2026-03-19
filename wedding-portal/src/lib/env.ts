@@ -48,6 +48,7 @@ export const N8N_API_KEY = process.env.N8N_API_KEY ?? "";
 export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME ?? "";
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY ?? "";
 export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? "";
+export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 
 // ── Rate-limit constants (single source of truth) ─────────────────────────────
 export const RATE_LIMIT = {
