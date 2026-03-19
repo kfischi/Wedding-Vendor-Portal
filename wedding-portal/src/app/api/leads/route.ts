@@ -7,6 +7,7 @@ import { leads, vendors } from "@/lib/db/schema";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
 import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL } from "@/lib/env";
 import { n8nLeadNew } from "@/lib/n8n";
+import { scoreAndSaveLead } from "@/lib/ai/score-lead";
 
 // ── Parse DD/MM/YYYY date strings ──────────────────────────────────────────────
 function parseDateString(dateStr: string): Date | null {
@@ -271,7 +272,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("[leads] Email send error:", err);
   }
 
-  // ── 7. Trigger n8n webhook (non-blocking) ─────────────────────────────────
+  // ── 7. AI Lead Scoring (non-blocking, fire-and-forget) ────────────────────
+  if (newLead?.id) {
+    void scoreAndSaveLead({
+      id: newLead.id,
+      name,
+      message,
+      phone: phone ?? null,
+      eventDate: eventDate ? parseDateString(eventDate) : null,
+      vendorCategory: vendor.category,
+    });
+  }
+
+  // ── 8. Trigger n8n webhook (non-blocking) ─────────────────────────────────
   void n8nLeadNew({
     lead_id: newLead?.id ?? "",
     vendor_id: vendorId,

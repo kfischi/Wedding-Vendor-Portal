@@ -168,6 +168,9 @@ export const leads = pgTable(
     status: leadStatusEnum("status").notNull().default("new"),
     notes: text("notes"),
     submitterIp: text("submitter_ip"),
+    aiScore: integer("ai_score"),
+    aiScoreLabel: text("ai_score_label"), // "hot" | "warm" | "cold"
+    aiScoreReason: text("ai_score_reason"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

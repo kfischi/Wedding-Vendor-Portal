@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useActionState, useState } from "react";
+import { useEffect, useActionState, useState, useRef } from "react";
 import { toast } from "sonner";
-import { Loader2, User, Phone, Globe, Check } from "lucide-react";
+import { Loader2, User, Phone, Globe, Check, Sparkles } from "lucide-react";
 import { updateContentAction, type ContentFormState } from "@/app/(dashboard)/dashboard/content/actions";
 import type { Vendor } from "@/lib/db/schema";
 
@@ -72,13 +72,43 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
     {}
   );
   const [tab, setTab] = useState(0);
-  const [descLen, setDescLen] = useState(vendor.description?.length ?? 0);
-  const [shortLen, setShortLen] = useState(vendor.shortDescription?.length ?? 0);
+  const [descValue, setDescValue] = useState(vendor.description ?? "");
+  const [shortValue, setShortValue] = useState(vendor.shortDescription ?? "");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const descLen = descValue.length;
+  const shortLen = shortValue.length;
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (state.success) toast.success("השינויים נשמרו בהצלחה ✓");
     if (state.error)   toast.error(state.error);
   }, [state]);
+
+  async function generateWithAI() {
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/ai/generate-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName: vendor.businessName,
+          category: categoryRef.current?.value ?? vendor.category,
+          city: cityRef.current?.value ?? vendor.city,
+          type: "both",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "שגיאה");
+      if (data.description) setDescValue(data.description);
+      if (data.tagline) setShortValue(data.tagline);
+      toast.success("✨ תוכן נוצר בהצלחה — עיין ושמור");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "שגיאה ביצירת תוכן");
+    } finally {
+      setAiGenerating(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -114,7 +144,25 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
         {/* ────────── Tab 0: Basic info ────────── */}
         <div className={tab === 0 ? "space-y-5" : "hidden"}>
           <div className="bg-white rounded-2xl border border-champagne/60 p-5 shadow-sm space-y-5">
-            <h2 className="font-display text-xl text-obsidian">פרטי עסק</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl text-obsidian">פרטי עסק</h2>
+              <button
+                type="button"
+                onClick={generateWithAI}
+                disabled={aiGenerating}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(135deg, rgba(184,151,106,0.15), rgba(154,125,86,0.1))",
+                  border: "1px solid rgba(184,151,106,0.4)",
+                  color: "#9a7d56",
+                }}
+              >
+                {aiGenerating
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> יוצר...</>
+                  : <><Sparkles className="h-3.5 w-3.5" /> יצור עם AI</>
+                }
+              </button>
+            </div>
 
             <div>
               <label className={labelCls}>שם העסק *</label>
@@ -137,11 +185,11 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
               </div>
               <input
                 name="shortDescription"
-                defaultValue={vendor.shortDescription ?? ""}
+                value={shortValue}
                 maxLength={100}
                 placeholder="משפט אחד שמתאר את השירות שלך"
                 className={inputCls}
-                onChange={(e) => setShortLen(e.target.value.length)}
+                onChange={(e) => setShortValue(e.target.value)}
               />
               <p className={hintCls}>מופיע מתחת לשם בפרופיל</p>
             </div>
@@ -149,7 +197,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>קטגוריה *</label>
-                <select name="category" defaultValue={vendor.category} className={inputCls}>
+                <select name="category" defaultValue={vendor.category} ref={categoryRef} className={inputCls}>
                   {CATEGORIES.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
@@ -163,6 +211,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
                   required
                   maxLength={50}
                   placeholder="תל אביב"
+                  ref={cityRef}
                   className={inputCls}
                 />
               </div>
@@ -186,12 +235,12 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
               </div>
               <textarea
                 name="description"
-                defaultValue={vendor.description ?? ""}
+                value={descValue}
                 rows={6}
                 maxLength={1000}
                 placeholder="ספר על עצמך, הניסיון שלך, הסגנון שלך..."
                 className={`${inputCls} resize-none`}
-                onChange={(e) => setDescLen(e.target.value.length)}
+                onChange={(e) => setDescValue(e.target.value)}
               />
             </div>
           </div>

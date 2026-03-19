@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/agent/monitor",
+      "schedule": "0 * * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/og",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=3600" }
+      ]
+    }
+  ]
+}
