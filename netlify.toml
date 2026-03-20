@@ -7,8 +7,9 @@
   package = "@netlify/plugin-nextjs"
 
 [build.environment]
-  NODE_VERSION            = "20"
-  NEXT_TELEMETRY_DISABLED = "1"
+  NODE_VERSION                                    = "20"
+  NEXT_TELEMETRY_DISABLED                         = "1"
+  NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS = "1"
 
 # ─── Headers ──────────────────────────────────────────────────────────────────
 [[headers]]

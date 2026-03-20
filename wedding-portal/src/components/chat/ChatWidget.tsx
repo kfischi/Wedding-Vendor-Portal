@@ -486,7 +486,7 @@ export function ChatWidget() {
                                 background: "rgb(24 24 27)",
                                 border: "1px solid rgb(39 39 42)",
                                 color: "rgb(212 212 216)",
-                                borderTopRight: "4px",
+                                borderTopRightRadius: "4px",
                               }
                             : {
                                 background: "rgb(201 168 84 / 0.08)",
