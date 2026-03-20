@@ -220,6 +220,31 @@ export const coupons = pgTable("coupons", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ─── messages ─────────────────────────────────────────────────────────────────
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: text("id").primaryKey().notNull(),
+    vendorId: text("vendor_id")
+      .notNull()
+      .references(() => vendors.id, { onDelete: "cascade" }),
+    leadId: text("lead_id").references(() => leads.id, { onDelete: "set null" }),
+    channel: text("channel").notNull(), // 'email' | 'whatsapp'
+    recipient: text("recipient").notNull(),
+    subject: text("subject"),
+    body: text("body").notNull(),
+    status: text("status").notNull().default("sent"), // 'sent' | 'failed'
+    error: text("error"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("messages_vendor_id_idx").on(table.vendorId),
+    index("messages_lead_id_idx").on(table.leadId),
+    index("messages_created_at_idx").on(table.createdAt),
+  ]
+);
+
 // ─── plan_overrides ───────────────────────────────────────────────────────────
 
 export const planOverrides = pgTable("plan_overrides", {
@@ -268,3 +293,5 @@ export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
 export type Coupon = typeof coupons.$inferSelect;
 export type NewCoupon = typeof coupons.$inferInsert;
+export type Message = typeof messages.$inferSelect;
+export type NewMessage = typeof messages.$inferInsert;
