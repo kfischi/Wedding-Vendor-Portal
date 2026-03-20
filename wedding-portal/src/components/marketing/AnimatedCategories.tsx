@@ -3,32 +3,63 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
-import {
-  Camera,
-  Building2,
-  UtensilsCrossed,
-  Flower2,
-  Music,
-  Sparkles,
-  Calendar,
-  Headphones,
-  Cake,
-  Shirt,
-  Heart,
-} from "lucide-react";
 
 const CATEGORIES = [
-  { slug: "photography", label: "צילום חתונות", icon: Camera, color: "bg-blush/20 text-dusty-rose" },
-  { slug: "wedding-dress-designers", label: "מעצבי שמלות כלה", icon: Shirt, color: "bg-fuchsia-50 text-fuchsia-500" },
-  { slug: "venue", label: "אולמות ומקומות", icon: Building2, color: "bg-gold/10 text-gold" },
-  { slug: "catering", label: "קייטרינג", icon: UtensilsCrossed, color: "bg-amber-50 text-amber-600" },
-  { slug: "flowers", label: "פרחים ועיצוב", icon: Flower2, color: "bg-pink-50 text-pink-500" },
-  { slug: "music", label: "מוזיקה חיה", icon: Music, color: "bg-purple-50 text-purple-500" },
-  { slug: "makeup", label: "איפור ושיער", icon: Sparkles, color: "bg-rose-50 text-rose-500" },
-  { slug: "planning", label: "תכנון אירועים", icon: Calendar, color: "bg-teal-50 text-teal-600" },
-  { slug: "dj", label: "DJ", icon: Headphones, color: "bg-indigo-50 text-indigo-500" },
-  { slug: "cake", label: "עוגות חתונה", icon: Cake, color: "bg-orange-50 text-orange-500" },
-  { slug: "bridal-preparation", label: "התארגנות כלות", icon: Heart, color: "bg-rose-50 text-rose-400" },
+  {
+    slug: "photography",
+    label: "צילום חתונות",
+    img: "https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "wedding-dress-designers",
+    label: "מעצבי שמלות כלה",
+    img: "https://images.unsplash.com/photo-1594938298603-c8148c4b4e49?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "venue",
+    label: "אולמות ומקומות",
+    img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "catering",
+    label: "קייטרינג",
+    img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "flowers",
+    label: "פרחים ועיצוב",
+    img: "https://images.unsplash.com/photo-1487530811015-780c45f2cfe8?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "music",
+    label: "מוזיקה חיה",
+    img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "makeup",
+    label: "איפור ושיער",
+    img: "https://images.unsplash.com/photo-1512207736890-6ffed8a84e8d?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "planning",
+    label: "תכנון אירועים",
+    img: "https://images.unsplash.com/photo-1519741497674-611481863552?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "dj",
+    label: "DJ",
+    img: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "cake",
+    label: "עוגות חתונה",
+    img: "https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=120&h=120&q=80&fit=crop",
+  },
+  {
+    slug: "bridal-preparation",
+    label: "התארגנות כלות",
+    img: "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=120&h=120&q=80&fit=crop",
+  },
 ];
 
 export function AnimatedCategories() {
@@ -40,7 +71,7 @@ export function AnimatedCategories() {
       ref={ref}
       className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"
     >
-      {CATEGORIES.map(({ slug, label, icon: Icon, color }, i) => (
+      {CATEGORIES.map(({ slug, label, img }, i) => (
         <motion.div
           key={slug}
           initial={{ opacity: 0, y: 22 }}
@@ -48,19 +79,24 @@ export function AnimatedCategories() {
           transition={{ delay: i * 0.07, duration: 0.4, ease: "easeOut" }}
           whileHover={{
             y: -6,
-            boxShadow: "0 14px 32px rgba(0,0,0,0.13)",
+            boxShadow: "0 14px 32px rgba(0,0,0,0.3)",
             transition: { duration: 0.2 },
           }}
-          className="bg-cream-white rounded-2xl card-shadow"
+          className="bg-cream-white rounded-2xl card-shadow overflow-hidden"
         >
           <Link
             href={`/vendors?category=${slug}`}
             className="group flex flex-col items-center gap-3 p-4 sm:p-5 rounded-2xl text-center w-full h-full"
           >
-            <div
-              className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color} group-hover:scale-110 transition-transform duration-200`}
-            >
-              <Icon className="w-5 h-5" />
+            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-200">
+              <img
+                src={img}
+                alt={label}
+                width={56}
+                height={56}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
             <span className="text-sm font-medium text-obsidian leading-tight">{label}</span>
           </Link>
