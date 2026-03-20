@@ -75,10 +75,8 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:text-white"
                   style={{ background: "rgb(24 24 27)", border: "1px solid rgb(39 39 42)", color: "rgb(113 113 122)" }}
-                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "rgb(250 250 250)"}
-                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "rgb(113 113 122)"}
                 >
                   {icon}
                 </a>
@@ -100,10 +98,8 @@ export function Footer() {
                   <li key={href}>
                     <Link
                       href={href}
-                      className="text-sm transition-colors"
+                      className="text-sm transition-colors hover:text-zinc-300"
                       style={{ color: "rgb(82 82 91)" }}
-                      onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "rgb(212 212 216)"}
-                      onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "rgb(82 82 91)"}
                     >
                       {label}
                     </Link>
