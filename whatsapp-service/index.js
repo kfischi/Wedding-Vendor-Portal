@@ -8,6 +8,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 const API_KEY = process.env.API_KEY || 'change-me-in-env';
+const WHATSAPP_PHONE = process.env.WHATSAPP_PHONE || '';
 
 // ─── WhatsApp Client ──────────────────────────────────────────────────────────
 
@@ -31,7 +32,9 @@ client.on('qr', (qr) => {
   lastQR = qr;
   isReady = false;
   qrcode.generate(qr, { small: true });
-  console.log('\n✅ סרוק את ה-QR בוואטסאפ שלך (Settings → Linked Devices → Link a Device)\n');
+  const phoneHint = WHATSAPP_PHONE ? ` (${WHATSAPP_PHONE})` : '';
+  console.log(`\n📱 סרוק את ה-QR בוואטסאפ${phoneHint}`);
+  console.log('   Settings → Linked Devices → Link a Device\n');
 });
 
 client.on('ready', () => {
@@ -70,7 +73,11 @@ function requireApiKey(req, res, next) {
 
 // בריאות השירות
 app.get('/health', (req, res) => {
-  res.json({ status: isReady ? 'ready' : 'not_ready', timestamp: new Date().toISOString() });
+  res.json({
+    status: isReady ? 'ready' : 'not_ready',
+    phone: WHATSAPP_PHONE || null,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // QR Code כתמונה (לסקירה בדפדפן)
