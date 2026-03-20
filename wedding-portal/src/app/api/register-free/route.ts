@@ -21,7 +21,7 @@ const schema = z.object({
   businessName: z.string().min(2, "שם עסק נדרש").max(100),
   category: z.enum(VALID_CATEGORIES, { error: "קטגוריה לא תקינה" }),
   city: z.string().min(1, "עיר נדרשת").max(100),
-  phone: z.string().max(20).optional(),
+  phone: z.string().min(9, "טלפון נדרש").max(20),
   couponCode: z.string().min(1, "קוד קופון נדרש").max(50),
 });
 

@@ -12,7 +12,7 @@ const schema = z.object({
   region:           z.string().optional(),
   shortDescription: z.string().max(160).optional(),
   description:      z.string().max(1000).optional(),
-  phone:            z.string().max(20).optional(),
+  phone:            z.string().min(9, "טלפון נדרש").max(20),
   email:            z.string().email().max(255),
   website:          z.string().url().optional().or(z.literal("")),
   instagram:        z.string().max(50).optional(),

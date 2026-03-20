@@ -51,6 +51,7 @@ export default function JoinFreePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.category) { setError("בחר קטגוריה"); return; }
+    if (!form.phone.trim()) { setError("טלפון / WhatsApp נדרש"); return; }
     if (!form.couponCode.trim()) { setError("קוד קופון נדרש"); return; }
 
     setLoading(true);
@@ -241,9 +242,10 @@ export default function JoinFreePage() {
               </div>
 
               <div>
-                <label className={labelCls}>טלפון / WhatsApp</label>
+                <label className={labelCls}>טלפון / WhatsApp *</label>
                 <input
                   type="tel"
+                  required
                   maxLength={20}
                   value={form.phone}
                   onChange={(e) => set("phone", e.target.value)}
