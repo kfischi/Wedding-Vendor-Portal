@@ -1,0 +1,37 @@
+# WAHA — WhatsApp HTTP API (Free / Core edition)
+# Deploy this on Coolify as a "Docker Compose" service.
+#
+# Steps in Coolify:
+#  1. New Resource → Docker Compose → paste this file
+#  2. Set environment variables (see below)
+#  3. Deploy → wait for container to start
+#  4. Open https://waha.YOUR_DOMAIN/dashboard → scan QR to connect WhatsApp
+#
+# Then in your Next.js app set:
+#  WHATSAPP_SERVICE_URL=https://waha.YOUR_DOMAIN
+#  WHATSAPP_SERVICE_API_KEY=<same value as WHATSAPP_API_KEY below>
+#  WAHA_SESSION=default
+
+version: "3.8"
+
+services:
+  waha:
+    image: devlikeapro/waha:latest   # Core (free) — no session limit workaround needed
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Required: secret key for API authentication
+      WHATSAPP_API_KEY: ${WHATSAPP_API_KEY}
+
+      # Optional: default session auto-start on boot
+      WAHA_AUTO_START_SESSIONS: "default"
+
+      # Logging
+      WAHA_LOG_LEVEL: info
+    volumes:
+      # Persist WhatsApp session so you don't re-scan QR after restart
+      - waha_sessions:/app/.sessions
+
+volumes:
+  waha_sessions:
