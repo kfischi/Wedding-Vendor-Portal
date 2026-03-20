@@ -51,6 +51,7 @@ export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? "";
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 export const WHATSAPP_SERVICE_URL = process.env.WHATSAPP_SERVICE_URL ?? "";
 export const WHATSAPP_SERVICE_API_KEY = process.env.WHATSAPP_SERVICE_API_KEY ?? "";
+export const ADMIN_PHONE = process.env.ADMIN_PHONE ?? "";
 
 // ── Rate-limit constants (single source of truth) ─────────────────────────────
 export const RATE_LIMIT = {

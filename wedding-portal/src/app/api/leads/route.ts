@@ -5,8 +5,9 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
-import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL } from "@/lib/env";
+import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, ADMIN_PHONE } from "@/lib/env";
 import { n8nLeadNew } from "@/lib/n8n";
+import { waSend } from "@/lib/whatsapp";
 import { scoreAndSaveLead } from "@/lib/ai/score-lead";
 
 // ── Parse DD/MM/YYYY date strings ──────────────────────────────────────────────
@@ -284,7 +285,51 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
-  // ── 8. Trigger n8n webhook (non-blocking) ─────────────────────────────────
+  // ── 8. WhatsApp notifications (non-blocking) ──────────────────────────────
+  void (async () => {
+    const parsedEventDate = eventDate ? parseDateString(eventDate) : null;
+    const eventDateFormatted = parsedEventDate
+      ? new Intl.DateTimeFormat("he-IL").format(parsedEventDate)
+      : null;
+
+    // Notify vendor
+    if (vendor.phone) {
+      const vendorMsg = [
+        `📋 *פנייה חדשה התקבלה!*`,
+        ``,
+        `*שם:* ${name}`,
+        phone ? `*טלפון:* ${phone}` : null,
+        `*אימייל:* ${email}`,
+        eventDateFormatted ? `*תאריך אירוע:* ${eventDateFormatted}` : null,
+        ``,
+        `*הודעה:*`,
+        message,
+        ``,
+        `לצפייה בלידים: ${NEXT_PUBLIC_APP_URL}/dashboard/leads`,
+      ]
+        .filter((l) => l !== null)
+        .join("\n");
+      await waSend(vendor.phone, vendorMsg);
+    }
+
+    // Notify admin
+    if (ADMIN_PHONE) {
+      const adminMsg = [
+        `📋 *ליד חדש במערכת*`,
+        ``,
+        `*ספק:* ${vendor.businessName}`,
+        `*לקוח:* ${name}`,
+        phone ? `*טלפון:* ${phone}` : null,
+        `*אימייל:* ${email}`,
+        eventDateFormatted ? `*תאריך אירוע:* ${eventDateFormatted}` : null,
+      ]
+        .filter((l) => l !== null)
+        .join("\n");
+      await waSend(ADMIN_PHONE, adminMsg);
+    }
+  })();
+
+  // ── 9. Trigger n8n webhook (non-blocking) ─────────────────────────────────
   void n8nLeadNew({
     lead_id: newLead?.id ?? "",
     vendor_id: vendorId,
