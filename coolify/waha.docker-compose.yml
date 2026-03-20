@@ -5,10 +5,10 @@
 #  1. New Resource → Docker Compose → paste this file
 #  2. Set environment variables (see below)
 #  3. Deploy → wait for container to start
-#  4. Open https://waha.YOUR_DOMAIN/dashboard → scan QR to connect WhatsApp
+#  4. Open https://waha.multibrawn.co.il/dashboard → scan QR to connect WhatsApp
 #
 # Then in your Next.js app set:
-#  WHATSAPP_SERVICE_URL=https://waha.YOUR_DOMAIN
+#  WHATSAPP_SERVICE_URL=https://waha.multibrawn.co.il
 #  WHATSAPP_SERVICE_API_KEY=<same value as WHATSAPP_API_KEY below>
 #  WAHA_SESSION=default
 
