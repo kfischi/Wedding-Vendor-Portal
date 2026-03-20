@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.suite-hagit.co.il";
 
   return {
     rules: [
