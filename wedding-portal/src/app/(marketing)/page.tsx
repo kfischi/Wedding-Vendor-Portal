@@ -167,7 +167,7 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 
 export default async function HomePage() {
   const featuredVendors = await getFeaturedVendors();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.suite-hagit.co.il";
 
   const websiteJsonLd = {
     "@context": "https://schema.org",
