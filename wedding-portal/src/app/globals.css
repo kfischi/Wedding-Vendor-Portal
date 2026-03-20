@@ -52,6 +52,10 @@
 
   body {
     background-color: rgb(9 9 11);
+    background-image: url("https://res.cloudinary.com/decirk3zb/image/upload/v1774012420/WhatsApp_Image_2026-03-20_at_12.50.24_j8ss5w.jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: rgb(250 250 250);
     font-family: var(--font-inter);
     -webkit-font-smoothing: antialiased;
