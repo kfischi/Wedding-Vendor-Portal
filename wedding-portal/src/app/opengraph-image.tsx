@@ -20,7 +20,7 @@ export default async function Image() {
         {/* Background: wedding rings photo from hero */}
         { }
         <img
-          src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&h=630&fit=crop&crop=center&q=85"
+          src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=630&fit=crop&crop=center&q=85"
           alt=""
           style={{
             position: "absolute",
