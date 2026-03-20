@@ -198,7 +198,7 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-    <div className="min-h-screen bg-ivory" dir="rtl">
+    <div className="min-h-screen" dir="rtl">
 
       {/* ── HERO (rotating images + animated text) ─────────────────────────────── */}
       <HeroSlideshow />
@@ -211,7 +211,7 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p className="font-script text-gold text-xl mb-1">כל מה שצריך</p>
-            <h2 className="font-display text-4xl sm:text-5xl text-obsidian">
+            <h2 className="font-display text-4xl sm:text-5xl" style={{ color: "rgb(26 22 20)" }}>
               קטגוריות פופולריות
             </h2>
           </div>
@@ -275,7 +275,7 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p className="font-script text-gold text-xl mb-1">בשלושה צעדים פשוטים</p>
-            <h2 className="font-display text-4xl sm:text-5xl text-obsidian">
+            <h2 className="font-display text-4xl sm:text-5xl" style={{ color: "rgb(26 22 20)" }}>
               איך זה עובד?
             </h2>
           </div>
@@ -314,8 +314,8 @@ export default async function HomePage() {
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${color}`}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="font-display text-2xl text-obsidian">{title}</h3>
-                <p className="text-stone text-sm leading-relaxed">{description}</p>
+                <h3 className="font-display text-2xl" style={{ color: "rgb(26 22 20)" }}>{title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "rgb(82 78 76)" }}>{description}</p>
               </div>
             ))}
           </div>

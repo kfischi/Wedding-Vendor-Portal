@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
+  { href: "/",         label: "ראשי" },
   { href: "/vendors",  label: "ספקים" },
   { href: "/blog",     label: "בלוג" },
   { href: "/about",    label: "אודות" },
@@ -15,6 +16,7 @@ const NAV_LINKS = [
 ];
 
 const DRAWER_LINKS = [
+  { href: "/",           label: "ראשי" },
   { href: "/vendors",    label: "ספקים" },
   { href: "/blog",       label: "בלוג" },
   { href: "/about",      label: "אודות" },
@@ -81,8 +83,9 @@ export function Navbar() {
             <nav className="hidden md:flex items-center gap-0.5">
               {NAV_LINKS.map((link) => {
                 const active =
-                  pathname === link.href ||
-                  (link.href !== "/" && pathname.startsWith(link.href + "/"));
+                  link.href === "/"
+                    ? pathname === "/"
+                    : pathname === link.href || pathname.startsWith(link.href + "/");
                 return (
                   <Link
                     key={link.href}
