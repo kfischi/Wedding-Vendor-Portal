@@ -25,7 +25,7 @@ const greatVibes = Great_Vibes({
   display: "swap",
 });
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://weddingpro.co.il";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.suite-hagit.co.il";
 
 export const metadata: Metadata = {
   title: {
