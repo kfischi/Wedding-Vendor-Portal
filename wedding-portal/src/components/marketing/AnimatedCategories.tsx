@@ -28,7 +28,7 @@ const CATEGORIES = [
   {
     slug: "flowers",
     label: "פרחים ועיצוב",
-    img: "https://images.unsplash.com/photo-1487530811015-780c45f2cfe8?w=400&q=75&fit=crop&crop=center",
+    img: "https://images.unsplash.com/photo-1490750967868-88df5691cc8c?w=400&q=75&fit=crop&crop=center",
   },
   {
     slug: "music",
@@ -83,19 +83,23 @@ export function AnimatedCategories() {
         >
           <Link
             href={`/vendors?category=${slug}`}
-            className="block relative h-36 sm:h-40"
+            className="block relative h-36 sm:h-40 bg-stone-800"
           >
             <img
               src={img}
-              alt={label}
+              alt=""
+              aria-hidden="true"
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
             />
             {/* gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
             {/* label */}
-            <span className="absolute bottom-0 inset-x-0 px-3 pb-3 pt-6 text-sm font-medium text-white text-center leading-tight">
+            <span className="absolute bottom-0 inset-x-0 px-3 pb-3 text-sm font-semibold text-white text-center leading-tight drop-shadow-sm">
               {label}
             </span>
           </Link>
