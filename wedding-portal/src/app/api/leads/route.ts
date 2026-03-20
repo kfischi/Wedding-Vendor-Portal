@@ -5,7 +5,7 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
-import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, ADMIN_PHONE } from "@/lib/env";
+import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, RESEND_FROM_EMAIL, ADMIN_EMAIL, ADMIN_PHONE } from "@/lib/env";
 import { n8nLeadNew } from "@/lib/n8n";
 import { waSend } from "@/lib/whatsapp";
 import { scoreAndSaveLead } from "@/lib/ai/score-lead";
@@ -235,7 +235,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       </div>
     `;
 
-    const fromAddress = `WeddingPro <noreply@${new URL(baseUrl).hostname}>`;
+    const fromAddress = RESEND_FROM_EMAIL
+      ? `WeddingPro <${RESEND_FROM_EMAIL}>`
+      : `WeddingPro <noreply@${new URL(baseUrl).hostname}>`;
 
     // Email to vendor
     await resend.emails.send({
