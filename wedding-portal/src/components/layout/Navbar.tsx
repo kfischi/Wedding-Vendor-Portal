@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoIcon } from "@/components/shared/LogoIcon";
 
 const NAV_LINKS = [
   { href: "/",         label: "ראשי" },
@@ -62,15 +63,7 @@ export function Navbar() {
 
             {/* Logo */}
             <Link href="/" className="shrink-0 flex items-center gap-2.5">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-xs"
-                style={{
-                  background: "rgb(24 24 27)",
-                  border: "1px solid rgb(39 39 42)",
-                }}
-              >
-                <span className="font-script leading-none" style={{ color: "rgb(201 168 84)", fontSize: "1rem" }}>W</span>
-              </div>
+              <LogoIcon size={28} />
               <span
                 className="font-semibold text-[15px] tracking-tight"
                 style={{ color: "rgb(250 250 250)" }}
