@@ -17,6 +17,7 @@ import {
   LogOut,
   Crown,
   Package,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -38,6 +39,7 @@ const NAV_GROUPS = [
       { href: "/dashboard/content/pricing", label: "מחירים", icon: Package, exact: false, showBadge: false },
       { href: "/dashboard/media", label: "מדיה", icon: Image, exact: false, showBadge: false },
       { href: "/dashboard/leads", label: "לידים", icon: Users, exact: false, showBadge: true },
+      { href: "/dashboard/messaging", label: "הודעות", icon: Send, exact: false, showBadge: false },
       { href: "/dashboard/reviews", label: "ביקורות", icon: Star, exact: false, showBadge: false },
     ],
   },
@@ -53,9 +55,9 @@ const NAV_GROUPS = [
 const MOBILE_NAV = [
   { href: "/dashboard", label: "בית", icon: LayoutDashboard, exact: true, showBadge: false },
   { href: "/dashboard/leads", label: "לידים", icon: Users, exact: false, showBadge: true },
+  { href: "/dashboard/messaging", label: "הודעות", icon: Send, exact: false, showBadge: false },
   { href: "/dashboard/content", label: "תוכן", icon: FileText, exact: false, showBadge: false },
   { href: "/dashboard/media", label: "מדיה", icon: Image, exact: false, showBadge: false },
-  { href: "/dashboard/billing", label: "חיוב", icon: CreditCard, exact: false, showBadge: false },
 ];
 
 // ── Props ─────────────────────────────────────────────────────────────────────

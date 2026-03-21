@@ -290,12 +290,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
-  const ogImage =
+  // Build cover URL for OG image
+  const coverUrl =
     vendor.coverImage && cloudName && !vendor.coverImage.startsWith("http")
       ? `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/${vendor.coverImage}`
       : vendor.coverImage?.startsWith("http")
       ? vendor.coverImage
       : undefined;
+
+  // Use dynamic OG image generator
+  const ogParams = new URLSearchParams({
+    name: vendor.businessName,
+    plan: vendor.plan,
+    ...(vendor.category && { category: vendor.category }),
+    ...(vendor.city && { city: vendor.city }),
+    ...(vendor.rating != null && { rating: String(vendor.rating) }),
+    ...(coverUrl && { image: coverUrl }),
+  });
+  const ogImage = `${appUrl}/api/og?${ogParams.toString()}`;
 
   return {
     title: vendor.seoTitle ?? `${vendor.businessName} | WeddingPro`,
@@ -307,14 +319,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
       url: `${appUrl}/vendors/${slug}`,
-      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: vendor.businessName }],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
-      images: ogImage ? [ogImage] : [],
+      images: [ogImage],
     },
   };
 }

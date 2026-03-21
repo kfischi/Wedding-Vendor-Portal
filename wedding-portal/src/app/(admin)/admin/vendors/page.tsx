@@ -2,7 +2,7 @@ import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import { eq, ilike, and, desc, count, SQL } from "drizzle-orm";
 import Link from "next/link";
-import { Search, ExternalLink } from "lucide-react";
+import { Search, ExternalLink, Ban } from "lucide-react";
 import { approveVendor, suspendVendor } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -43,12 +43,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "אחר",
 };
 
-// inline-style CSS string for status badges on dark bg
-const STATUS_STYLE: Record<string, string> = {
-  pending: "color:#fbbf24;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25)",
-  active:  "color:#34d399;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25)",
-  suspended:"color:#f87171;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25)",
-  rejected: "color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)",
+// React CSSProperties objects for status badges on dark bg
+const STATUS_STYLE: Record<string, React.CSSProperties> = {
+  pending:   { color: "#fbbf24", background: "rgba(251,191,36,0.1)",    border: "1px solid rgba(251,191,36,0.25)" },
+  active:    { color: "#34d399", background: "rgba(52,211,153,0.1)",    border: "1px solid rgba(52,211,153,0.25)" },
+  suspended: { color: "#f87171", background: "rgba(248,113,113,0.1)",   border: "1px solid rgba(248,113,113,0.25)" },
+  rejected:  { color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" },
 };
 
 interface Props {
@@ -207,7 +207,13 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
               </thead>
               <tbody>
                 {vendorList.map((v) => (
-                  <tr key={v.id} style={tableRow}>
+                  <tr
+                    key={v.id}
+                    style={{
+                      ...tableRow,
+                      opacity: v.status === "suspended" || v.status === "rejected" ? 0.55 : 1,
+                    }}
+                  >
                     <td className="px-6 py-4">
                       <div>
                         <Link
@@ -237,9 +243,12 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
                     </td>
                     <td className="px-4 py-4">
                       <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs"
-                        style={{ cssText: STATUS_STYLE[v.status] } as React.CSSProperties}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
+                        style={STATUS_STYLE[v.status] ?? {}}
                       >
+                        {(v.status === "suspended" || v.status === "rejected") && (
+                          <Ban className="w-3 h-3 flex-shrink-0" />
+                        )}
                         {STATUS_LABELS[v.status]}
                       </span>
                     </td>

@@ -12,6 +12,7 @@ import {
   ADMIN_EMAIL,
 } from "@/lib/env";
 import { escapeHtml } from "@/lib/security/sanitize";
+import { n8nVendorRegistered } from "@/lib/n8n";
 
 const VALID_CATEGORIES = vendorCategoryEnum.enumValues;
 
@@ -20,7 +21,7 @@ const schema = z.object({
   businessName: z.string().min(2, "שם עסק נדרש").max(100),
   category: z.enum(VALID_CATEGORIES, { error: "קטגוריה לא תקינה" }),
   city: z.string().min(1, "עיר נדרשת").max(100),
-  phone: z.string().max(20).optional(),
+  phone: z.string().min(9, "טלפון נדרש").max(20),
   couponCode: z.string().min(1, "קוד קופון נדרש").max(50),
 });
 
@@ -189,6 +190,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("[register-free] Coupon increment error:", err);
     // Non-fatal — vendor is already created
   }
+
+  // Trigger n8n webhook (non-blocking)
+  void n8nVendorRegistered({
+    vendor_id: newVendor.id!,
+    vendor_name: businessName,
+    vendor_email: email,
+    vendor_phone: phone ?? null,
+    category,
+    city,
+    plan: "standard",
+    registration_type: "trial",
+    trial_ends_at: trialEndsAt.toISOString(),
+  });
 
   // Send welcome email with password setup link
   try {

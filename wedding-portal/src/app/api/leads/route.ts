@@ -5,7 +5,10 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
-import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, N8N_WEBHOOK_URL } from "@/lib/env";
+import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, RESEND_FROM_EMAIL, ADMIN_EMAIL, ADMIN_PHONE } from "@/lib/env";
+import { n8nLeadNew } from "@/lib/n8n";
+import { waSend } from "@/lib/whatsapp";
+import { scoreAndSaveLead } from "@/lib/ai/score-lead";
 
 // ── Parse DD/MM/YYYY date strings ──────────────────────────────────────────────
 function parseDateString(dateStr: string): Date | null {
@@ -232,7 +235,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       </div>
     `;
 
-    const fromAddress = `WeddingPro <noreply@${new URL(baseUrl).hostname}>`;
+    const fromAddress = RESEND_FROM_EMAIL
+      ? `WeddingPro <${RESEND_FROM_EMAIL}>`
+      : `WeddingPro <noreply@${new URL(baseUrl).hostname}>`;
 
     // Email to vendor
     await resend.emails.send({
@@ -270,27 +275,75 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("[leads] Email send error:", err);
   }
 
-  // ── 7. Trigger n8n webhook (optional WhatsApp notification) ───────────────
-  if (N8N_WEBHOOK_URL) {
-    try {
-      await fetch(N8N_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor_phone: vendor.phone,
-          vendor_name: vendor.businessName,
-          lead_name: name,
-          lead_phone: phone ?? null,
-          lead_email: email,
-          event_date: eventDate ?? null,
-          message,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (err) {
-      console.error("[leads] n8n webhook error:", err);
-    }
+  // ── 7. AI Lead Scoring (non-blocking, fire-and-forget) ────────────────────
+  if (newLead?.id) {
+    void scoreAndSaveLead({
+      id: newLead.id,
+      name,
+      message,
+      phone: phone ?? null,
+      eventDate: eventDate ? parseDateString(eventDate) : null,
+      vendorCategory: vendor.category,
+    });
   }
+
+  // ── 8. WhatsApp notifications (non-blocking) ──────────────────────────────
+  void (async () => {
+    const parsedEventDate = eventDate ? parseDateString(eventDate) : null;
+    const eventDateFormatted = parsedEventDate
+      ? new Intl.DateTimeFormat("he-IL").format(parsedEventDate)
+      : null;
+
+    // Notify vendor
+    if (vendor.phone) {
+      const vendorMsg = [
+        `📋 *פנייה חדשה התקבלה!*`,
+        ``,
+        `*שם:* ${name}`,
+        phone ? `*טלפון:* ${phone}` : null,
+        `*אימייל:* ${email}`,
+        eventDateFormatted ? `*תאריך אירוע:* ${eventDateFormatted}` : null,
+        ``,
+        `*הודעה:*`,
+        message,
+        ``,
+        `לצפייה בלידים: ${NEXT_PUBLIC_APP_URL}/dashboard/leads`,
+      ]
+        .filter((l) => l !== null)
+        .join("\n");
+      await waSend(vendor.phone, vendorMsg);
+    }
+
+    // Notify admin
+    if (ADMIN_PHONE) {
+      const adminMsg = [
+        `📋 *ליד חדש במערכת*`,
+        ``,
+        `*ספק:* ${vendor.businessName}`,
+        `*לקוח:* ${name}`,
+        phone ? `*טלפון:* ${phone}` : null,
+        `*אימייל:* ${email}`,
+        eventDateFormatted ? `*תאריך אירוע:* ${eventDateFormatted}` : null,
+      ]
+        .filter((l) => l !== null)
+        .join("\n");
+      await waSend(ADMIN_PHONE, adminMsg);
+    }
+  })();
+
+  // ── 9. Trigger n8n webhook (non-blocking) ─────────────────────────────────
+  void n8nLeadNew({
+    lead_id: newLead?.id ?? "",
+    vendor_id: vendorId,
+    vendor_name: vendor.businessName,
+    vendor_phone: vendor.phone ?? null,
+    vendor_email: vendor.email,
+    lead_name: name,
+    lead_email: email,
+    lead_phone: phone ?? null,
+    event_date: eventDate ?? null,
+    message,
+  });
 
   return NextResponse.json({ ok: true, leadId: newLead?.id }, { status: 201 });
 }

@@ -27,8 +27,8 @@ const CATEGORIES = [
 ];
 
 const inputCls =
-  "w-full px-4 py-3 rounded-xl border border-champagne/60 bg-white text-obsidian placeholder:text-stone/40 focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold transition-colors text-sm";
-const labelCls = "block text-sm font-semibold text-obsidian mb-1.5";
+  "w-full px-4 py-3 rounded-xl border border-champagne bg-surface-2 text-fg placeholder:text-stone focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold/50 transition-colors text-sm";
+const labelCls = "block text-sm font-semibold text-fg/70 mb-1.5";
 
 export default function JoinFreePage() {
   const [loading, setLoading] = useState(false);
@@ -51,6 +51,7 @@ export default function JoinFreePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.category) { setError("בחר קטגוריה"); return; }
+    if (!form.phone.trim()) { setError("טלפון / WhatsApp נדרש"); return; }
     if (!form.couponCode.trim()) { setError("קוד קופון נדרש"); return; }
 
     setLoading(true);
@@ -78,10 +79,10 @@ export default function JoinFreePage() {
     return (
       <div className="min-h-screen bg-ivory flex items-center justify-center px-4" dir="rtl">
         <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 rounded-full bg-green-950/40 border border-green-700/50 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="h-10 w-10 text-green-500" />
           </div>
-          <h1 className="font-display text-3xl text-obsidian mb-3">ברוכים הבאים!</h1>
+          <h1 className="font-display text-3xl text-fg mb-3">ברוכים הבאים!</h1>
           <p className="text-stone leading-relaxed mb-2">
             שלחנו לך אימייל עם קישור להגדרת סיסמה.
           </p>
@@ -104,7 +105,7 @@ export default function JoinFreePage() {
     <>
       <div className="min-h-screen bg-ivory" dir="rtl">
         {/* Header */}
-        <header className="border-b border-champagne/60 bg-white/80 backdrop-blur-sm sticky top-0 z-30 px-4 py-4">
+        <header className="border-b border-champagne glass sticky top-0 z-30 px-4 py-4">
           <div className="max-w-lg mx-auto flex items-center justify-between">
             <Link href="/" className="font-script text-2xl text-gold">WeddingPro</Link>
             <Link
@@ -129,8 +130,8 @@ export default function JoinFreePage() {
           </div>
 
           {/* Trial features */}
-          <div className="bg-white rounded-2xl border border-champagne/60 p-5 mb-8 shadow-sm">
-            <p className="text-sm font-semibold text-obsidian mb-3">מה כולל תקופת הניסיון:</p>
+          <div className="bg-surface-2 rounded-2xl border border-champagne p-5 mb-8 card-shadow">
+            <p className="text-sm font-semibold text-fg/80 mb-3">מה כולל תקופת הניסיון:</p>
             <ul className="space-y-2">
               {[
                 "פרופיל מלא עם גלריה עד 20 תמונות",
@@ -152,10 +153,10 @@ export default function JoinFreePage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Coupon code — prominent at top */}
-            <div className="bg-gold/5 rounded-2xl border-2 border-gold/30 p-5 shadow-sm">
+            <div className="bg-surface-2 rounded-2xl border border-gold/25 p-5 card-shadow gold-glow">
               <div className="flex items-center gap-2 mb-3">
                 <Gift className="h-4 w-4 text-gold" />
-                <h2 className="font-display text-lg text-obsidian">קוד קופון</h2>
+                <h2 className="font-display text-lg text-fg">קוד קופון</h2>
               </div>
               <label className={labelCls}>קוד קופון *</label>
               <input
@@ -173,8 +174,8 @@ export default function JoinFreePage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-champagne/60 p-6 shadow-sm space-y-5">
-              <h2 className="font-display text-xl text-obsidian">פרטי העסק</h2>
+            <div className="bg-surface-2 rounded-2xl border border-champagne p-6 card-shadow space-y-5">
+              <h2 className="font-display text-xl text-fg">פרטי העסק</h2>
 
               <div>
                 <label className={labelCls}>שם העסק *</label>
@@ -220,8 +221,8 @@ export default function JoinFreePage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-champagne/60 p-6 shadow-sm space-y-5">
-              <h2 className="font-display text-xl text-obsidian">פרטי קשר</h2>
+            <div className="bg-surface-2 rounded-2xl border border-champagne p-6 card-shadow space-y-5">
+              <h2 className="font-display text-xl text-fg">פרטי קשר</h2>
 
               <div>
                 <label className={labelCls}>אימייל *</label>
@@ -241,9 +242,10 @@ export default function JoinFreePage() {
               </div>
 
               <div>
-                <label className={labelCls}>טלפון / WhatsApp</label>
+                <label className={labelCls}>טלפון / WhatsApp *</label>
                 <input
                   type="tel"
+                  required
                   maxLength={20}
                   value={form.phone}
                   onChange={(e) => set("phone", e.target.value)}
@@ -255,7 +257,7 @@ export default function JoinFreePage() {
             </div>
 
             {error && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+              <div className="p-4 rounded-xl bg-red-950/40 border border-red-800/50 text-sm text-red-400">
                 {error}
               </div>
             )}

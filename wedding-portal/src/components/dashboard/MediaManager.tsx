@@ -269,6 +269,14 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
                   />
                 )}
 
+                {/* Video hero badge — first video is auto-used as the hero on vendor page */}
+                {item.type === "video" && media.filter((m) => m.type === "video")[0]?.id === item.id && (
+                  <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 bg-dusty-rose text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm">
+                    <Video className="h-2.5 w-2.5" />
+                    ראשי
+                  </div>
+                )}
+
                 {/* Cover badge */}
                 {item.type === "image" && item.url === coverUrl && (
                   <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 bg-gold text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm">

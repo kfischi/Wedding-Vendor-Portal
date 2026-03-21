@@ -10,6 +10,8 @@ import { LeadStatusSelect } from "@/components/dashboard/LeadStatusSelect";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { MessageSquare } from "lucide-react";
 import type { Lead } from "@/lib/db/schema";
+import { ReviewRequestButton } from "@/components/dashboard/ReviewRequestButton";
+import { AiInsightsWidget } from "@/components/dashboard/AiInsightsWidget";
 
 export const metadata: Metadata = { title: "לידים | WeddingPro" };
 
@@ -32,6 +34,15 @@ const STATUS_DOT: Record<Lead["status"], string> = {
   contacted: "bg-amber-500",
   qualified: "bg-green-500",
   closed:    "bg-stone/40",
+};
+
+const AI_SCORE_STYLES: Record<string, string> = {
+  hot:  "bg-red-50 text-red-600 border-red-200",
+  warm: "bg-amber-50 text-amber-600 border-amber-200",
+  cold: "bg-sky-50 text-sky-600 border-sky-200",
+};
+const AI_SCORE_EMOJI: Record<string, string> = {
+  hot: "🔥", warm: "☀️", cold: "❄️",
 };
 
 function formatDate(date: Date): string {
@@ -115,6 +126,9 @@ export default async function LeadsPage() {
         </div>
       </div>
 
+      {/* AI Insights widget */}
+      <AiInsightsWidget />
+
       {/* Status summary pills */}
       {vendorLeads.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -153,6 +167,7 @@ export default async function LeadsPage() {
                   <th className="px-5 py-3.5 text-xs font-semibold text-stone/60 tracking-wide">תאריך פנייה</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-stone/60 tracking-wide">תאריך אירוע</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-stone/60 tracking-wide">הודעה</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-stone/60 tracking-wide">AI</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-stone/60 tracking-wide">סטטוס</th>
                 </tr>
               </thead>
@@ -201,7 +216,24 @@ export default async function LeadsPage() {
                         <p className="line-clamp-2 text-xs">{lead.message}</p>
                       </td>
                       <td className="px-5 py-4">
-                        <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
+                        {lead.aiScoreLabel ? (
+                          <div
+                            className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full border ${AI_SCORE_STYLES[lead.aiScoreLabel] ?? ""}`}
+                            title={lead.aiScoreReason ?? ""}
+                          >
+                            {AI_SCORE_EMOJI[lead.aiScoreLabel]} {lead.aiScore}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-stone/30">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
+                          {lead.status === "closed" && (
+                            <ReviewRequestButton leadId={lead.id} />
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

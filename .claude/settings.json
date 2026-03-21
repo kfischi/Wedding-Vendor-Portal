@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/user/Wedding-Vendor-Portal/scripts/pre-commit-check.sh",
+            "timeout": 60,
+            "statusMessage": "Running pre-commit quality checks..."
+          }
+        ]
+      }
+    ]
+  }
+}

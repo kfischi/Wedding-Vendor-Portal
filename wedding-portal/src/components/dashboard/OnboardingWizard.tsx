@@ -67,6 +67,10 @@ export function OnboardingWizard({ vendor }: Props) {
   }
 
   async function saveAndContinue() {
+    if (step === 1 && !form.phone.trim()) {
+      toast.error("טלפון / WhatsApp נדרש");
+      return;
+    }
     setSaving(true);
     try {
       const fd = new FormData();
@@ -214,9 +218,10 @@ export function OnboardingWizard({ vendor }: Props) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>טלפון / WhatsApp</label>
+                <label className={labelCls}>טלפון / WhatsApp *</label>
                 <input
                   type="tel"
+                  required
                   dir="ltr"
                   value={form.phone}
                   onChange={(e) => set("phone", e.target.value)}

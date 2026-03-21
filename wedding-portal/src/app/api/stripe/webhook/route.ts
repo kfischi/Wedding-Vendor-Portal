@@ -6,6 +6,7 @@ import { getStripe } from "@/lib/stripe/config";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import { slugify } from "@/lib/utils";
+import { n8nVendorPaymentCompleted } from "@/lib/n8n";
 
 export const runtime = "nodejs";
 
@@ -123,7 +124,15 @@ async function handleCheckoutCompleted(
     console.error("[webhook] DB insert error:", dbError);
   }
 
-  // ── 4. שלח התראה לאדמין ─────────────────────────────────────────────────────
+  // ── 4. Trigger n8n webhook (non-blocking) ────────────────────────────────────
+  void n8nVendorPaymentCompleted({
+    vendor_email: vendorEmail,
+    plan,
+    stripe_session_id: session.id,
+    stripe_customer_id: (session.customer as string | null) ?? null,
+  });
+
+  // ── 5. שלח התראה לאדמין ─────────────────────────────────────────────────────
   const adminEmail = process.env.ADMIN_EMAIL;
   if (adminEmail) {
     await resend.emails.send({

@@ -3,32 +3,63 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
-import {
-  Camera,
-  Building2,
-  UtensilsCrossed,
-  Flower2,
-  Music,
-  Sparkles,
-  Calendar,
-  Headphones,
-  Cake,
-  Shirt,
-  Heart,
-} from "lucide-react";
 
 const CATEGORIES = [
-  { slug: "photography", label: "צילום חתונות", icon: Camera, color: "bg-blush/20 text-dusty-rose" },
-  { slug: "wedding-dress-designers", label: "מעצבי שמלות כלה", icon: Shirt, color: "bg-fuchsia-50 text-fuchsia-500" },
-  { slug: "venue", label: "אולמות ומקומות", icon: Building2, color: "bg-gold/10 text-gold" },
-  { slug: "catering", label: "קייטרינג", icon: UtensilsCrossed, color: "bg-amber-50 text-amber-600" },
-  { slug: "flowers", label: "פרחים ועיצוב", icon: Flower2, color: "bg-pink-50 text-pink-500" },
-  { slug: "music", label: "מוזיקה חיה", icon: Music, color: "bg-purple-50 text-purple-500" },
-  { slug: "makeup", label: "איפור ושיער", icon: Sparkles, color: "bg-rose-50 text-rose-500" },
-  { slug: "planning", label: "תכנון אירועים", icon: Calendar, color: "bg-teal-50 text-teal-600" },
-  { slug: "dj", label: "DJ", icon: Headphones, color: "bg-indigo-50 text-indigo-500" },
-  { slug: "cake", label: "עוגות חתונה", icon: Cake, color: "bg-orange-50 text-orange-500" },
-  { slug: "bridal-preparation", label: "התארגנות כלות", icon: Heart, color: "bg-rose-50 text-rose-400" },
+  {
+    slug: "photography",
+    label: "צילום חתונות",
+    img: "https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=400&q=75&fit=crop&crop=center",
+  },
+  {
+    slug: "wedding-dress-designers",
+    label: "מעצבי שמלות כלה",
+    img: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=75&fit=crop&crop=top",
+  },
+  {
+    slug: "venue",
+    label: "אולמות ומקומות",
+    img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&q=75&fit=crop&crop=center",
+  },
+  {
+    slug: "catering",
+    label: "קייטרינג",
+    img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=75&fit=crop&crop=center",
+  },
+  {
+    slug: "flowers",
+    label: "פרחים ועיצוב",
+    img: "https://images.unsplash.com/photo-1490750967868-88df5691cc8c?w=400&q=75&fit=crop&crop=center",
+  },
+  {
+    slug: "music",
+    label: "מוזיקה חיה",
+    img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&q=75&fit=crop&crop=center",
+  },
+  {
+    slug: "makeup",
+    label: "איפור ושיער",
+    img: "https://images.unsplash.com/photo-1512207736890-6ffed8a84e8d?w=400&q=75&fit=crop&crop=top",
+  },
+  {
+    slug: "planning",
+    label: "תכנון אירועים",
+    img: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=400&q=75&fit=crop&crop=center",
+  },
+  {
+    slug: "dj",
+    label: "DJ",
+    img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=75&fit=crop&crop=center",
+  },
+  {
+    slug: "cake",
+    label: "עוגות חתונה",
+    img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=75&fit=crop&crop=top",
+  },
+  {
+    slug: "bridal-preparation",
+    label: "התארגנות כלות",
+    img: "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&q=75&fit=crop&crop=top",
+  },
 ];
 
 export function AnimatedCategories() {
@@ -40,29 +71,37 @@ export function AnimatedCategories() {
       ref={ref}
       className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"
     >
-      {CATEGORIES.map(({ slug, label, icon: Icon, color }, i) => (
+      {CATEGORIES.map(({ slug, label, img }, i) => (
         <motion.div
           key={slug}
-          initial={{ opacity: 0, y: 22 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: i * 0.07, duration: 0.4, ease: "easeOut" }}
-          whileHover={{
-            y: -6,
-            boxShadow: "0 14px 32px rgba(0,0,0,0.13)",
-            transition: { duration: 0.2 },
-          }}
-          className="bg-cream-white rounded-2xl card-shadow"
+          transition={{ delay: i * 0.07, duration: 0.45, ease: "easeOut" }}
+          whileHover={{ y: -5, transition: { duration: 0.25, ease: "easeOut" } }}
+          className="rounded-2xl overflow-hidden card-shadow"
+          style={{ willChange: "transform" }}
         >
           <Link
             href={`/vendors?category=${slug}`}
-            className="group flex flex-col items-center gap-3 p-4 sm:p-5 rounded-2xl text-center w-full h-full"
+            className="block relative h-36 sm:h-40 bg-stone-800"
           >
-            <div
-              className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color} group-hover:scale-110 transition-transform duration-200`}
-            >
-              <Icon className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-medium text-obsidian leading-tight">{label}</span>
+            <img
+              src={img}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+            {/* gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+            {/* label */}
+            <span className="absolute bottom-0 inset-x-0 px-3 pb-3 text-sm font-semibold text-white text-center leading-tight drop-shadow-sm">
+              {label}
+            </span>
           </Link>
         </motion.div>
       ))}

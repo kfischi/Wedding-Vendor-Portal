@@ -25,19 +25,43 @@ const greatVibes = Great_Vibes({
   display: "swap",
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://weddingpro.co.il";
+
 export const metadata: Metadata = {
   title: {
-    default: "Wedding Vendor Portal | ספקי חתונות בישראל",
-    template: "%s | Wedding Vendor Portal",
+    default: "WeddingPro | ספקי חתונות בישראל",
+    template: "%s | WeddingPro",
   },
   description:
     "הפלטפורמה המובילה לספקי חתונות בישראל. מצאו צלמים, קייטרינג, מקומות אירוע ועוד.",
   keywords: ["חתונה", "ספקי חתונות", "ישראל", "צלם חתונות", "קייטרינג"],
+  metadataBase: new URL(APP_URL),
   openGraph: {
     type: "website",
     locale: "he_IL",
-    url: process.env.NEXT_PUBLIC_APP_URL,
-    siteName: "Wedding Vendor Portal",
+    url: APP_URL,
+    siteName: "WeddingPro",
+    title: "WeddingPro | ספקי חתונות מובחרים בישראל",
+    description:
+      "מעל 500 ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד. מצאו את הספקים המושלמים לחתונה שלכם.",
+    images: [
+      {
+        url: "https://res.cloudinary.com/dptyfvwyo/image/upload/w_1200,h_630,c_fill,g_center,f_jpg,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A4_hkjxkz.jpg",
+        width: 1200,
+        height: 630,
+        alt: "WeddingPro — ספקי חתונות מובחרים בישראל",
+        secureUrl: "https://res.cloudinary.com/dptyfvwyo/image/upload/w_1200,h_630,c_fill,g_center,f_jpg,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A4_hkjxkz.jpg",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WeddingPro | ספקי חתונות מובחרים בישראל",
+    description:
+      "מעל 500 ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג ועוד.",
+    images: [
+      "https://res.cloudinary.com/dptyfvwyo/image/upload/w_1200,h_630,c_fill,g_center,f_jpg,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A4_hkjxkz.jpg",
+    ],
   },
 };
 

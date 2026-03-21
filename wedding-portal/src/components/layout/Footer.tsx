@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Instagram, Facebook } from "lucide-react";
+import { Instagram, Facebook } from "lucide-react";
 
 const YEAR = new Date().getFullYear();
 
@@ -34,56 +34,63 @@ const COLS = [
 
 export function Footer() {
   return (
-    <footer className="bg-obsidian text-white/70 mt-0" dir="rtl">
+    <footer
+      dir="rtl"
+      style={{
+        background: "rgb(9 9 11)",
+        borderTop: "1px solid rgb(39 39 42)",
+        color: "rgb(113 113 122)",
+      }}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
 
-          {/* Brand column */}
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
+
+          {/* Brand */}
           <div className="space-y-4 lg:col-span-1">
-            <div>
-              <p className="font-script text-gold text-2xl leading-none mb-1">WeddingPro</p>
-            </div>
-            <p className="text-sm leading-relaxed text-white/50">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "rgb(24 24 27)", border: "1px solid rgb(39 39 42)" }}
+              >
+                <span className="font-script leading-none" style={{ color: "rgb(201 168 84)", fontSize: "1rem" }}>W</span>
+              </div>
+              <span className="font-semibold text-[15px]" style={{ color: "rgb(250 250 250)" }}>
+                WeddingPro
+              </span>
+            </Link>
+            <p className="text-sm leading-relaxed" style={{ color: "rgb(82 82 91)" }}>
               הפלטפורמה המובילה לחיבור בין ספקי חתונות לזוגות מתחתנים בישראל.
             </p>
-            {/* Social */}
-            <div className="flex items-center gap-3 pt-1">
-              <a
-                href="https://instagram.com/weddingpro.il"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-              >
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a
-                href="https://facebook.com/weddingpro.il"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-              >
-                <Facebook className="h-4 w-4" />
-              </a>
-              {/* TikTok */}
-              <a
-                href="https://tiktok.com/@weddingpro.il"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="TikTok"
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold"
-              >
-                TT
-              </a>
+            <div className="flex items-center gap-2 pt-1">
+              {[
+                { href: "https://instagram.com/weddingpro.il", label: "Instagram", icon: <Instagram className="h-3.5 w-3.5" /> },
+                { href: "https://facebook.com/weddingpro.il",  label: "Facebook",  icon: <Facebook  className="h-3.5 w-3.5" /> },
+                { href: "https://tiktok.com/@weddingpro.il",   label: "TikTok",    icon: <span className="text-[10px] font-bold">TT</span> },
+              ].map(({ href, label, icon }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:text-white"
+                  style={{ background: "rgb(24 24 27)", border: "1px solid rgb(39 39 42)", color: "rgb(113 113 122)" }}
+                >
+                  {icon}
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Nav columns */}
+          {/* Columns */}
           {COLS.map((col) => (
             <div key={col.title}>
-              <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
+              <h3
+                className="text-xs font-semibold uppercase tracking-widest mb-4"
+                style={{ color: "rgb(82 82 91)" }}
+              >
                 {col.title}
               </h3>
               <ul className="space-y-2.5">
@@ -91,7 +98,8 @@ export function Footer() {
                   <li key={href}>
                     <Link
                       href={href}
-                      className="text-sm text-white/50 hover:text-white transition-colors"
+                      className="text-sm transition-colors hover:text-zinc-300"
+                      style={{ color: "rgb(82 82 91)" }}
                     >
                       {label}
                     </Link>
@@ -102,23 +110,39 @@ export function Footer() {
           ))}
         </div>
 
-        {/* Newsletter */}
-        <div className="bg-white/5 rounded-2xl p-5 mb-10 border border-white/10">
+        {/* Newsletter bar */}
+        <div
+          className="rounded-xl p-5 mb-10"
+          style={{
+            background: "rgb(15 15 18)",
+            border: "1px solid rgb(39 39 42)",
+          }}
+        >
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex-1">
-              <p className="text-white text-sm font-semibold mb-0.5">טיפים לחתונה במייל</p>
-              <p className="text-white/40 text-xs">הישארו מעודכנים עם המדריכים הטובים ביותר</p>
+              <p className="text-sm font-medium" style={{ color: "rgb(212 212 216)" }}>
+                טיפים לחתונה במייל
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "rgb(82 82 91)" }}>
+                המדריכים הטובים ביותר ישירות לתיבה שלכם
+              </p>
             </div>
             <form className="flex gap-2 w-full sm:w-auto" action="/contact" method="get">
               <input
                 type="email"
                 placeholder="האימייל שלכם"
                 dir="ltr"
-                className="flex-1 sm:w-52 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-gold/60"
+                className="flex-1 sm:w-52 px-3 py-2 rounded-lg text-sm transition-all"
+                style={{
+                  background: "rgb(24 24 27)",
+                  border: "1px solid rgb(39 39 42)",
+                  color: "rgb(212 212 216)",
+                }}
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-gold text-white text-sm font-semibold hover:bg-gold/90 transition-colors shrink-0"
+                className="px-4 py-2 rounded-lg text-sm font-semibold shrink-0 transition-opacity"
+                style={{ background: "rgb(250 250 250)", color: "rgb(9 9 11)" }}
               >
                 הרשמה
               </button>
@@ -126,13 +150,16 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-white/30">
+        {/* Bottom bar */}
+        <div
+          className="pt-7 flex flex-col sm:flex-row items-center justify-between gap-3"
+          style={{ borderTop: "1px solid rgb(39 39 42)" }}
+        >
+          <p className="text-xs" style={{ color: "rgb(63 63 70)" }}>
             © {YEAR} WeddingPro. כל הזכויות שמורות.
           </p>
-          <p className="text-xs text-white/25 flex items-center gap-1.5">
-            נבנה עם <Heart className="w-3 h-3 text-dusty-rose fill-dusty-rose" /> בישראל 🇮🇱
+          <p className="text-xs" style={{ color: "rgb(63 63 70)" }}>
+            נבנה עם ❤️ בישראל 🇮🇱
           </p>
         </div>
       </div>
