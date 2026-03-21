@@ -46,7 +46,7 @@ export const metadata: Metadata = {
       "מעל 500 ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד. מצאו את הספקים המושלמים לחתונה שלכם.",
     images: [
       {
-        url: "/opengraph-image",
+        url: "https://res.cloudinary.com/dptyfvwyo/image/upload/w_1200,h_630,c_fill,g_center,f_jpg,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A8_hkjxkz.jpg",
         width: 1200,
         height: 630,
         alt: "WeddingPro — ספקי חתונות מובחרים בישראל",
@@ -58,7 +58,9 @@ export const metadata: Metadata = {
     title: "WeddingPro | ספקי חתונות מובחרים בישראל",
     description:
       "מעל 500 ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג ועוד.",
-    images: ["/opengraph-image"],
+    images: [
+      "https://res.cloudinary.com/dptyfvwyo/image/upload/w_1200,h_630,c_fill,g_center,f_jpg,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A8_hkjxkz.jpg",
+    ],
   },
 };
 
