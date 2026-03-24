@@ -13,13 +13,19 @@ import {
   Menu,
   X,
   Shield,
+  Zap,
+  BookOpen,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin", label: "לוח בקרה", icon: LayoutDashboard, exact: true },
   { href: "/admin/vendors", label: "ספקים", icon: Users },
+  { href: "/admin/automations", label: "אוטומציות", icon: Zap },
+  { href: "/admin/blog", label: "בלוג & SEO", icon: BookOpen },
   { href: "/admin/coupons", label: "קופונים", icon: Tag },
+  { href: "/admin/monitor", label: "ניטור מערכת", icon: Activity },
   { href: "/admin/settings", label: "הגדרות", icon: Settings },
 ];
 
