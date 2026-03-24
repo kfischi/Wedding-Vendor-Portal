@@ -260,6 +260,44 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
                 />
               </div>
             </div>
+
+            <div>
+              <label className={labelCls}>TikTok</label>
+              <div className="relative">
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone/40 text-sm select-none font-medium">@</span>
+                <input
+                  name="tiktok"
+                  dir="ltr"
+                  defaultValue={vendor.tiktok?.replace("@", "") ?? ""}
+                  placeholder="yourusername"
+                  className={`${inputCls} pr-8`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={labelCls}>YouTube</label>
+              <input
+                name="youtube"
+                type="url"
+                dir="ltr"
+                defaultValue={vendor.youtube ?? ""}
+                placeholder="https://youtube.com/@yourchannel"
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>Facebook</label>
+              <input
+                name="facebook"
+                type="url"
+                dir="ltr"
+                defaultValue={vendor.facebook ?? ""}
+                placeholder="https://facebook.com/yourpage"
+                className={inputCls}
+              />
+            </div>
           </div>
 
           {/* SEO — Premium only */}
