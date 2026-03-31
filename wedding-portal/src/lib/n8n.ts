@@ -106,6 +106,7 @@ export interface N8nBlogPublished {
 }
 
 export interface N8nSeoPing {
+  [key: string]: unknown;
   event: "seo.ping";
   url: string;
   type: "vendor" | "blog" | "category" | "homepage";

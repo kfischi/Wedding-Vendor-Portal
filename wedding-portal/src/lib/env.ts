@@ -43,7 +43,10 @@ export const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 
 // Optional — no throw if missing
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "";
+export const ADMIN_PHONE = process.env.ADMIN_PHONE ?? "";
 export const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL ?? "";
+export const N8N_API_KEY = process.env.N8N_API_KEY ?? "";
+export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME ?? "";
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY ?? "";
 export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? "";
