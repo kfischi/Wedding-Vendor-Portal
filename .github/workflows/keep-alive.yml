@@ -1,0 +1,21 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # כל 3 ימים בשעה 08:00 UTC
+    - cron: "0 8 */3 * *"
+  workflow_dispatch: # הפעלה ידנית מ-GitHub אם צריך
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping WeddingPro DB
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/api/ping")
+          echo "Response: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Ping failed with status $STATUS"
+            exit 1
+          fi
+          echo "DB is alive ✓"
