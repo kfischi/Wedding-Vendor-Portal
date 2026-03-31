@@ -106,7 +106,6 @@ export interface N8nBlogPublished {
 }
 
 export interface N8nSeoPing {
-  [key: string]: unknown;
   event: "seo.ping";
   url: string;
   type: "vendor" | "blog" | "category" | "homepage";
@@ -168,7 +167,7 @@ export async function sendN8nEvent(
   opts?: { vendorId?: string; leadId?: string }
 ): Promise<{ ok: boolean; durationMs: number }> {
   if (!N8N_WEBHOOK_URL) {
-    void logToDb(payload.event, "skipped", payload as Record<string, unknown>, {
+    void logToDb(payload.event, "skipped", payload as unknown as Record<string, unknown>, {
       error: "N8N_WEBHOOK_URL not configured",
       vendorId: opts?.vendorId,
       leadId: opts?.leadId,
@@ -200,7 +199,7 @@ export async function sendN8nEvent(
       console.error(
         `[n8n] Webhook responded with ${res.status} for event "${payload.event}"`
       );
-      void logToDb(payload.event, "failed", payload as Record<string, unknown>, {
+      void logToDb(payload.event, "failed", payload as unknown as Record<string, unknown>, {
         durationMs,
         responseCode: res.status,
         error: errText.slice(0, 500),
@@ -210,7 +209,7 @@ export async function sendN8nEvent(
       return { ok: false, durationMs };
     }
 
-    void logToDb(payload.event, "sent", payload as Record<string, unknown>, {
+    void logToDb(payload.event, "sent", payload as unknown as Record<string, unknown>, {
       durationMs,
       responseCode: res.status,
       vendorId: opts?.vendorId,
@@ -222,7 +221,7 @@ export async function sendN8nEvent(
     const durationMs = Date.now() - start;
     const error = err instanceof Error ? err.message : "Connection error";
     console.error(`[n8n] Failed to send event "${payload.event}":`, err);
-    void logToDb(payload.event, "failed", payload as Record<string, unknown>, {
+    void logToDb(payload.event, "failed", payload as unknown as Record<string, unknown>, {
       durationMs,
       error,
       vendorId: opts?.vendorId,
