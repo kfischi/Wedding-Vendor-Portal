@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Ping WeddingPro DB
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/api/ping")
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/api/ping?token=${{ secrets.PING_SECRET }}")
           echo "Response: $STATUS"
           if [ "$STATUS" != "200" ]; then
             echo "Ping failed with status $STATUS"
