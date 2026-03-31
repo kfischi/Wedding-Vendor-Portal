@@ -145,7 +145,7 @@ export default function JoinFreePage() {
               ))}
             </ul>
             <p className="text-xs text-stone/50 mt-4 pt-3 border-t border-champagne/40">
-              לאחר 3 חודשים תוכל לבחור תוכנית Standard (₪149/חודש) או Premium (₪349/חודש).
+              לאחר 3 חודשים תוכל להמשיך במנוי חודשי ב-₪179 בלבד — או לבטל בלי שאלות.
             </p>
           </div>
 
@@ -164,7 +164,7 @@ export default function JoinFreePage() {
                 maxLength={50}
                 value={form.couponCode}
                 onChange={(e) => set("couponCode", e.target.value.toUpperCase())}
-                placeholder="WEDDING2025"
+                placeholder="WEDDINGPRO"
                 dir="ltr"
                 className={inputCls + " font-mono tracking-widest uppercase"}
               />
