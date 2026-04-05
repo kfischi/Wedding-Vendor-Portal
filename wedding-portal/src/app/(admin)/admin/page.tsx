@@ -18,7 +18,7 @@ import {
 import { approveVendor, suspendVendor } from "./actions";
 import { formatPrice } from "@/lib/utils";
 
-const PLAN_MRR = { standard: 149, premium: 349 };
+const PLAN_MRR = { standard: 179, premium: 179 };
 
 const CATEGORY_LABELS: Record<string, string> = {
   photography: "צילום",
