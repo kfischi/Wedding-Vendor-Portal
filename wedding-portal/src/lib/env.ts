@@ -40,6 +40,7 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 export const STRIPE_STANDARD_PRICE_ID = process.env.STRIPE_STANDARD_PRICE_ID ?? "";
 export const STRIPE_PREMIUM_PRICE_ID = process.env.STRIPE_PREMIUM_PRICE_ID ?? "";
 export const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
+export const FROM_EMAIL = process.env.FROM_EMAIL ?? "WeddingPro <info@weddingpro.co.il>";
 
 // Optional — no throw if missing
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "";

@@ -7,6 +7,7 @@ import { getStripe } from "@/lib/stripe/config";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import { slugify } from "@/lib/utils";
+import { FROM_EMAIL } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -70,7 +71,7 @@ async function handleCheckoutCompleted(
     resetData?.properties?.action_link ?? `${baseUrl}/auth/login`;
 
   await resend.emails.send({
-    from: `WeddingPro <noreply@${new URL(baseUrl).hostname}>`,
+    from: FROM_EMAIL,
     to: vendorEmail,
     subject: "ברוכים הבאים ל-WeddingPro — הגדר את הסיסמה שלך",
     html: `
@@ -130,7 +131,7 @@ async function handleCheckoutCompleted(
   const adminEmail = process.env.ADMIN_EMAIL;
   if (adminEmail) {
     await resend.emails.send({
-      from: `WeddingPro <noreply@${new URL(baseUrl).hostname}>`,
+      from: FROM_EMAIL,
       to: adminEmail,
       subject: `[WeddingPro] ספק חדש מחכה לאישור — ${vendorEmail}`,
       html: `

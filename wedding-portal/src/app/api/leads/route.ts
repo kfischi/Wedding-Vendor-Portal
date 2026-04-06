@@ -5,7 +5,7 @@ import { Resend } from "resend";
 import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
-import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, N8N_WEBHOOK_URL } from "@/lib/env";
+import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, N8N_WEBHOOK_URL, FROM_EMAIL } from "@/lib/env";
 import { LeadNotificationVendor } from "@/emails/LeadNotificationVendor";
 
 // ── Parse DD/MM/YYYY date strings ──────────────────────────────────────────────
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ? new Intl.DateTimeFormat("he-IL").format(parsedEventDate)
       : null;
 
-    const fromAddress = `WeddingPro <noreply@${new URL(baseUrl).hostname}>`;
+    const fromAddress = FROM_EMAIL;
 
     // Email to vendor — uses React component for rich formatting
     await resend.emails.send({

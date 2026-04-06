@@ -10,6 +10,7 @@ import {
   NEXT_PUBLIC_APP_URL,
   RESEND_API_KEY,
   ADMIN_EMAIL,
+  FROM_EMAIL,
 } from "@/lib/env";
 import { escapeHtml } from "@/lib/security/sanitize";
 
@@ -107,7 +108,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const supabaseAdmin = getSupabaseAdmin();
   const baseUrl = NEXT_PUBLIC_APP_URL;
-  const hostname = new URL(baseUrl).hostname;
 
   // Create Supabase auth user
   const tempPassword = crypto.randomUUID();
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const resend = new Resend(RESEND_API_KEY);
 
     await resend.emails.send({
-      from: `WeddingPro <noreply@${hostname}>`,
+      from: FROM_EMAIL,
       to: email,
       subject: "ברוכים הבאים ל-WeddingPro — הגדר את הסיסמה שלך",
       html: `
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               </a>
             </div>
             <p style="margin:0; color:#9e8e86; font-size:13px;">
-              הקישור תקף ל-24 שעות. לשאלות: <a href="mailto:support@${hostname}" style="color:#b8976a;">support@${hostname}</a>
+              הקישור תקף ל-24 שעות. לשאלות: <a href="mailto:info@weddingpro.co.il" style="color:#b8976a;">info@weddingpro.co.il</a>
             </p>
           </div>
           <div style="padding:12px 28px; background:#faf8f5; text-align:center; font-size:11px; color:#9e8e86;">
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       const resend = new Resend(RESEND_API_KEY);
       await resend.emails.send({
-        from: `WeddingPro <noreply@${hostname}>`,
+        from: FROM_EMAIL,
         to: ADMIN_EMAIL,
         subject: `[WeddingPro] ספק ניסיון חדש — ${businessName}`,
         html: `

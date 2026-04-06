@@ -11,7 +11,7 @@ import { vendors, coupons, adminLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { escapeHtml } from "@/lib/security/sanitize";
-import { RESEND_API_KEY, NEXT_PUBLIC_APP_URL } from "@/lib/env";
+import { RESEND_API_KEY, NEXT_PUBLIC_APP_URL, FROM_EMAIL } from "@/lib/env";
 
 // ─── Admin Guard ──────────────────────────────────────────────────────────────
 
@@ -74,11 +74,10 @@ export async function approveVendor(vendorId: string) {
     try {
       const resend = new Resend(RESEND_API_KEY);
       const baseUrl = NEXT_PUBLIC_APP_URL;
-      const hostname = new URL(baseUrl).hostname;
       const profileUrl = `${baseUrl}/vendors/${vendor.slug}`;
 
       await resend.emails.send({
-        from: `WeddingPro <noreply@${hostname}>`,
+        from: FROM_EMAIL,
         to: vendor.email,
         subject: "🎉 הפרופיל שלך פעיל! — WeddingPro",
         html: `
@@ -300,8 +299,7 @@ export async function broadcastAnnouncement(formData: FormData) {
   if (resendApiKey && activeVendors.length > 0) {
     const { Resend } = await import("resend");
     const resend = new Resend(resendApiKey);
-    const fromEmail =
-      process.env.RESEND_FROM_EMAIL ?? "noreply@wedding-vendor-portal.com";
+    const fromEmail = FROM_EMAIL;
 
     await Promise.allSettled(
       activeVendors.map((v) =>
