@@ -6,6 +6,7 @@ import { db } from "@/lib/db/db";
 import { leads, vendors } from "@/lib/db/schema";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
 import { RATE_LIMIT, NEXT_PUBLIC_APP_URL, RESEND_API_KEY, ADMIN_EMAIL, N8N_WEBHOOK_URL } from "@/lib/env";
+import { LeadNotificationVendor } from "@/emails/LeadNotificationVendor";
 
 // ── Parse DD/MM/YYYY date strings ──────────────────────────────────────────────
 function parseDateString(dateStr: string): Date | null {
@@ -169,100 +170,58 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ? new Intl.DateTimeFormat("he-IL").format(parsedEventDate)
       : null;
 
-    // ── HTML-escape all user-supplied values before inserting into HTML ──────
-    const safeName = escapeHtml(name);
-    const safeEmail = escapeHtml(email);
-    const safePhone = phone ? escapeHtml(phone) : null;
-    const safeMessage = escapeHtmlMultiline(message);
-    const safeVendorName = escapeHtml(vendor.businessName);
-
-    const leadTableRows = `
-      <tr>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">שם</td>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; color:#1a1614;">${safeName}</td>
-      </tr>
-      <tr>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">אימייל</td>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0;">
-          <a href="mailto:${safeEmail}" style="color:#b8976a;">${safeEmail}</a>
-        </td>
-      </tr>
-      ${safePhone ? `<tr>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">טלפון</td>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0;">
-          <a href="tel:${safePhone}" style="color:#b8976a;">${safePhone}</a>
-        </td>
-      </tr>` : ""}
-      ${eventDateFormatted ? `<tr>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">תאריך אירוע</td>
-        <td style="padding:8px; border-bottom:1px solid #e8ddd0; color:#1a1614;">${escapeHtml(eventDateFormatted)}</td>
-      </tr>` : ""}
-      <tr>
-        <td style="padding:8px; font-weight:bold; vertical-align:top; color:#5a4a42;">הודעה</td>
-        <td style="padding:8px; color:#1a1614;">${safeMessage}</td>
-      </tr>
-    `;
-
-    const emailWrapper = (bodyHtml: string) => `
-      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#faf8f5; border-radius:12px; overflow:hidden;">
-        <div style="background: linear-gradient(135deg, #1a1614 0%, #2d2420 100%); padding: 28px 32px;">
-          <p style="margin:0; font-size:22px; color:#b8976a; font-weight:bold;">WeddingPro</p>
-        </div>
-        <div style="padding: 28px 32px; background:#ffffff;">
-          ${bodyHtml}
-        </div>
-        <div style="padding: 16px 32px; background:#faf8f5; text-align:center; font-size:12px; color:#9e8e86;">
-          WeddingPro — פלטפורמת ספקי חתונות בישראל
-        </div>
-      </div>
-    `;
-
-    const ctaButton = (href: string, label: string) => `
-      <div style="margin-top: 24px; text-align:center;">
-        <a href="${escapeHtml(href)}" style="
-          display: inline-block;
-          background: linear-gradient(135deg, #b8976a 0%, #9a7d56 100%);
-          color: white;
-          padding: 13px 28px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: bold;
-          font-size: 14px;
-        ">${escapeHtml(label)}</a>
-      </div>
-    `;
-
     const fromAddress = `WeddingPro <noreply@${new URL(baseUrl).hostname}>`;
 
-    // Email to vendor
+    // Email to vendor — uses React component for rich formatting
     await resend.emails.send({
       from: fromAddress,
       to: vendor.email,
       subject: `פנייה חדשה התקבלה — ${name}`,
-      html: emailWrapper(`
-        <h2 style="margin:0 0 6px; font-size:22px; color:#1a1614;">פנייה חדשה התקבלה!</h2>
-        <p style="margin:0 0 20px; color:#5a4a42; font-size:14px;">לקוח/ה פנה/תה אליך דרך WeddingPro</p>
-        <table style="width:100%; border-collapse:collapse; border: 1px solid #e8ddd0; border-radius:8px; overflow:hidden;">
-          ${leadTableRows}
-        </table>
-        ${ctaButton(`${baseUrl}/dashboard/leads`, "צפה בכל הלידים")}
-      `),
+      react: LeadNotificationVendor({
+        vendorName: vendor.businessName,
+        leadName: name,
+        leadEmail: email,
+        leadPhone: phone ?? null,
+        leadMessage: message,
+        eventDate: eventDateFormatted,
+        profileUrl: `${baseUrl}/dashboard/leads`,
+      }),
     });
 
-    // Email to admin (optional)
+    // Email to admin (optional) — inline HTML with vendor context
     if (ADMIN_EMAIL) {
+      const safeVendorName = escapeHtml(vendor.businessName);
+      const safeName = escapeHtml(name);
+      const safeEmail = escapeHtml(email);
+      const safePhone = phone ? escapeHtml(phone) : null;
+      const safeMessage = escapeHtmlMultiline(message);
+
       await resend.emails.send({
         from: fromAddress,
         to: ADMIN_EMAIL,
         subject: `פנייה חדשה: ${vendor.businessName} ← ${name}`,
-        html: emailWrapper(`
-          <h2 style="margin:0 0 6px; font-size:22px; color:#1a1614;">פנייה חדשה במערכת</h2>
-          <p style="margin:0 0 20px; color:#5a4a42; font-size:14px;">ספק: <strong>${safeVendorName}</strong></p>
-          <table style="width:100%; border-collapse:collapse; border: 1px solid #e8ddd0; border-radius:8px; overflow:hidden;">
-            ${leadTableRows}
-          </table>
-          ${ctaButton(`${baseUrl}/admin/vendors/${escapeHtml(vendorId)}`, "צפה בספק במערכת האדמין")}
-        `),
+        html: `
+          <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#faf8f5; border-radius:12px; overflow:hidden;">
+            <div style="background: linear-gradient(135deg, #1a1614 0%, #2d2420 100%); padding: 28px 32px;">
+              <p style="margin:0; font-size:22px; color:#b8976a; font-weight:bold;">WeddingPro — Admin</p>
+            </div>
+            <div style="padding: 28px 32px; background:#ffffff;">
+              <h2 style="margin:0 0 6px; font-size:22px; color:#1a1614;">פנייה חדשה במערכת</h2>
+              <p style="margin:0 0 20px; color:#5a4a42; font-size:14px;">ספק: <strong>${safeVendorName}</strong></p>
+              <table style="width:100%; border-collapse:collapse; border: 1px solid #e8ddd0; border-radius:8px; overflow:hidden;">
+                <tr><td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">שם</td><td style="padding:8px; border-bottom:1px solid #e8ddd0;">${safeName}</td></tr>
+                <tr><td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">אימייל</td><td style="padding:8px; border-bottom:1px solid #e8ddd0;"><a href="mailto:${safeEmail}" style="color:#b8976a;">${safeEmail}</a></td></tr>
+                ${safePhone ? `<tr><td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">טלפון</td><td style="padding:8px; border-bottom:1px solid #e8ddd0;"><a href="tel:${safePhone}" style="color:#b8976a;">${safePhone}</a></td></tr>` : ""}
+                ${eventDateFormatted ? `<tr><td style="padding:8px; border-bottom:1px solid #e8ddd0; font-weight:bold; color:#5a4a42;">תאריך אירוע</td><td style="padding:8px; border-bottom:1px solid #e8ddd0;">${escapeHtml(eventDateFormatted)}</td></tr>` : ""}
+                <tr><td style="padding:8px; font-weight:bold; vertical-align:top; color:#5a4a42;">הודעה</td><td style="padding:8px;">${safeMessage}</td></tr>
+              </table>
+              <div style="margin-top:24px; text-align:center;">
+                <a href="${baseUrl}/admin/vendors/${escapeHtml(vendorId)}" style="display:inline-block; background:linear-gradient(135deg,#b8976a,#9a7d56); color:white; padding:13px 28px; border-radius:8px; text-decoration:none; font-weight:bold; font-size:14px;">צפה בספק באדמין</a>
+              </div>
+            </div>
+            <div style="padding:16px 32px; background:#faf8f5; text-align:center; font-size:12px; color:#9e8e86;">WeddingPro — פלטפורמת ספקי חתונות בישראל</div>
+          </div>
+        `,
       });
     }
   } catch (err) {
