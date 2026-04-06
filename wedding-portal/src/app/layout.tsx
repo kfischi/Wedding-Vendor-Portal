@@ -1,29 +1,6 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter, Great_Vibes } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
-const greatVibes = Great_Vibes({
-  variable: "--font-script",
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -50,7 +27,7 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${cormorant.variable} ${inter.variable} ${greatVibes.variable}`}
+      className=""
     >
       <body className="antialiased">
         {children}
