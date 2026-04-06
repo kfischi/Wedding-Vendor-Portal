@@ -18,8 +18,10 @@ export async function forgotPasswordAction(
 
   const supabase = await createClient();
 
+  const baseUrl = NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+    redirectTo: `${baseUrl}/auth/reset-password`,
   });
 
   if (error) {
