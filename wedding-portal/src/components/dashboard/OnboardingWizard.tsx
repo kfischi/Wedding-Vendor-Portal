@@ -93,7 +93,7 @@ export function OnboardingWizard({ vendor }: Props) {
 
   async function finish() {
     await saveAndContinue();
-    toast.success("הפרופיל נשמר! בקרוב תקבל אישור מהצוות שלנו 🎉");
+    toast.success("הפרופיל נשמר! הפרופיל שלך פעיל ומופיע בדירקטורי 🎉");
     router.push("/dashboard");
   }
 
@@ -308,10 +308,10 @@ export function OnboardingWizard({ vendor }: Props) {
                 <Rocket className="h-9 w-9 text-gold" />
               </div>
               <div>
-                <h2 className="font-display text-2xl text-obsidian mb-2">הפרופיל כמעט מוכן!</h2>
+                <h2 className="font-display text-2xl text-obsidian mb-2">הפרופיל מוכן!</h2>
                 <p className="text-stone/70 text-sm leading-relaxed max-w-sm mx-auto">
-                  לאחר שמירה, הפרופיל שלך יישלח לאישור קצר מצוות WeddingPro.
-                  בינתיים תוכל להעלות תמונות ולמלא פרטים נוספים.
+                  הפרופיל שלך פעיל ומופיע בדירקטורי מיד לאחר השמירה.
+                  עכשיו תוכל להעלות תמונות ולמלא פרטים נוספים.
                 </p>
               </div>
 
