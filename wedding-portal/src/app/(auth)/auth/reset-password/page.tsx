@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,12 +17,26 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  // The /auth/callback route already exchanged the code for a session.
-  // Check if a session exists immediately, and also listen for auth events as fallback.
   useEffect(() => {
     const supabase = createClient();
 
-    // Immediate check — callback may have already set the session
+    // Supabase PKCE flow: email link redirects here with ?code=XXX
+    // Exchange the code for a session directly on this page.
+    const code = searchParams.get("code");
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error: err }) => {
+        if (!err) {
+          setReady(true);
+          // Clean the code from the URL
+          window.history.replaceState({}, "", "/auth/reset-password");
+        } else {
+          setError("הקישור פג תוקף — בקש קישור חדש");
+        }
+      });
+      return;
+    }
+
+    // Fallback: implicit flow (hash fragment) or existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true);
     });
@@ -32,7 +47,7 @@ export default function ResetPasswordPage() {
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,14 +94,25 @@ export default function ResetPasswordPage() {
     return (
       <div className="w-full max-w-md">
         <div className="bg-cream-white rounded-2xl card-shadow gold-border p-8 sm:p-10 text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-gold mx-auto" />
-          <p className="text-stone text-sm">מאמת את הקישור...</p>
-          <p className="text-stone/50 text-xs">
-            אם העמוד לא נטען, ייתכן שהקישור פג תוקף.{" "}
-            <Link href="/auth/forgot-password" className="text-gold hover:underline">
-              שלח קישור חדש
-            </Link>
-          </p>
+          {error ? (
+            <>
+              <p className="text-red-600 text-sm font-medium">{error}</p>
+              <Link href="/auth/forgot-password" className="text-gold hover:underline text-sm">
+                בקש קישור חדש
+              </Link>
+            </>
+          ) : (
+            <>
+              <Loader2 className="h-8 w-8 animate-spin text-gold mx-auto" />
+              <p className="text-stone text-sm">מאמת את הקישור...</p>
+              <p className="text-stone/50 text-xs">
+                אם העמוד לא נטען, ייתכן שהקישור פג תוקף.{" "}
+                <Link href="/auth/forgot-password" className="text-gold hover:underline">
+                  שלח קישור חדש
+                </Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -192,5 +218,19 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full max-w-md">
+        <div className="bg-cream-white rounded-2xl card-shadow gold-border p-8 sm:p-10 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gold mx-auto" />
+        </div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -21,7 +21,7 @@ export async function forgotPasswordAction(
   const baseUrl = NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${baseUrl}/auth/callback?next=/auth/reset-password`,
+    redirectTo: `${baseUrl}/auth/reset-password`,
   });
 
   if (error) {
