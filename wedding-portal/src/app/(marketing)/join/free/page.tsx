@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, CheckCircle2, Gift } from "lucide-react";
+import { Loader2, CheckCircle2, Gift, Eye, EyeOff } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
 
 const CATEGORIES = [
@@ -42,7 +42,10 @@ export default function JoinFreePage() {
     category: "",
     city: "",
     couponCode: "",
+    password: "",
+    confirmPassword: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   function set(key: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -52,6 +55,8 @@ export default function JoinFreePage() {
     e.preventDefault();
     if (!form.category) { setError("בחר קטגוריה"); return; }
     if (!form.couponCode.trim()) { setError("קוד קופון נדרש"); return; }
+    if (form.password.length < 8) { setError("הסיסמה חייבת להכיל לפחות 8 תווים"); return; }
+    if (form.password !== form.confirmPassword) { setError("הסיסמאות אינן תואמות"); return; }
 
     setLoading(true);
     setError(null);
@@ -249,6 +254,43 @@ export default function JoinFreePage() {
                   onChange={(e) => set("phone", e.target.value)}
                   placeholder="050-0000000"
                   dir="ltr"
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>סיסמה *</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={8}
+                    dir="ltr"
+                    value={form.password}
+                    onChange={(e) => set("password", e.target.value)}
+                    placeholder="לפחות 8 תווים"
+                    className={`${inputCls} pl-10`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-stone/40 hover:text-stone transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelCls}>אישור סיסמה *</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  dir="ltr"
+                  value={form.confirmPassword}
+                  onChange={(e) => set("confirmPassword", e.target.value)}
+                  placeholder="הזן שוב את הסיסמה"
                   className={inputCls}
                 />
               </div>

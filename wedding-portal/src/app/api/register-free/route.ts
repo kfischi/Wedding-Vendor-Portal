@@ -23,6 +23,7 @@ const schema = z.object({
   city: z.string().min(1, "עיר נדרשת").max(100),
   phone: z.string().max(20).optional(),
   couponCode: z.string().min(1, "קוד קופון נדרש").max(50),
+  password: z.string().min(8, "הסיסמה חייבת להכיל לפחות 8 תווים").max(72),
 });
 
 function getSupabaseAdmin() {
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { email, businessName, category, city, phone, couponCode } = parsed.data;
+  const { email, businessName, category, city, phone, couponCode, password } = parsed.data;
   const now = new Date();
 
   // ── Validate coupon ──────────────────────────────────────────────────────────
@@ -109,12 +110,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabaseAdmin = getSupabaseAdmin();
   const baseUrl = NEXT_PUBLIC_APP_URL;
 
-  // Create Supabase auth user
-  const tempPassword = crypto.randomUUID();
+  // Create Supabase auth user with the provided password
   const { data: newUser, error: userError } =
     await supabaseAdmin.auth.admin.createUser({
       email,
-      password: tempPassword,
+      password,
       email_confirm: true,
       user_metadata: { role: "vendor", plan: "standard" },
     });
@@ -135,14 +135,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!userId) {
     return NextResponse.json({ error: "שגיאה ביצירת חשבון" }, { status: 500 });
   }
-
-  // Generate password-reset link
-  const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
-    type: "recovery",
-    email,
-    options: { redirectTo: `${baseUrl}/auth/login` },
-  });
-  const resetUrl = resetData?.properties?.action_link ?? `${baseUrl}/auth/login`;
 
   // Compute trial end date (90 days from now)
   const trialEndsAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -190,14 +182,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Non-fatal — vendor is already created
   }
 
-  // Send welcome email with password setup link
+  // Send welcome email
   try {
     const resend = new Resend(RESEND_API_KEY);
-
     await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
-      subject: "ברוכים הבאים ל-WeddingPro — הגדר את הסיסמה שלך",
+      subject: "ברוכים הבאים ל-WeddingPro!",
       html: `
         <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#faf8f5; border-radius:12px; overflow:hidden;">
           <div style="background: linear-gradient(135deg, #1a1614 0%, #2d2420 100%); padding: 24px 28px;">
@@ -214,17 +205,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 הפרופיל שלך פעיל ומופיע בדירקטורי עד <strong>${trialEndDisplay}</strong>.
               </p>
             </div>
-            <p style="margin:0 0 20px; color:#5a4a42; line-height:1.6;">
-              כדי להתחיל למלא את הפרופיל, הגדר תחילה סיסמה:
-            </p>
             <div style="text-align:center; margin: 24px 0;">
-              <a href="${escapeHtml(resetUrl)}"
+              <a href="${escapeHtml(baseUrl)}/dashboard"
                  style="display:inline-block; background:linear-gradient(135deg,#b8976a,#9a7d56); color:white; padding:14px 32px; border-radius:10px; text-decoration:none; font-weight:bold; font-size:15px;">
-                הגדר סיסמה →
+                כניסה ללוח הבקרה →
               </a>
             </div>
             <p style="margin:0; color:#9e8e86; font-size:13px;">
-              הקישור תקף ל-24 שעות. לשאלות: <a href="mailto:info@weddingpro.co.il" style="color:#b8976a;">info@weddingpro.co.il</a>
+              לשאלות: <a href="mailto:info@weddingpro.co.il" style="color:#b8976a;">info@weddingpro.co.il</a>
             </p>
           </div>
           <div style="padding:12px 28px; background:#faf8f5; text-align:center; font-size:11px; color:#9e8e86;">
