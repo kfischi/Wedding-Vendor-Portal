@@ -249,7 +249,7 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
     const [vendor] = await db
       .select()
       .from(vendors)
-      .where(and(eq(vendors.slug, slug), eq(vendors.status, "active")))
+      .where(eq(vendors.slug, slug))   // no status filter — pending vendors can preview their page
       .limit(1);
 
     if (!vendor) {
@@ -409,6 +409,18 @@ export default async function VendorPage({ params }: Props) {
       />
 
       <div className="min-h-screen bg-ivory">
+        {/* ── Pending / suspended notice ── */}
+        {vendor.status === "pending" && (
+          <div className="w-full bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-sm text-amber-800">
+            🔒 הפרופיל הזה גלוי לך בלבד — הוא לא מופיע עדיין בדירקטורי הציבורי
+          </div>
+        )}
+        {vendor.status === "suspended" && (
+          <div className="w-full bg-red-50 border-b border-red-200 px-4 py-2.5 text-center text-sm text-red-800">
+            הפרופיל הושעה
+          </div>
+        )}
+
         {/* ── Full-bleed Hero ── */}
         <VendorHero vendor={vendor} heroVideo={heroVideo} heroImageUrl={heroImageUrl} />
 
