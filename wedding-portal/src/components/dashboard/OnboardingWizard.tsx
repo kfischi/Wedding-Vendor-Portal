@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { Vendor } from "@/lib/db/schema";
+import { AIDescriptionHelper } from "./AIDescriptionHelper";
 
 const CATEGORIES = [
   { value: "photography",             label: "📷 צילום חתונות" },
@@ -277,7 +278,15 @@ export function OnboardingWizard({ vendor }: Props) {
 
             <div>
               <div className="flex justify-between mb-1.5">
-                <label className={labelCls} style={{margin:0}}>תיאור מלא</label>
+                <div className="flex items-center gap-3">
+                  <label className={labelCls} style={{margin:0}}>תיאור מלא</label>
+                  <AIDescriptionHelper
+                    category={form.category}
+                    city={form.city}
+                    businessName={form.businessName}
+                    onResult={(text) => set("description", text)}
+                  />
+                </div>
                 <span className={`text-xs ${form.description.length > 900 ? "text-amber-500" : "text-stone/40"}`}>
                   {form.description.length}/1000
                 </span>

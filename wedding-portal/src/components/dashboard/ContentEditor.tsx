@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useActionState, useState } from "react";
+import { useEffect, useActionState, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Loader2, User, Phone, Globe, Check } from "lucide-react";
 import { updateContentAction, type ContentFormState } from "@/app/(dashboard)/dashboard/content/actions";
 import type { Vendor } from "@/lib/db/schema";
+import { AIDescriptionHelper } from "./AIDescriptionHelper";
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,7 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
   const [tab, setTab] = useState(0);
   const [descLen, setDescLen] = useState(vendor.description?.length ?? 0);
   const [shortLen, setShortLen] = useState(vendor.shortDescription?.length ?? 0);
+  const descRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (state.success) toast.success("השינויים נשמרו בהצלחה ✓");
@@ -179,12 +181,31 @@ export function ContentEditor({ vendor }: ContentEditorProps) {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className={labelCls} style={{ margin: 0 }}>תיאור מלא</label>
+                <div className="flex items-center gap-3">
+                  <label className={labelCls} style={{ margin: 0 }}>תיאור מלא</label>
+                  <AIDescriptionHelper
+                    category={vendor.category}
+                    city={vendor.city}
+                    businessName={vendor.businessName}
+                    onResult={(text) => {
+                      if (descRef.current) {
+                        // Use native input setter so React detects the change
+                        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                          window.HTMLTextAreaElement.prototype, "value"
+                        )?.set;
+                        nativeInputValueSetter?.call(descRef.current, text);
+                        descRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+                      }
+                      setDescLen(text.length);
+                    }}
+                  />
+                </div>
                 <span className={`text-[10px] ${descLen > 900 ? "text-amber-500" : "text-stone/40"}`}>
                   {descLen}/1000
                 </span>
               </div>
               <textarea
+                ref={descRef}
                 name="description"
                 defaultValue={vendor.description ?? ""}
                 rows={6}
