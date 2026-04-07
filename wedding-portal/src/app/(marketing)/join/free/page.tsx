@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle2, Gift, Eye, EyeOff } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
+import { createClient } from "@/lib/supabase/client";
 
 const CATEGORIES = [
   { value: "photography",             label: "צילום חתונות" },
@@ -31,6 +33,7 @@ const inputCls =
 const labelCls = "block text-sm font-semibold text-obsidian mb-1.5";
 
 export default function JoinFreePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +74,20 @@ export default function JoinFreePage() {
 
       if (!res.ok) { setError(data.error ?? "שגיאה בהרשמה"); return; }
 
-      setDone(true);
+      // Auto-login after successful registration
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      });
+
+      if (signInError) {
+        // Registration succeeded but login failed — show success and let them log in manually
+        setDone(true);
+        return;
+      }
+
+      router.push("/dashboard/onboarding");
     } catch {
       setError("שגיאת רשת — נסה שוב");
     } finally {
@@ -88,10 +104,10 @@ export default function JoinFreePage() {
           </div>
           <h1 className="font-display text-3xl text-obsidian mb-3">ברוכים הבאים!</h1>
           <p className="text-stone leading-relaxed mb-2">
-            שלחנו לך אימייל עם קישור להגדרת סיסמה.
+            החשבון שלך נוצר בהצלחה.
           </p>
           <p className="text-stone/70 text-sm leading-relaxed mb-8">
-            לאחר הגדרת הסיסמה הפרופיל שלך יהיה פעיל מיד ויופיע בדירקטורי.
+            הפרופיל שלך פעיל ומופיע בדירקטורי.
             תקופת הניסיון שלך (3 חודשים) כבר מתחילה לרוץ!
           </p>
           <Link
