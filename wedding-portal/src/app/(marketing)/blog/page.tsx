@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { getAllPosts, getAllCategories } from "@/lib/blog";
+import { getAllPostsMerged, getAllCategories } from "@/lib/blog";
 import { Footer } from "@/components/layout/Footer";
 import { Clock, ChevronLeft } from "lucide-react";
 
@@ -22,7 +22,7 @@ export default async function BlogPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category: catParam } = await searchParams;
-  const allPosts = getAllPosts();
+  const allPosts = await getAllPostsMerged();
   const categories = getAllCategories();
 
   const posts = catParam
