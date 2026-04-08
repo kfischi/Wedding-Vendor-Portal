@@ -16,6 +16,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
   const urlError = searchParams.get("error");
+  const urlErrorDetail = searchParams.get("detail");
 
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -23,10 +24,12 @@ function LoginForm() {
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
     const supabase = createClient();
+    // Use NEXT_PUBLIC_APP_URL to avoid www/non-www cookie mismatch during PKCE flow
+    const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${appOrigin}/auth/callback`,
       },
     });
   }
@@ -42,7 +45,13 @@ function LoginForm() {
 
         {(state.error || urlError) && (
           <div role="alert" className="mb-6 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm text-center">
-            {state.error ?? "שגיאת אימות — נסה שוב"}
+            {state.error
+              ? state.error
+              : urlError === "missing_code"
+              ? "לא התקבל קוד אימות — נסה שוב"
+              : urlError === "auth" && urlErrorDetail
+              ? `שגיאת אימות: ${urlErrorDetail}`
+              : "שגיאת אימות — נסה שוב"}
           </div>
         )}
 

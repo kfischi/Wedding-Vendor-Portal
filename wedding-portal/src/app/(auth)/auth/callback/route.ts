@@ -10,6 +10,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const next = searchParams.get("next");
 
   if (!code) {
+    console.error("[auth/callback] No code in request. URL:", request.url);
     return NextResponse.redirect(`${origin}/auth/login?error=missing_code`);
   }
 
@@ -17,8 +18,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    console.error("[auth/callback]", error.message);
-    return NextResponse.redirect(`${origin}/auth/login?error=auth`);
+    console.error("[auth/callback] exchangeCodeForSession failed:", error.message, "code:", code.slice(0, 8) + "...");
+    // Pass the error type so the UI can show a more helpful message
+    const errParam = encodeURIComponent(error.message.slice(0, 120));
+    return NextResponse.redirect(`${origin}/auth/login?error=auth&detail=${errParam}`);
   }
 
   if (next?.startsWith("/")) {
