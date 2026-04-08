@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 };
 
 const CONTACT_INFO = [
-  { icon: Mail,  label: "אימייל",          value: "support@weddingpro.co.il", href: "mailto:support@weddingpro.co.il" },
-  { icon: Phone, label: "טלפון",           value: "03-000-0000",              href: "tel:030000000" },
+  { icon: Mail,  label: "אימייל",          value: "info@weddingpro.co.il", href: "mailto:info@weddingpro.co.il" },
+  { icon: Phone, label: "טלפון",           value: "052-267-6718",              href: "tel:0522676718" },
   { icon: Clock, label: "שעות פעילות",     value: "א׳–ה׳, 09:00–18:00",      href: null },
 ];
 

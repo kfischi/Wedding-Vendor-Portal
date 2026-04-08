@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Check, Sparkles, Loader2, Gift } from "lucide-react";
+import { Check, X, Sparkles, Loader2, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 async function startCheckout(email: string) {
@@ -16,13 +16,26 @@ async function startCheckout(email: string) {
   return url;
 }
 
-const FEATURES = [
-  "פרופיל ספק מלא",
-  "גלריה עד 20 תמונות",
-  "קישורי רשתות חברתיות",
-  "קבלת לידים ללא הגבלה",
-  "אנליטיקס בסיסי",
-  "תמיכה באימייל",
+const FREE_FEATURES = [
+  { label: "פרופיל ספק מלא", included: true },
+  { label: "גלריה עד 10 תמונות", included: true },
+  { label: "קישורי רשתות חברתיות", included: true },
+  { label: "קבלת לידים", included: true },
+  { label: "אנליטיקס בסיסי", included: true },
+  { label: "כפתור WhatsApp ישיר", included: false },
+  { label: "גלריה עד 50 תמונות", included: false },
+  { label: "תמיכה מועדפת", included: false },
+];
+
+const PAID_FEATURES = [
+  { label: "פרופיל ספק מלא", included: true },
+  { label: "גלריה עד 10 תמונות", included: true },
+  { label: "קישורי רשתות חברתיות", included: true },
+  { label: "קבלת לידים ללא הגבלה", included: true },
+  { label: "אנליטיקס מפורט", included: true },
+  { label: "כפתור WhatsApp ישיר", included: true },
+  { label: "גלריה עד 50 תמונות", included: true },
+  { label: "תמיכה מועדפת", included: true },
 ];
 
 export default function PricingPage() {
@@ -54,7 +67,7 @@ export default function PricingPage() {
             תוכניות ומחירים
           </h1>
           <p className="text-stone text-lg max-w-xl mx-auto leading-relaxed">
-            שני מסלולים פשוטים — תתחיל בחינם עם קופון, או הצטרף ישירות.
+            שני מסלולים פשוטים — תתחיל בחינם עם קופון, או הצטרף ישירות עם כל הפיצ׳רים.
           </p>
         </div>
 
@@ -70,16 +83,20 @@ export default function PricingPage() {
                 <span className="font-display text-4xl text-obsidian">₪0</span>
                 <span className="text-stone text-sm">/ 3 חודשים</span>
               </div>
-              <p className="text-stone text-sm mt-2">
-                עם קוד קופון — ללא כרטיס אשראי
-              </p>
+              <p className="text-stone text-sm mt-2">עם קוד קופון — ללא כרטיס אשראי</p>
             </div>
 
             <ul className="space-y-3 mb-8 flex-1">
-              {FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-2.5 text-sm text-obsidian">
-                  <Check className="h-4 w-4 text-green-500 shrink-0" />
-                  {f}
+              {FREE_FEATURES.map((f) => (
+                <li key={f.label} className="flex items-center gap-2.5 text-sm">
+                  {f.included ? (
+                    <Check className="h-4 w-4 text-green-500 shrink-0" />
+                  ) : (
+                    <X className="h-4 w-4 text-stone/30 shrink-0" />
+                  )}
+                  <span className={f.included ? "text-obsidian" : "text-stone/40"}>
+                    {f.label}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -97,28 +114,24 @@ export default function PricingPage() {
             <div className="absolute top-4 left-4">
               <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-gold/10 text-gold border border-gold/30">
                 <Sparkles className="h-3 w-3" />
-                ללא קופון
+                מלא
               </span>
             </div>
 
             <div className="mb-6">
-              <h2 className="font-display text-2xl text-obsidian mb-1">
-                מנוי חודשי
-              </h2>
+              <h2 className="font-display text-2xl text-obsidian mb-1">מנוי חודשי</h2>
               <div className="flex items-baseline gap-1 mt-3">
                 <span className="font-display text-4xl text-obsidian">₪179</span>
                 <span className="text-stone text-sm">/ חודש</span>
               </div>
-              <p className="text-stone text-sm mt-2">
-                התחל מיד, בטל בכל עת
-              </p>
+              <p className="text-stone text-sm mt-2">התחל מיד, בטל בכל עת</p>
             </div>
 
             <ul className="space-y-3 mb-8 flex-1">
-              {FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-2.5 text-sm text-obsidian">
+              {PAID_FEATURES.map((f) => (
+                <li key={f.label} className="flex items-center gap-2.5 text-sm text-obsidian">
                   <Check className="h-4 w-4 text-gold shrink-0" />
-                  {f}
+                  {f.label}
                 </li>
               ))}
             </ul>
@@ -138,10 +151,7 @@ export default function PricingPage() {
                 className="w-full py-3 rounded-xl text-sm font-medium bg-dusty-rose text-cream-white hover:opacity-90 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 flex items-center justify-center gap-2"
               >
                 {isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    מעבד...
-                  </>
+                  <><Loader2 className="h-4 w-4 animate-spin" />מעבד...</>
                 ) : (
                   "התחל עכשיו"
                 )}
