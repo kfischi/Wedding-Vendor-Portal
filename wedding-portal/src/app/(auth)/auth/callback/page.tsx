@@ -52,11 +52,10 @@ function CallbackHandler() {
         } catch {}
       }
 
-      if (next?.startsWith("/")) {
-        router.replace(next);
-      } else {
-        router.replace("/dashboard");
-      }
+      const destination = next?.startsWith("/") ? next : "/dashboard";
+      // Full page reload (not client-side nav) so cookies written via document.cookie
+      // are guaranteed to be in the browser jar before the server request fires.
+      window.location.href = destination;
     }
 
     handleCallback();
