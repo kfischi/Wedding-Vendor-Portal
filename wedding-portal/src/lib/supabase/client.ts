@@ -28,7 +28,7 @@ export function createOAuthClient() {
   if (typeof window === "undefined") return createRawSupabase(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { detectSessionFromUrl: false, storageKey: "sb-oauth-pkce" } }
+    { auth: { detectSessionInUrl: false, storageKey: "sb-oauth-pkce" } }
   );
   if (!_rawClient) {
     _rawClient = createRawSupabase(
@@ -40,7 +40,7 @@ export function createOAuthClient() {
           storageKey: "sb-oauth-pkce",
           // We call exchangeCodeForSession manually; disable auto-detection to prevent
           // race condition where the client tries to auto-exchange the URL code
-          detectSessionFromUrl: false,
+          detectSessionInUrl: false,
         },
       }
     );
