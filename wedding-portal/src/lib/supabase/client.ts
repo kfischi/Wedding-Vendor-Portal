@@ -28,7 +28,7 @@ export function createOAuthClient() {
   if (typeof window === "undefined") return createRawSupabase(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { detectSessionInUrl: false, storageKey: "sb-oauth-pkce" } }
+    { auth: { flowType: "pkce", detectSessionInUrl: false, storageKey: "sb-oauth-pkce" } }
   );
   if (!_rawClient) {
     _rawClient = createRawSupabase(
@@ -38,6 +38,9 @@ export function createOAuthClient() {
         auth: {
           // Separate storage key — avoids "Multiple GoTrueClient" conflict with SSR client
           storageKey: "sb-oauth-pkce",
+          // Force PKCE so Supabase returns ?code= (not #access_token= from implicit flow)
+          // The verifier is stored in localStorage which survives the cross-domain redirect
+          flowType: "pkce",
           // We call exchangeCodeForSession manually; disable auto-detection to prevent
           // race condition where the client tries to auto-exchange the URL code
           detectSessionInUrl: false,
