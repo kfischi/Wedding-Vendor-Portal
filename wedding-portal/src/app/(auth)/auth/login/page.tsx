@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { loginAction, type LoginState } from "./actions";
 import { createClient } from "@/lib/supabase/client";
+import { createOAuthClient } from "@/lib/supabase/client";
 
 const initialState: LoginState = {};
 
@@ -23,8 +24,8 @@ function LoginForm() {
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
-    const supabase = createClient();
-    // Use NEXT_PUBLIC_APP_URL to avoid www/non-www cookie mismatch during PKCE flow
+    // Use raw OAuth client (localStorage) so PKCE verifier survives cross-domain redirects
+    const supabase = createOAuthClient();
     const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: "google",

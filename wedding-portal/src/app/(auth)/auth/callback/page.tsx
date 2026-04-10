@@ -3,25 +3,24 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createOAuthClient, syncSessionToCookies } from "@/lib/supabase/client";
 
 function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const supabase = createClient();
-
-    // Implicit flow: Supabase puts #access_token= in the URL hash.
-    // The browser client detects it automatically via onAuthStateChange.
-    // PKCE flow: Supabase puts ?code= in the query string.
-    // We handle both cases for robustness.
     const code = searchParams.get("code");
+    const next = searchParams.get("next");
 
-    async function handleSession() {
+    async function handleCallback() {
+      // Use the raw OAuth client (localStorage) — PKCE verifier is stored here,
+      // not in cookies, so it survives the cross-domain OAuth redirect chain.
+      const oauthClient = createOAuthClient();
+
       if (code) {
-        // PKCE fallback
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { data, error } = await oauthClient.auth.exchangeCodeForSession(code);
+
         if (error) {
           console.error("[callback] exchangeCodeForSession:", error.message);
           router.replace(
@@ -29,38 +28,30 @@ function CallbackHandler() {
           );
           return;
         }
-      }
 
-      // Wait for session (covers both implicit hash and PKCE code paths)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        redirectAfterLogin();
-        return;
-      }
-
-      // Implicit flow: session arrives async via hash — listen for it
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          if (event === "SIGNED_IN" && session) {
-            subscription.unsubscribe();
-            redirectAfterLogin();
-          }
-          if (event === "SIGNED_OUT") {
-            subscription.unsubscribe();
-            router.replace("/auth/login?error=auth");
+        if (data.session) {
+          // Sync the session into cookie storage so SSR pages can see the user
+          try {
+            await syncSessionToCookies(
+              data.session.access_token,
+              data.session.refresh_token
+            );
+          } catch (syncErr) {
+            console.warn("[callback] syncSessionToCookies failed:", syncErr);
           }
         }
-      );
+      } else {
+        // No code — check if session already exists (e.g. hash-based implicit)
+        const { data: { session } } = await oauthClient.auth.getSession();
+        if (!session) {
+          router.replace("/auth/login?error=missing_code");
+          return;
+        }
+        try {
+          await syncSessionToCookies(session.access_token, session.refresh_token);
+        } catch {}
+      }
 
-      // Timeout fallback after 8 seconds
-      setTimeout(() => {
-        subscription.unsubscribe();
-        router.replace("/auth/login?error=auth&detail=timeout");
-      }, 8000);
-    }
-
-    function redirectAfterLogin() {
-      const next = searchParams.get("next");
       if (next?.startsWith("/")) {
         router.replace(next);
       } else {
@@ -68,7 +59,7 @@ function CallbackHandler() {
       }
     }
 
-    handleSession();
+    handleCallback();
   }, [router, searchParams]);
 
   return (
