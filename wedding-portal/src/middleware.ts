@@ -57,7 +57,9 @@ async function withAuthGuard(
     },
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     const loginUrl = new URL("/auth/login", request.url);
@@ -68,24 +70,27 @@ async function withAuthGuard(
   return response;
 }
 
-// ── Proxy entrypoint (Next.js 16 — replaces middleware) ───────────────────────
-export async function proxy(request: NextRequest): Promise<NextResponse> {
+// ── Pages that handle ?code= themselves — do NOT intercept ───────────────────
+const CODE_HANDLED_PATHS = ["/auth/callback", "/auth/reset-password"];
+
+// ── Middleware entrypoint ─────────────────────────────────────────────────────
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname, searchParams, origin } = request.nextUrl;
 
-  // Intercept Supabase OAuth ?code= landing on any page → forward to /auth/callback
+  // If Supabase redirected ?code= to the wrong page, forward to /auth/callback
   const code = searchParams.get("code");
-  if (code && pathname !== "/auth/callback") {
+  if (code && !CODE_HANDLED_PATHS.includes(pathname)) {
     const callbackUrl = new URL("/auth/callback", origin);
     callbackUrl.searchParams.set("code", code);
     return NextResponse.redirect(callbackUrl);
   }
 
-  // Pass-through response with headers/cookies
+  // Pass-through response (preserves headers/cookies for SSR)
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
 
-  // Apply security headers on every request
+  // Security headers on every request
   response = applySecurityHeaders(response);
 
   // Protect dashboard and admin routes

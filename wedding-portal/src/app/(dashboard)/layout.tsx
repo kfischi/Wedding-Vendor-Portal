@@ -23,6 +23,11 @@ export default async function DashboardLayout({
     redirect("/auth/login");
   }
 
+  // Admin users have no vendor record — send them straight to the admin panel
+  if (user.email && user.email === process.env.ADMIN_EMAIL) {
+    redirect("/admin");
+  }
+
   let vendor = null;
   let newLeadsCount = 0;
 
