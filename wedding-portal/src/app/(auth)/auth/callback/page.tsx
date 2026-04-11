@@ -10,15 +10,17 @@ function CallbackHandler() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    const next = searchParams.get("next");
-
     async function handleCallback() {
-      // Use the raw OAuth client (localStorage) — PKCE verifier is stored here,
-      // not in cookies, so it survives the cross-domain OAuth redirect chain.
-      const oauthClient = createOAuthClient();
+      const code = searchParams.get("code");
+      const next = searchParams.get("next");
+      const destination = next?.startsWith("/") ? next : "/dashboard";
 
+      // ── 1. PKCE flow: ?code= in query string ──────────────────────────────
+      // The PKCE code verifier was stored in localStorage by createOAuthClient()
+      // on the login page. It survives the full-page redirect chain through Google
+      // and back because localStorage persists within the same origin.
       if (code) {
+        const oauthClient = createOAuthClient();
         const { data, error } = await oauthClient.auth.exchangeCodeForSession(code);
 
         if (error) {
@@ -30,7 +32,6 @@ function CallbackHandler() {
         }
 
         if (data.session) {
-          // Sync the session into cookie storage so SSR pages can see the user
           try {
             await syncSessionToCookies(
               data.session.access_token,
@@ -40,22 +41,65 @@ function CallbackHandler() {
             console.warn("[callback] syncSessionToCookies failed:", syncErr);
           }
         }
-      } else {
-        // No code — check if session already exists (e.g. hash-based implicit)
-        const { data: { session } } = await oauthClient.auth.getSession();
-        if (!session) {
-          router.replace("/auth/login?error=missing_code");
-          return;
-        }
-        try {
-          await syncSessionToCookies(session.access_token, session.refresh_token);
-        } catch {}
+
+        // Full-page reload so SSR sees the new cookies before the first server request
+        window.location.href = destination;
+        return;
       }
 
-      const destination = next?.startsWith("/") ? next : "/dashboard";
-      // Full page reload (not client-side nav) so cookies written via document.cookie
-      // are guaranteed to be in the browser jar before the server request fires.
-      window.location.href = destination;
+      // ── 2. Implicit / magic-link flow: #access_token= in URL hash ─────────
+      // This happens when:
+      //   a) The Supabase project has implicit flow enabled
+      //   b) The redirectTo URL was not in Supabase's allowed list so Supabase
+      //      fell back to the Site URL but still forwarded tokens as a hash
+      //   c) Email magic links or password-reset links
+      const rawHash = window.location.hash.slice(1);
+      if (rawHash) {
+        const hashParams = new URLSearchParams(rawHash);
+
+        // Supabase may embed an error in the hash (e.g. expired link)
+        const hashError = hashParams.get("error_code") ?? hashParams.get("error");
+        const hashErrorDesc = hashParams.get("error_description");
+        if (hashError) {
+          const detail = (hashErrorDesc ?? hashError).slice(0, 120);
+          router.replace(`/auth/login?error=auth&detail=${encodeURIComponent(detail)}`);
+          return;
+        }
+
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+
+        if (accessToken && refreshToken) {
+          try {
+            await syncSessionToCookies(accessToken, refreshToken);
+            window.location.href = destination;
+            return;
+          } catch (syncErr) {
+            console.error("[callback] hash sync failed:", syncErr);
+            router.replace("/auth/login?error=auth&detail=sync_failed");
+            return;
+          }
+        }
+      }
+
+      // ── 3. Last resort: session may already live in the localStorage client ─
+      // Covers edge cases where a previous attempt partially succeeded.
+      try {
+        const oauthClient = createOAuthClient();
+        const {
+          data: { session },
+        } = await oauthClient.auth.getSession();
+        if (session) {
+          await syncSessionToCookies(session.access_token, session.refresh_token);
+          window.location.href = destination;
+          return;
+        }
+      } catch {
+        // ignore — fall through to error
+      }
+
+      // ── 4. Nothing worked ─────────────────────────────────────────────────
+      router.replace("/auth/login?error=missing_code");
     }
 
     handleCallback();
