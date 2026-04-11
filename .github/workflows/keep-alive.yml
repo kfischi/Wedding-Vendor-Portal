@@ -1,21 +1,98 @@
 name: Keep Supabase Alive
 
+# Supabase מכבה פרויקטים חינמיים אחרי 7 ימים ללא פעילות DB.
+# ה-workflow הזה מבצע query ישיר ל-Supabase PostgREST כל 4 ימים —
+# עצמאי לחלוטין מהסייט (Netlify יכול להיות down וזה עדיין יעבוד).
+
 on:
   schedule:
-    # כל 3 ימים בשעה 08:00 UTC
-    - cron: "0 8 */3 * *"
-  workflow_dispatch: # הפעלה ידנית מ-GitHub אם צריך
+    # כל 4 ימים בשעה 07:00 UTC (בטוח מאוד — סף הכיבוי הוא 7 ימים)
+    - cron: "0 7 */4 * *"
+  workflow_dispatch:
 
 jobs:
-  ping:
+  ping-supabase:
+    name: Ping Supabase DB
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      SUPABASE_URL: https://ulfwxmjerugxayuyliug.supabase.co
+      ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
     steps:
-      - name: Ping WeddingPro DB
+      # ── 1. Ping ישיר ל-Supabase PostgREST (לא דרך הסייט) ─────────────────
+      - name: Ping Supabase PostgREST
+        id: supabase_ping
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/api/ping?token=${{ secrets.PING_SECRET }}")
-          echo "Response: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "Ping failed with status $STATUS"
+          echo "🔍 Pinging Supabase PostgREST directly..."
+
+          STATUS=$(curl -s -o body.json -w "%{http_code}" \
+            --max-time 30 \
+            -H "apikey: ${ANON_KEY}" \
+            -H "Authorization: Bearer ${ANON_KEY}" \
+            -H "Accept: application/json" \
+            "${SUPABASE_URL}/rest/v1/vendors?select=count&limit=1")
+
+          echo "HTTP status: ${STATUS}"
+          echo "Response body: $(cat body.json)"
+
+          if [ "${STATUS}" = "200" ] || [ "${STATUS}" = "206" ]; then
+            echo "✅ Supabase DB is alive and responding"
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          elif [ "${STATUS}" = "400" ] || [ "${STATUS}" = "401" ] || [ "${STATUS}" = "403" ]; then
+            # Auth error — DB is up, just missing/wrong key.
+            # Still counts as activity so Supabase won't pause the project.
+            echo "⚠️  DB responded with ${STATUS} (auth issue, but project is awake)"
+            echo "status=warn" >> "$GITHUB_OUTPUT"
+          else
+            echo "❌ Supabase ping failed — status ${STATUS}"
+            echo "status=fail" >> "$GITHUB_OUTPUT"
             exit 1
           fi
-          echo "DB is alive ✓"
+
+      # ── 2. בדיקת Auth endpoint כגיבוי ─────────────────────────────────────
+      - name: Ping Supabase Auth
+        if: steps.supabase_ping.outputs.status != 'ok'
+        run: |
+          echo "🔍 Fallback: pinging Supabase Auth health endpoint..."
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            -H "apikey: ${ANON_KEY}" \
+            "${SUPABASE_URL}/auth/v1/health")
+
+          echo "Auth health status: ${STATUS}"
+
+          if [ "${STATUS}" = "200" ]; then
+            echo "✅ Supabase Auth is healthy"
+          else
+            echo "❌ Both PostgREST and Auth ping failed — Supabase may be down"
+            exit 1
+          fi
+
+      # ── 3. (אופציונלי) Ping לסייט עצמו לוודא שהכל עובד ──────────────────
+      - name: Ping app health check
+        if: ${{ secrets.APP_URL != '' && secrets.PING_SECRET != '' }}
+        continue-on-error: true   # כישלון כאן לא מפיל את ה-workflow
+        run: |
+          echo "🔍 Pinging app health check..."
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            "${{ secrets.APP_URL }}/api/ping?token=${{ secrets.PING_SECRET }}")
+
+          if [ "${STATUS}" = "200" ]; then
+            echo "✅ App is healthy"
+          else
+            echo "⚠️  App ping returned ${STATUS} (non-fatal — Supabase is already awake)"
+          fi
+
+      - name: Summary
+        run: |
+          echo ""
+          echo "═══════════════════════════════════════"
+          echo "  Supabase keep-alive completed ✓"
+          echo "  Next run: in ~4 days"
+          echo "  Supabase pauses after: 7 days inactivity"
+          echo "═══════════════════════════════════════"
