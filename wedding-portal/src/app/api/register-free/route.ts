@@ -112,7 +112,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  let supabaseAdmin: ReturnType<typeof createSupabaseAdmin>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   try {
     supabaseAdmin = getSupabaseAdmin();
   } catch (err) {
@@ -134,23 +135,48 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       user_metadata: { role: "vendor", plan: "standard" },
     });
 
-  if (userError && !userError.message.includes("already registered")) {
-    console.error("[register-free] Supabase user creation error:", userError.message);
-    return NextResponse.json(
-      { error: "שגיאה ביצירת חשבון — " + userError.message },
-      { status: 500 }
-    );
-  }
-
-  // Resolve userId (handle existing user case)
   let userId = newUser?.user?.id;
-  if (!userId) {
-    const { data: existing } = await supabaseAdmin.auth.admin.listUsers();
-    const found = existing?.users?.find((u) => u.email === email);
-    userId = found?.id;
+
+  if (userError) {
+    const isAlreadyExists =
+      userError.message.toLowerCase().includes("already registered") ||
+      userError.message.toLowerCase().includes("already exists") ||
+      userError.message.toLowerCase().includes("email address has already been registered");
+
+    if (!isAlreadyExists) {
+      console.error("[register-free] Supabase createUser error:", userError.message);
+      return NextResponse.json(
+        { error: "שגיאה ביצירת חשבון: " + userError.message },
+        { status: 500 }
+      );
+    }
+
+    // Email already exists in Supabase auth — find userId via paginated search
+    let page = 1;
+    outer: while (true) {
+      const { data: pageData, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: 1000,
+      });
+      if (listErr || !pageData?.users?.length) break;
+      for (const u of pageData.users) {
+        if (u.email === email) { userId = u.id; break outer; }
+      }
+      if (pageData.users.length < 1000) break;
+      page++;
+    }
+
+    if (!userId) {
+      // Edge case: email exists in Supabase but we can't find the userId
+      return NextResponse.json(
+        { error: "האימייל הזה כבר רשום. כנס דרך דף ההתחברות או אפס סיסמה." },
+        { status: 409 }
+      );
+    }
   }
 
   if (!userId) {
+    console.error("[register-free] No userId after createUser (unexpected)");
     return NextResponse.json({ error: "שגיאה ביצירת חשבון" }, { status: 500 });
   }
 
