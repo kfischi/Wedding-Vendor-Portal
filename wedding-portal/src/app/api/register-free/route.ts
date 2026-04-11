@@ -27,8 +27,13 @@ const schema = z.object({
 });
 
 function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(
+      `Missing env vars: ${!url ? "NEXT_PUBLIC_SUPABASE_URL" : ""} ${!key ? "SUPABASE_SERVICE_ROLE_KEY" : ""}`.trim()
+    );
+  }
   return createSupabaseAdmin(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -107,7 +112,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
+  let supabaseAdmin: ReturnType<typeof createSupabaseAdmin>;
+  try {
+    supabaseAdmin = getSupabaseAdmin();
+  } catch (err) {
+    console.error("[register-free] Admin client init error:", err);
+    return NextResponse.json(
+      { error: "שגיאת תצורת שרת — פנה למנהל המערכת" },
+      { status: 500 }
+    );
+  }
+
   const baseUrl = NEXT_PUBLIC_APP_URL;
 
   // Create Supabase auth user with the provided password
@@ -120,8 +135,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
   if (userError && !userError.message.includes("already registered")) {
-    console.error("[register-free] Supabase user creation error:", userError);
-    return NextResponse.json({ error: "שגיאה ביצירת חשבון" }, { status: 500 });
+    console.error("[register-free] Supabase user creation error:", userError.message);
+    return NextResponse.json(
+      { error: "שגיאה ביצירת חשבון — " + userError.message },
+      { status: 500 }
+    );
   }
 
   // Resolve userId (handle existing user case)
