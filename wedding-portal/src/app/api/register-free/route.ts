@@ -211,8 +211,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     await db.insert(vendors).values(newVendor);
   } catch (err) {
-    console.error("[register-free] DB insert error:", err);
-    return NextResponse.json({ error: "שגיאה בשמירת נתונים" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[register-free] DB insert error:", msg);
+    // Clean up the Supabase user we just created so the email can be reused
+    try { await supabaseAdmin.auth.admin.deleteUser(userId); } catch {}
+    return NextResponse.json({ error: "שגיאה בשמירת נתונים: " + msg }, { status: 500 });
   }
 
   // Increment coupon usage
