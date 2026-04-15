@@ -114,11 +114,20 @@ export default async function AdminVendorsPage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-3xl text-white">ניהול ספקים</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-          {total} ספקים נמצאו
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display text-3xl text-white">ניהול ספקים</h1>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+            {total} ספקים נמצאו
+          </p>
+        </div>
+        <Link
+          href="/admin/vendors/new"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
+          style={{ background: "linear-gradient(135deg,#b8935a,#9a7d56)", color: "white" }}
+        >
+          + ספק חדש
+        </Link>
       </div>
 
       {/* Filters bar */}

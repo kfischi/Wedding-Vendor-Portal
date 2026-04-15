@@ -180,6 +180,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "שגיאה ביצירת חשבון" }, { status: 500 });
   }
 
+  // Check if this userId already has a vendor (e.g. previous partial registration)
+  try {
+    const [existingByUserId] = await db
+      .select({ id: vendors.id, email: vendors.email })
+      .from(vendors)
+      .where(eq(vendors.userId, userId))
+      .limit(1);
+
+    if (existingByUserId) {
+      // Vendor already exists for this Supabase user — treat as already registered
+      return NextResponse.json(
+        { error: "החשבון שלך כבר קיים במערכת. כנס דרך דף ההתחברות." },
+        { status: 409 }
+      );
+    }
+  } catch {
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
+
   // Compute trial end date (90 days from now)
   const trialEndsAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
 
