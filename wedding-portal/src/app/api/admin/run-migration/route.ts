@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/lib/db/db";
-import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import postgres from "postgres";
+import { resolve } from "path";
 
 /**
  * POST /api/admin/run-migration
  *
- * Adds missing enum values to the production DB.
- * Safe to run multiple times (IF NOT EXISTS).
+ * Applies all pending Drizzle migrations using DIRECT_URL (bypasses PgBouncer).
  * Requires admin auth.
  */
 export async function POST(): Promise<NextResponse> {
@@ -20,42 +21,32 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const results: { statement: string; status: "ok" | "error"; detail: string }[] = [];
-
-  // Each ALTER TYPE must run separately (cannot be batched in one execute call)
-  const statements = [
-    "ALTER TYPE vendor_category ADD VALUE IF NOT EXISTS 'wedding-dress-designers'",
-    "ALTER TYPE vendor_category ADD VALUE IF NOT EXISTS 'bridal-preparation'",
-  ];
-
-  for (const statement of statements) {
-    try {
-      await db.execute(sql.raw(statement));
-      results.push({ statement, status: "ok", detail: "הצליח" });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      results.push({ statement, status: "error", detail: msg });
-    }
+  // DIRECT_URL bypasses PgBouncer — needed for DDL (ALTER TYPE, etc.)
+  const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+  if (!url) {
+    return NextResponse.json({ error: "Missing DIRECT_URL and DATABASE_URL" }, { status: 500 });
   }
 
-  // Verify the values now exist
+  const isPooled = url.includes(":6543");
+  if (isPooled && !process.env.DIRECT_URL) {
+    return NextResponse.json({
+      error: "DIRECT_URL is not set. ALTER TYPE requires a direct connection (port 5432), not PgBouncer (port 6543). Add DIRECT_URL to Netlify env vars.",
+      hint: "Get it from: Supabase Dashboard → Settings → Database → Connection string (Direct, not Pooled)",
+    }, { status: 400 });
+  }
+
+  const client = postgres(url, { max: 1, ssl: "require", prepare: false, connect_timeout: 30 });
+  const db = drizzle(client);
+
   try {
-    const check = await db.execute(sql`
-      SELECT enumlabel FROM pg_enum
-      JOIN pg_type ON pg_enum.enumtypid = pg_type.oid
-      WHERE pg_type.typname = 'vendor_category'
-    `);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const values = (check as any[]).map((r: { enumlabel: string }) => r.enumlabel);
-    results.push({
-      statement: "verify",
-      status: values.includes("bridal-preparation") && values.includes("wedding-dress-designers") ? "ok" : "error",
-      detail: `ערכים קיימים: ${values.join(", ")}`,
-    });
+    // Use Drizzle's migrate() which tracks applied migrations
+    const migrationsFolder = resolve(process.cwd(), "drizzle");
+    await migrate(db, { migrationsFolder });
+    return NextResponse.json({ ok: true, detail: "כל ה-migrations הוחלו בהצלחה" });
   } catch (err) {
-    results.push({ statement: "verify", status: "error", detail: String(err) });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  } finally {
+    await client.end();
   }
-
-  const allOk = results.every(r => r.status === "ok");
-  return NextResponse.json({ ok: allOk, results }, { status: allOk ? 200 : 207 });
 }
