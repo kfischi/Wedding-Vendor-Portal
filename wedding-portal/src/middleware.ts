@@ -35,7 +35,8 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 // ── Auth guard for protected routes ───────────────────────────────────────────
 async function withAuthGuard(
   request: NextRequest,
-  response: NextResponse
+  response: NextResponse,
+  requireAdmin = false
 ): Promise<NextResponse> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -67,6 +68,13 @@ async function withAuthGuard(
     return NextResponse.redirect(loginUrl);
   }
 
+  if (requireAdmin) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail || user.email !== adminEmail) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
   return response;
 }
 
@@ -93,9 +101,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // Security headers on every request
   response = applySecurityHeaders(response);
 
-  // Protect dashboard and admin routes
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+  // Protect dashboard routes (any authenticated user)
+  if (pathname.startsWith("/dashboard")) {
     response = await withAuthGuard(request, response);
+  }
+
+  // Protect admin routes (admin email only)
+  if (pathname.startsWith("/admin")) {
+    response = await withAuthGuard(request, response, true);
   }
 
   return response;
