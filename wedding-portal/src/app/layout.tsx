@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
+import { AccessibilityWidget } from "@/components/shared/AccessibilityWidget";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({
     >
       <body className="antialiased">
         {children}
+        <AccessibilityWidget />
         <Toaster
           position="bottom-right"
           dir="rtl"
