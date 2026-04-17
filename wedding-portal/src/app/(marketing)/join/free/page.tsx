@@ -35,7 +35,6 @@ const labelCls = "block text-sm font-semibold text-obsidian mb-1.5";
 export default function JoinFreePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -82,8 +81,8 @@ export default function JoinFreePage() {
       });
 
       if (signInError) {
-        // Registration succeeded but login failed — show success and let them log in manually
-        setDone(true);
+        // Registration succeeded but auto-login failed — redirect to login with next param
+        router.push("/auth/login?next=/dashboard/onboarding");
         return;
       }
 
@@ -93,32 +92,6 @@ export default function JoinFreePage() {
     } finally {
       setLoading(false);
     }
-  }
-
-  if (done) {
-    return (
-      <div className="min-h-screen bg-ivory flex items-center justify-center px-4" dir="rtl">
-        <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-10 w-10 text-green-500" />
-          </div>
-          <h1 className="font-display text-3xl text-obsidian mb-3">ברוכים הבאים!</h1>
-          <p className="text-stone leading-relaxed mb-2">
-            החשבון שלך נוצר בהצלחה.
-          </p>
-          <p className="text-stone/70 text-sm leading-relaxed mb-8">
-            הפרופיל שלך פעיל ומופיע בדירקטורי.
-            תקופת הניסיון שלך (3 חודשים) כבר מתחילה לרוץ!
-          </p>
-          <Link
-            href="/auth/login"
-            className="inline-block px-8 py-3 rounded-xl bg-dusty-rose text-white font-semibold text-sm hover:opacity-90 transition-opacity"
-          >
-            כניסה ללוח הבקרה
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (
