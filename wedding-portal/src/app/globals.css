@@ -125,3 +125,15 @@
   .border-gold { border-color: rgb(184 147 90); }
   .border-champagne { border-color: rgb(232 221 208); }
 }
+
+/* ─── Accessibility widget classes ──────────────────────────────────────── */
+
+html.a11y-contrast {
+  filter: contrast(1.4) saturate(0.8);
+}
+
+html.a11y-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  font-weight: 600 !important;
+}
