@@ -376,7 +376,7 @@ export default async function HomePage() {
 
           {/* Plan prices */}
           <p className="mt-8 text-white/30 text-xs">
-            חינם לתמיד · Standard ₪149/חודש · Premium ₪349/חודש
+            3 חודשי ניסיון חינם · ₪179/חודש לאחר מכן · ביטול בכל עת
           </p>
         </div>
       </section>

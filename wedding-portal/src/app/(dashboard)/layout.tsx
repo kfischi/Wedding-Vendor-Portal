@@ -112,15 +112,12 @@ export default async function DashboardLayout({
               כדי להמשיך להופיע בדירקטורי ולקבל לידים — בחר תוכנית מנוי.
             </p>
           </div>
-          <div className="bg-white rounded-2xl border border-amber-100 p-5 text-sm text-stone text-right space-y-3">
+          <div className="bg-white rounded-2xl border border-amber-100 p-5 text-sm text-stone text-right">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-obsidian">Standard</span>
-              <span className="text-gold font-display text-lg">₪149<span className="text-xs text-stone/60">/חודש</span></span>
+              <span className="font-semibold text-obsidian">מנוי חודשי</span>
+              <span className="text-gold font-display text-lg">₪179<span className="text-xs text-stone/60">/חודש</span></span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-obsidian">Premium</span>
-              <span className="text-gold font-display text-lg">₪349<span className="text-xs text-stone/60">/חודש</span></span>
-            </div>
+            <p className="text-xs text-stone/50 mt-2">ביטול בכל עת. ללא עמלות על לידים.</p>
           </div>
           <div className="flex flex-col gap-3">
             <Link

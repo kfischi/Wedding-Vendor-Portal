@@ -2,18 +2,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/layout/Footer";
 import { Heart, Users, Target, Eye, ChevronLeft, Calendar, TrendingUp, Award } from "lucide-react";
+import { db } from "@/lib/db/db";
+import { vendors } from "@/lib/db/schema";
+import { eq, count } from "drizzle-orm";
 
 export const metadata: Metadata = {
   title: "אודות WeddingPro",
   description: "הכירו את WeddingPro — הפלטפורמה המובילה לחיבור בין ספקי חתונות לזוגות מתחתנים בישראל.",
 };
 
-const STATS = [
-  { value: "500+",  label: "ספקים פעילים" },
-  { value: "2,400+", label: "זוגות השתמשו בפלטפורמה" },
-  { value: "18",    label: "קטגוריות ספקים" },
-  { value: "4.8★",  label: "דירוג ממוצע ספקים" },
-];
+async function getVendorCount(): Promise<number> {
+  try {
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return Number(value) ?? 0;
+  } catch {
+    return 0;
+  }
+}
 
 const VALUES = [
   {
@@ -81,7 +89,16 @@ const TEAM = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const vendorCount = await getVendorCount();
+
+  const STATS = [
+    { value: vendorCount > 0 ? `${vendorCount}+` : "עשרות", label: "ספקים פעילים" },
+    { value: "18",    label: "קטגוריות ספקים" },
+    { value: "₪0",   label: "עמלות על עסקאות" },
+    { value: "3",     label: "חודשי ניסיון חינם" },
+  ];
+
   return (
     <>
       <main dir="rtl" className="min-h-screen bg-[#faf9f7]">
@@ -133,7 +150,6 @@ export default function AboutPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-center text-xs text-stone/40 mt-4">נכון לאפריל 2025</p>
             </div>
           </div>
         </section>
