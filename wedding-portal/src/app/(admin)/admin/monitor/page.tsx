@@ -121,6 +121,7 @@ export default function MonitorPage() {
   }, []);
 
   // Initial fetch
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
   // Auto-refresh

@@ -33,21 +33,15 @@ interface AdminSidebarProps {
   adminEmail: string;
 }
 
-export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const supabase = createClient();
+interface AdminSidebarNavProps {
+  isActive: (href: string, exact?: boolean) => boolean;
+  setOpen: (open: boolean) => void;
+  adminEmail: string;
+  handleLogout: () => void;
+}
 
-  const isActive = (href: string, exact?: boolean) =>
-    exact ? pathname === href : pathname.startsWith(href);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/auth/login");
-  };
-
-  const Nav = () => (
+function AdminSidebarNav({ isActive, setOpen, adminEmail, handleLogout }: AdminSidebarNavProps) {
+  return (
     <div
       className="flex flex-col h-full"
       style={{ background: "#0a0a0a" }}
@@ -157,6 +151,21 @@ export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
       </div>
     </div>
   );
+}
+
+export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const supabase = createClient();
+
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname.startsWith(href);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
 
   return (
     <>
@@ -185,12 +194,12 @@ export function AdminSidebar({ adminEmail }: AdminSidebarProps) {
           open ? "translate-x-0" : "translate-x-full"
         )}
       >
-        <Nav />
+        <AdminSidebarNav isActive={isActive} setOpen={setOpen} adminEmail={adminEmail} handleLogout={handleLogout} />
       </div>
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-0 h-screen">
-        <Nav />
+        <AdminSidebarNav isActive={isActive} setOpen={setOpen} adminEmail={adminEmail} handleLogout={handleLogout} />
       </aside>
     </>
   );

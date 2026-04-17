@@ -20,7 +20,7 @@ export interface BlogPost {
   isAiGenerated?: boolean;
 }
 
-export interface BlogPostMeta extends Omit<BlogPost, "content"> {}
+export type BlogPostMeta = Omit<BlogPost, "content">;
 
 function parseFrontmatter(slug: string): { meta: BlogPostMeta; content: string } | null {
   const filePath = path.join(CONTENT_DIR, `${slug}.mdx`);
