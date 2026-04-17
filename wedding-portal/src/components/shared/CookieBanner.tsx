@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Cookie, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,10 +8,16 @@ import { motion, AnimatePresence } from "framer-motion";
 const STORAGE_KEY = "cookie-consent";
 
 export function CookieBanner() {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try { return !localStorage.getItem(STORAGE_KEY); } catch { return false; }
-  });
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setVisible(true);
+      }
+    } catch {}
+  }, []);
 
   const accept = () => {
     try {
