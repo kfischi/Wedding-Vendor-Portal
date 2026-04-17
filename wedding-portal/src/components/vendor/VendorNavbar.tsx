@@ -14,6 +14,36 @@ interface VendorNavbarProps {
   sections: NavSection[];
 }
 
+interface VendorNavLinksProps {
+  sections: NavSection[];
+  activeId: string;
+  onNavClick: (id: string) => void;
+}
+
+function VendorNavLinks({ sections, activeId, onNavClick }: VendorNavLinksProps) {
+  return (
+    <>
+      {sections.map(({ id, label }) => (
+        <button
+          key={id}
+          onClick={() => onNavClick(id)}
+          className={cn(
+            "text-sm transition-colors duration-200 px-1 py-0.5 relative",
+            activeId === id
+              ? "text-dusty-rose font-medium"
+              : "text-stone hover:text-obsidian"
+          )}
+        >
+          {label}
+          {activeId === id && (
+            <span className="absolute -bottom-0.5 right-0 left-0 h-0.5 bg-dusty-rose rounded-full" />
+          )}
+        </button>
+      ))}
+    </>
+  );
+}
+
 export function VendorNavbar({ businessName, sections }: VendorNavbarProps) {
   const [activeId, setActiveId] = useState<string>("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -33,10 +63,8 @@ export function VendorNavbar({ businessName, sections }: VendorNavbarProps) {
           current = id;
         }
       }
-      setActive(current);
+      setActiveId(current);
     };
-
-    const setActive = (id: string) => setActiveId(id);
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
@@ -47,28 +75,6 @@ export function VendorNavbar({ businessName, sections }: VendorNavbarProps) {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     setMenuOpen(false);
   };
-
-  const NavLinks = ({ onClick }: { onClick?: (id: string) => void }) => (
-    <>
-      {sections.map(({ id, label }) => (
-        <button
-          key={id}
-          onClick={() => (onClick ?? scrollTo)(id)}
-          className={cn(
-            "text-sm transition-colors duration-200 px-1 py-0.5 relative",
-            activeId === id
-              ? "text-dusty-rose font-medium"
-              : "text-stone hover:text-obsidian"
-          )}
-        >
-          {label}
-          {activeId === id && (
-            <span className="absolute -bottom-0.5 right-0 left-0 h-0.5 bg-dusty-rose rounded-full" />
-          )}
-        </button>
-      ))}
-    </>
-  );
 
   return (
     <>
@@ -94,7 +100,7 @@ export function VendorNavbar({ businessName, sections }: VendorNavbarProps) {
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-6">
-            <NavLinks />
+            <VendorNavLinks sections={sections} activeId={activeId} onNavClick={scrollTo} />
           </div>
 
           {/* Mobile hamburger */}

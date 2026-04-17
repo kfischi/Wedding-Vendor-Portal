@@ -6,6 +6,7 @@ import { desc, count, eq } from "drizzle-orm";
 import Link from "next/link";
 import { FileText, PlusCircle, Eye, Globe, Archive, FileEdit } from "lucide-react";
 import type { Metadata } from "next";
+import type { BlogPost } from "@/lib/db/schema";
 
 export const metadata: Metadata = { title: "בלוג | WeddingPro Admin" };
 
@@ -22,7 +23,7 @@ const STATUS_COLORS: Record<string, { color: string; background: string; border:
 };
 
 export default async function AdminBlogPage() {
-  let posts: Awaited<ReturnType<typeof db.select>>= [];
+  let posts: BlogPost[] = [];
   let totalCount = 0;
   let publishedCount = 0;
   let draftCount = 0;
@@ -129,10 +130,7 @@ export default async function AdminBlogPage() {
               </thead>
               <tbody>
                 {posts.map((post) => {
-                  const p = post as {
-                    id: string; slug: string; title: string; status: string;
-                    category: string; viewCount: number; publishedAt: Date | null; createdAt: Date;
-                  };
+                  const p = post;
                   const colors = STATUS_COLORS[p.status] ?? STATUS_COLORS.draft;
                   return (
                     <tr key={p.id} className="border-b border-white/[0.04] transition-colors hover:bg-white/[0.03]">
