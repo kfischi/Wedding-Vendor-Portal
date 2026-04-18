@@ -85,21 +85,29 @@ function expiredEmail(businessName: string, appUrl: string): string {
     <p style="margin:0;font-size:20px;color:#b8976a;font-weight:bold;">WeddingPro</p>
   </div>
   <div style="padding:28px 32px;background:#ffffff;">
-    <h2 style="margin:0 0 12px;color:#1a1614;">תקופת הניסיון שלך הסתיימה</h2>
+    <h2 style="margin:0 0 12px;color:#1a1614;">תקופת הניסיון הסתיימה — הפרופיל עבר למסלול חינמי</h2>
     <p style="margin:0 0 16px;color:#5a4a42;line-height:1.6;">
       שלום <strong>${businessName}</strong>,<br/>
-      תקופת הניסיון החינמית שלך הסתיימה והפרופיל הושהה באופן זמני.
+      תקופת הניסיון שלך הסתיימה. <strong>הפרופיל שלך עדיין חי ומוצג בדירקטורי</strong> — אבל עם הגבלות מסלול החינמי.
     </p>
-    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px 18px;margin:0 0 20px;">
-      <p style="margin:0;color:#991b1b;font-size:14px;font-weight:bold;">הפרופיל שלך אינו מוצג כעת בדירקטורי</p>
-      <p style="margin:6px 0 0;color:#7f1d1d;font-size:13px;">
-        כדי להמשיך להופיע ולקבל לידים, יש לחדש את המנוי.
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin:0 0 8px;">
+      <p style="margin:0;color:#92400e;font-size:14px;font-weight:bold;">מה השתנה במסלול החינמי:</p>
+      <ul style="margin:8px 0 0;padding-right:18px;color:#78350f;font-size:13px;line-height:1.8;">
+        <li>עד 10 תמונות בגלריה (במקום 50)</li>
+        <li>ללא כפתור WhatsApp</li>
+        <li>ללא וידאו</li>
+      </ul>
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 18px;margin:0 0 20px;">
+      <p style="margin:0;color:#166534;font-size:14px;font-weight:bold;">✓ הפרופיל ממשיך לקבל לידים ואנשי קשר</p>
+      <p style="margin:6px 0 0;color:#14532d;font-size:13px;">
+        שדרוג למסלול Standard מחזיר את כל הפיצ'רים המלאים.
       </p>
     </div>
     <div style="text-align:center;margin:24px 0;">
       <a href="${appUrl}/dashboard"
          style="display:inline-block;background:linear-gradient(135deg,#b8976a,#9a7d56);color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;">
-        חדש את המנוי ←
+        שדרג למסלול Standard ←
       </a>
     </div>
     <p style="margin:0;color:#9e8e86;font-size:13px;">
@@ -148,14 +156,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const msUntilEnd = v.trialEndsAt.getTime() - now.getTime();
     const daysUntilEnd = msUntilEnd / (24 * 60 * 60 * 1000);
 
-    // ── Expired → suspend + email ───────────────────────────────────────────────
+    // ── Expired → downgrade to free (not suspend) + email ──────────────────────
     if (msUntilEnd < 0) {
       try {
-        await db.update(vendors).set({ status: "suspended", updatedAt: new Date() }).where(eq(vendors.id, v.id));
+        // Keep vendor active but drop to free plan — profile stays live with limits
+        await db
+          .update(vendors)
+          .set({ plan: "free", updatedAt: new Date() })
+          .where(eq(vendors.id, v.id));
         await resend.emails.send({
           from: FROM_EMAIL,
           to: v.email,
-          subject: "תקופת הניסיון שלך הסתיימה — WeddingPro",
+          subject: "תקופת הניסיון הסתיימה — הפרופיל עבר למסלול חינמי | WeddingPro",
           html: expiredEmail(v.businessName, appUrl),
         });
         results.push({ vendorId: v.id, email: v.email, businessName: v.businessName, event: "expired", status: "sent" });

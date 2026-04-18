@@ -83,15 +83,15 @@ export async function GET(): Promise<NextResponse> {
       });
     }
 
-    // 2. Expired trial still active
-    if (v.trialEndsAt && v.trialEndsAt < now && v.status === "active") {
+    // 2. Expired trial still on standard/premium plan (should be downgraded to free)
+    if (v.trialEndsAt && v.trialEndsAt < now && v.plan !== "free") {
       issues.push({
         vendorId: v.id,
         businessName: v.businessName,
         currentSlug: v.slug,
         issueType: "expired-trial",
         severity: "warn",
-        detail: `ניסיון פג ב-${v.trialEndsAt.toLocaleDateString("he-IL")} אך הספק עדיין פעיל`,
+        detail: `ניסיון פג ב-${v.trialEndsAt.toLocaleDateString("he-IL")} — עדיין במסלול ${v.plan}`,
         fixable: true,
       });
     }
@@ -219,16 +219,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       const all = await db.select().from(vendors);
       const expired = all.filter((v) => {
         const matchesFilter = !vendorId || v.id === vendorId;
-        return matchesFilter && v.trialEndsAt && v.trialEndsAt < now && v.status === "active";
+        return matchesFilter && v.trialEndsAt && v.trialEndsAt < now && v.plan !== "free";
       });
 
       for (const v of expired) {
         try {
           await db
             .update(vendors)
-            .set({ status: "suspended", updatedAt: new Date() })
+            .set({ plan: "free", updatedAt: new Date() })
             .where(eq(vendors.id, v.id));
-          results.push({ vendorId: v.id, action: "fix-trial", status: "ok", detail: `${v.businessName} — הושהה` });
+          results.push({ vendorId: v.id, action: "fix-trial", status: "ok", detail: `${v.businessName} — הורד למסלול חינמי` });
         } catch (err) {
           results.push({ vendorId: v.id, action: "fix-trial", status: "error", detail: String(err) });
         }

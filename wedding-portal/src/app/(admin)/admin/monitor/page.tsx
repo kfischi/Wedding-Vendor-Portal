@@ -52,7 +52,7 @@ function StatusIcon({ status }: { status: "ok" | "warn" | "error" }) {
 
 const ISSUE_LABELS: Record<string, string> = {
   "hebrew-slug":         "Slug עברי — גורם ל-404",
-  "expired-trial":       "ניסיון פג תוקף",
+  "expired-trial":       "ניסיון פג — לא הורד ל-free",
   "long-pending":        "ממתין לאישור > 7 ימים",
   "missing-cover":       "תמונת כריכה חסרה",
   "missing-phone":       "טלפון חסר",
