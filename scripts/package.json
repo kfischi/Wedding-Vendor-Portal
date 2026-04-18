@@ -1,0 +1,8 @@
+{
+  "name": "weddingpro-scripts",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0"
+  }
+}

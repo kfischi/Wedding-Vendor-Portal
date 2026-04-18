@@ -1,0 +1,180 @@
+name: Auto-Heal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wedding-portal/src/**"
+      - "wedding-portal/package.json"
+      - "wedding-portal/tsconfig.json"
+  schedule:
+    # Runtime health check — every 6 hours
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      force_heal:
+        description: "Force run Claude fixer even if no TS/lint errors"
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  # ── Job 1: TypeScript + ESLint — auto-fix with Claude ──────────────────────
+  check-and-fix:
+    name: Check & Auto-Fix Code
+    runs-on: ubuntu-latest
+    # Only run on push (not on schedule)
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: wedding-portal/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: wedding-portal
+        run: npm ci
+
+      - name: TypeScript check
+        id: tsc
+        working-directory: wedding-portal
+        run: |
+          npx tsc --noEmit 2>&1 | tee /tmp/tsc-errors.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: ESLint check
+        id: eslint
+        working-directory: wedding-portal
+        run: |
+          npx next lint 2>&1 | tee /tmp/eslint-errors.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Merge error output
+        id: errors
+        run: |
+          cat /tmp/tsc-errors.txt /tmp/eslint-errors.txt > /tmp/errors.txt 2>/dev/null || true
+          # Strip ANSI colour codes
+          sed -i 's/\x1b\[[0-9;]*m//g' /tmp/errors.txt
+          LINE_COUNT=$(wc -l < /tmp/errors.txt)
+          echo "has_errors=$( [ "$LINE_COUNT" -gt 2 ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          echo "line_count=$LINE_COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Run Claude auto-fixer
+        if: |
+          steps.errors.outputs.has_errors == 'true' ||
+          inputs.force_heal == true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "🤖 Calling Claude to fix ${{ steps.errors.outputs.line_count }} error lines…"
+          cd scripts
+          npm install --prefer-offline 2>/dev/null || npm install
+          cd ..
+          node scripts/claude-fix.mjs < /tmp/errors.txt
+
+      - name: Commit fixes (if any)
+        if: |
+          steps.errors.outputs.has_errors == 'true' ||
+          inputs.force_heal == true
+        run: |
+          git config user.name  "claude-auto-heal[bot]"
+          git config user.email "claude-auto-heal[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "✅ No file changes — nothing to commit."
+          else
+            git add -A
+            git commit -m "fix: auto-heal TypeScript/ESLint errors [skip ci]
+
+Applied by Claude (claude-opus-4-7) in response to CI errors.
+Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            git push origin HEAD
+            echo "✅ Fixes committed and pushed."
+          fi
+
+  # ── Job 2: Runtime health check — ping deployed app ────────────────────────
+  runtime-health:
+    name: Runtime Health Check
+    runs-on: ubuntu-latest
+    # Run on schedule and manual dispatch (not on every push)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Check secrets configured
+        id: secrets
+        run: |
+          if [ -z "${{ secrets.NETLIFY_SITE_URL }}" ]; then
+            echo "⚠️  NETLIFY_SITE_URL secret not set — skipping runtime health check."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ping /api/ping
+        if: steps.secrets.outputs.skip == 'false'
+        id: ping
+        run: |
+          BASE_URL="${{ secrets.NETLIFY_SITE_URL }}"
+          # Remove trailing slash
+          BASE_URL="${BASE_URL%/}"
+
+          HTTP_CODE=$(curl -s -o /tmp/ping-response.json -w "%{http_code}" \
+            --max-time 30 \
+            -H "x-ping-secret: ${{ secrets.PING_SECRET }}" \
+            "${BASE_URL}/api/ping")
+
+          echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
+          echo "HTTP status: $HTTP_CODE"
+          cat /tmp/ping-response.json | python3 -m json.tool || cat /tmp/ping-response.json
+
+          if [ "$HTTP_CODE" -ge 500 ]; then
+            echo "❌ Ping returned $HTTP_CODE — site may be down."
+            exit 1
+          fi
+
+      - name: Report health status
+        if: steps.secrets.outputs.skip == 'false'
+        run: |
+          OVERALL=$(cat /tmp/ping-response.json | \
+            python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('overall','unknown'))")
+          echo "Overall health: $OVERALL"
+          if [ "$OVERALL" = "error" ]; then
+            echo "❌ Runtime errors detected — check Netlify logs."
+            python3 -c "
+import sys, json
+d = json.load(open('/tmp/ping-response.json'))
+for c in d.get('checks', []):
+    if c['status'] != 'ok':
+        print(f'  [{c[\"status\"].upper()}] {c[\"name\"]}: {c[\"detail\"]}')
+"
+            exit 1
+          elif [ "$OVERALL" = "warn" ]; then
+            echo "⚠️  Runtime warnings:"
+            python3 -c "
+import sys, json
+d = json.load(open('/tmp/ping-response.json'))
+for c in d.get('checks', []):
+    if c['status'] == 'warn':
+        print(f'  [WARN] {c[\"name\"]}: {c[\"detail\"]}')
+"
+          else
+            echo "✅ All runtime checks passed."
+          fi
+
+      - name: Skipped
+        if: steps.secrets.outputs.skip == 'true'
+        run: echo "ℹ️  Set NETLIFY_SITE_URL + PING_SECRET secrets to enable runtime health checks."
