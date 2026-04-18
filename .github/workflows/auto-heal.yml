@@ -10,6 +10,8 @@ on:
   schedule:
     # Runtime health check — every 6 hours
     - cron: "0 */6 * * *"
+    # Trial reminders — every day at 08:00 UTC
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       force_heal:
@@ -178,3 +180,49 @@ for c in d.get('checks', []):
       - name: Skipped
         if: steps.secrets.outputs.skip == 'true'
         run: echo "ℹ️  Set APP_URL + PING_SECRET secrets to enable runtime health checks."
+
+  # ── Job 3: Trial reminder emails — daily at 08:00 UTC ──────────────────────
+  trial-reminders:
+    name: Trial Expiry Reminders
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Check secrets configured
+        id: secrets
+        run: |
+          if [ -z "${{ secrets.APP_URL }}" ] || [ -z "${{ secrets.PING_SECRET }}" ]; then
+            echo "⚠️  APP_URL or PING_SECRET not set — skipping trial reminders."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send trial reminder emails
+        if: steps.secrets.outputs.skip == 'false'
+        run: |
+          BASE_URL="${{ secrets.APP_URL }}"
+          BASE_URL="${BASE_URL%/}"
+
+          HTTP_CODE=$(curl -s -o /tmp/reminders-response.json -w "%{http_code}" \
+            --max-time 60 \
+            -H "x-ping-secret: ${{ secrets.PING_SECRET }}" \
+            "${BASE_URL}/api/cron/trial-reminders")
+
+          echo "HTTP status: $HTTP_CODE"
+          cat /tmp/reminders-response.json | python3 -m json.tool || cat /tmp/reminders-response.json
+
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ Trial reminders endpoint returned $HTTP_CODE"
+            exit 1
+          fi
+
+          SENT=$(cat /tmp/reminders-response.json | \
+            python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sent',0))")
+          ERRORS=$(cat /tmp/reminders-response.json | \
+            python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('errors',0))")
+          echo "✅ Emails sent: $SENT | Errors: $ERRORS"
+
+      - name: Skipped
+        if: steps.secrets.outputs.skip == 'true'
+        run: echo "ℹ️  Set APP_URL + PING_SECRET to enable trial reminder emails."

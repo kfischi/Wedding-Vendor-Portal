@@ -42,9 +42,9 @@ function getSupabaseAdmin() {
 /**
  * POST /api/register-free
  *
- * Creates a 3-month trial vendor account via coupon code.
+ * Creates a 2-month trial vendor account via coupon code.
  * The coupon is validated against the DB; on success the vendor is
- * immediately active (plan: "standard") with a trialEndsAt 90 days out.
+ * immediately active (plan: "standard") with a trialEndsAt 60 days out.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let body: unknown;
@@ -199,8 +199,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  // Compute trial end date (90 days from now)
-  const trialEndsAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  // Compute trial end date (60 days from now)
+  const trialEndsAt = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
 
   // Format trial end for display
   const trialEndDisplay = new Intl.DateTimeFormat("he-IL", {
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     year: "numeric",
   }).format(trialEndsAt);
 
-  // Create vendor record — active immediately, standard plan, 3-month trial
+  // Create vendor record — active immediately, standard plan, 2-month trial
   const slug = slugify(businessName) + "-" + userId.slice(0, 6);
 
   const newVendor: NewVendor = {
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               פרופיל הספק שלך נוצר בהצלחה עבור <strong>${escapeHtml(businessName)}</strong>.
             </p>
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px 18px; margin:0 0 20px;">
-              <p style="margin:0; color:#166534; font-weight:bold; font-size:14px;">✓ תקופת ניסיון של 3 חודשים פעילה</p>
+              <p style="margin:0; color:#166534; font-weight:bold; font-size:14px;">✓ תקופת ניסיון של 60 יום פעילה</p>
               <p style="margin:6px 0 0; color:#166534; font-size:13px;">
                 הפרופיל שלך פעיל ומופיע בדירקטורי עד <strong>${trialEndDisplay}</strong>.
               </p>
