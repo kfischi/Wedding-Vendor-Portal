@@ -117,8 +117,8 @@ Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{
       - name: Check secrets configured
         id: secrets
         run: |
-          if [ -z "${{ secrets.NETLIFY_SITE_URL }}" ]; then
-            echo "⚠️  NETLIFY_SITE_URL secret not set — skipping runtime health check."
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "⚠️  APP_URL secret not set — skipping runtime health check."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -128,7 +128,7 @@ Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{
         if: steps.secrets.outputs.skip == 'false'
         id: ping
         run: |
-          BASE_URL="${{ secrets.NETLIFY_SITE_URL }}"
+          BASE_URL="${{ secrets.APP_URL }}"
           # Remove trailing slash
           BASE_URL="${BASE_URL%/}"
 
@@ -177,4 +177,4 @@ for c in d.get('checks', []):
 
       - name: Skipped
         if: steps.secrets.outputs.skip == 'true'
-        run: echo "ℹ️  Set NETLIFY_SITE_URL + PING_SECRET secrets to enable runtime health checks."
+        run: echo "ℹ️  Set APP_URL + PING_SECRET secrets to enable runtime health checks."
