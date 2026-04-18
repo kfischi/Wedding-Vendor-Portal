@@ -19,14 +19,20 @@ import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
 import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
 
-// ─── Stats data ────────────────────────────────────────────────────────────────
+// ─── Stats data (vendor count is fetched dynamically) ─────────────────────────
 
-const STATS = [
-  { value: "500+", label: "ספקים מובחרים" },
-  { value: "10,000+", label: "זוגות מאושרים" },
-  { value: "15", label: "קטגוריות" },
-  { value: "4.9★", label: "דירוג ממוצע" },
-];
+async function getVendorCount(): Promise<number> {
+  try {
+    const { count } = await import("drizzle-orm");
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return Number(value) ?? 0;
+  } catch {
+    return 0;
+  }
+}
 
 // ─── Mock featured vendors (fallback when DB is unavailable) ──────────────────
 
@@ -166,7 +172,17 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const featuredVendors = await getFeaturedVendors();
+  const [featuredVendors, vendorCount] = await Promise.all([
+    getFeaturedVendors(),
+    getVendorCount(),
+  ]);
+
+  const STATS = [
+    { value: vendorCount > 0 ? `${vendorCount}+` : "50+", label: "ספקים מובחרים" },
+    { value: "18", label: "קטגוריות" },
+    { value: "4.9★", label: "דירוג ממוצע" },
+    { value: "100%", label: "ספקים מאומתים" },
+  ];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
 
   const websiteJsonLd = {

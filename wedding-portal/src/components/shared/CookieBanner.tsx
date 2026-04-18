@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Cookie, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,16 +8,10 @@ import { motion, AnimatePresence } from "framer-motion";
 const STORAGE_KEY = "cookie-consent";
 
 export function CookieBanner() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) setVisible(true);
-    } catch {
-      // localStorage not available (SSR / private mode)
-    }
-  }, []);
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return !localStorage.getItem(STORAGE_KEY); } catch { return false; }
+  });
 
   const accept = () => {
     try {

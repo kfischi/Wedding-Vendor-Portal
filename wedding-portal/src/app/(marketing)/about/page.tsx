@@ -21,12 +21,6 @@ const VALUES = [
   { icon: Eye,      title: "חדשנות",           desc: "כלים דיגיטליים חכמים שעוזרים לספקים לנהל את העסק ולזוגות לתכנן את היום המושלם." },
 ];
 
-const TEAM = [
-  { name: "דנה כהן",  role: "מנכ״לית ומייסדת",  initials: "ד.כ" },
-  { name: "יואב לוי", role: "CTO",               initials: "י.ל" },
-  { name: "שיר רוז",  role: "ראש שיווק",          initials: "ש.ר" },
-  { name: "עמית בן דוד", role: "ראש תמיכה",      initials: "ע.ב" },
-];
 
 export default function AboutPage() {
   return (
@@ -115,27 +109,6 @@ export default function AboutPage() {
                 <p className="text-stone/60 text-sm leading-relaxed">{v.desc}</p>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* Team */}
-        <section className="bg-white border-y border-champagne/60 py-20">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <p className="font-script text-2xl text-gold mb-2">האנשים מאחורינו</p>
-              <h2 className="font-display text-4xl text-obsidian">הצוות שלנו</h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-              {TEAM.map((member) => (
-                <div key={member.name} className="text-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gold/30 to-blush/30 flex items-center justify-center mx-auto mb-3 border-2 border-champagne">
-                    <span className="font-display text-lg text-obsidian">{member.initials}</span>
-                  </div>
-                  <p className="font-semibold text-obsidian text-sm">{member.name}</p>
-                  <p className="text-xs text-stone/55 mt-0.5">{member.role}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 

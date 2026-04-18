@@ -19,8 +19,8 @@ const PLAN_FEATURES = [
 
 const PLAN_PRICES = [
   { plan: "free", label: "חינמי", price: null, accent: "rgba(255,255,255,0.4)" },
-  { plan: "standard", label: "סטנדרט", price: 149, accent: "#60a5fa" },
-  { plan: "premium", label: "פרימיום", price: 349, accent: "#b8935a" },
+  { plan: "standard", label: "סטנדרט", price: 179, accent: "#60a5fa" },
+  { plan: "premium", label: "פרמיום (legacy)", price: 179, accent: "#b8935a" },
 ];
 
 function FeatureCell({ value }: { value: boolean | string }) {

@@ -34,9 +34,6 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // close drawer on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
-
   return (
     <>
       <header

@@ -40,10 +40,14 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 export const STRIPE_STANDARD_PRICE_ID = process.env.STRIPE_STANDARD_PRICE_ID ?? "";
 export const STRIPE_PREMIUM_PRICE_ID = process.env.STRIPE_PREMIUM_PRICE_ID ?? "";
 export const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
+export const FROM_EMAIL = process.env.FROM_EMAIL ?? "WeddingPro <info@weddingpro.co.il>";
 
 // Optional — no throw if missing
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "";
+export const ADMIN_PHONE = process.env.ADMIN_PHONE ?? "";
 export const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL ?? "";
+export const N8N_API_KEY = process.env.N8N_API_KEY ?? "";
+export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME ?? "";
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY ?? "";
 export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? "";

@@ -18,7 +18,7 @@ import {
 import { approveVendor, suspendVendor } from "./actions";
 import { formatPrice } from "@/lib/utils";
 
-const PLAN_MRR = { standard: 149, premium: 349 };
+const PLAN_MRR = { standard: 179, premium: 179 };
 
 const CATEGORY_LABELS: Record<string, string> = {
   photography: "צילום",
@@ -49,11 +49,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 // dark-background-safe badge colors
-const STATUS_COLORS: Record<string, string> = {
-  pending: "color: #fbbf24; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25)",
-  active: "color: #34d399; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25)",
-  suspended: "color: #f87171; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25)",
-  rejected: "color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1)",
+const STATUS_COLORS: Record<string, { color: string; background: string; border: string }> = {
+  pending: { color: "#fbbf24", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)" },
+  active: { color: "#34d399", background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)" },
+  suspended: { color: "#f87171", background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)" },
+  rejected: { color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" },
 };
 
 export default async function AdminDashboardPage() {
@@ -256,9 +256,7 @@ export default async function AdminDashboardPage() {
                     <tr
                       key={v.id}
                       style={tableRow}
-                      className="transition-colors"
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                      className="transition-colors hover:bg-white/[0.03]"
                     >
                       <td className="px-6 py-3.5">
                         <Link
@@ -288,7 +286,7 @@ export default async function AdminDashboardPage() {
                       <td className="px-4 py-3.5">
                         <span
                           className="inline-flex items-center px-2 py-0.5 rounded-full text-xs"
-                          style={{ cssText: STATUS_COLORS[v.status] } as React.CSSProperties}
+                          style={STATUS_COLORS[v.status]}
                         >
                           {STATUS_LABELS[v.status]}
                         </span>

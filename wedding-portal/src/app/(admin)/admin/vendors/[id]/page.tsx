@@ -326,9 +326,9 @@ export default async function AdminVendorDetailPage({ params }: Props) {
                 defaultValue={vendor.plan}
                 style={{ width: "100%", padding: "10px 12px", background: "#111", border: "1px solid rgba(184,147,90,0.3)", borderRadius: "10px", fontSize: "13px", color: "rgba(255,255,255,0.8)", outline: "none" }}
               >
-                <option value="free">חינם</option>
-                <option value="standard">סטנדרטי (₪149/חודש)</option>
-                <option value="premium">פרמיום (₪349/חודש)</option>
+                <option value="free">חינם (ניסיון)</option>
+                <option value="standard">סטנדרט (₪179/חודש)</option>
+                <option value="premium">פרמיום (legacy)</option>
               </select>
               <button
                 type="submit"
