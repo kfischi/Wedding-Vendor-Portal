@@ -28,15 +28,16 @@ export function formatPrice(
 }
 
 export function slugify(text: string): string {
-  return text
+  const ascii = text
     .toString()
     .toLowerCase()
     .trim()
     .replace(/\s+/g, "-")
-    .replace(/[^\w\-\u0590-\u05FF]+/g, "-")
-    .replace(/\-\-+/g, "-")
+    .replace(/[^a-z0-9\-]+/g, "")  // ASCII-only: strips Hebrew and other non-ASCII
+    .replace(/--+/g, "-")
     .replace(/^-+/, "")
     .replace(/-+$/, "");
+  return ascii.length >= 2 ? ascii : "vendor";
 }
 
 export function truncate(text: string, maxLength: number): string {

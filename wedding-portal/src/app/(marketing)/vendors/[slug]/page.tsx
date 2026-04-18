@@ -1,5 +1,4 @@
-// ISR: revalidate vendor pages every hour — fresh data without SSR overhead
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
@@ -20,20 +19,6 @@ import { LeadCaptureForm } from "@/components/vendor/LeadCaptureForm";
 import { WhatsAppButton } from "@/components/vendor/WhatsAppButton";
 import { ViewCountTracker } from "@/components/vendor/ViewCountTracker";
 import { Footer } from "@/components/layout/Footer";
-
-// ─── Static params ─────────────────────────────────────────────────────────────
-
-export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  try {
-    const rows = await db
-      .select({ slug: vendors.slug })
-      .from(vendors)
-      .where(eq(vendors.status, "active"));
-    return rows.map((r) => ({ slug: r.slug }));
-  } catch {
-    return [];
-  }
-}
 
 // ─── Mock data (for /vendors/demo and DB-fallback during development) ──────────
 
@@ -244,16 +229,22 @@ const MOCK_FALLBACK = () => ({
   reviews: MOCK_REVIEWS,
 });
 
-async function getVendorData(slug: string): Promise<VendorData | null> {
+async function getVendorData(rawSlug: string): Promise<VendorData | null> {
+  // Try as-is first, then URL-decoded — handles old Hebrew slugs stored in DB
+  const candidates = Array.from(new Set([rawSlug, decodeURIComponent(rawSlug)]));
   try {
-    const [vendor] = await db
-      .select()
-      .from(vendors)
-      .where(eq(vendors.slug, slug))   // no status filter — pending vendors can preview their page
-      .limit(1);
+    let vendor: Vendor | undefined;
+    for (const candidate of candidates) {
+      [vendor] = await db
+        .select()
+        .from(vendors)
+        .where(eq(vendors.slug, candidate))
+        .limit(1);
+      if (vendor) break;
+    }
 
     if (!vendor) {
-      return slug === "demo" ? MOCK_FALLBACK() : null;
+      return rawSlug === "demo" ? MOCK_FALLBACK() : null;
     }
 
     const [media, pricing, vendorReviews] = await Promise.all([
@@ -284,8 +275,8 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
 
     return { vendor, media, pricing, reviews: vendorReviews };
   } catch (err) {
-    console.error(`[vendor-page] Error for slug="${slug}":`, err);
-    return slug === "demo" ? MOCK_FALLBACK() : null;
+    console.error(`[vendor-page] Error for slug="${rawSlug}":`, err);
+    return rawSlug === "demo" ? MOCK_FALLBACK() : null;
   }
 }
 
