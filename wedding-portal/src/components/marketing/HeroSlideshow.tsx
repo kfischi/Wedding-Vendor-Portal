@@ -93,7 +93,7 @@ export function HeroSlideshow() {
             className="text-white/80 text-lg sm:text-xl leading-relaxed mb-10 max-w-lg"
             style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}
           >
-            מעל 500 ספקים מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד.
+            פורטל אוצרות של ספקי החתונות הטובים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד.
             כל מה שצריך למסע אל חתונת החלומות.
           </motion.p>
 

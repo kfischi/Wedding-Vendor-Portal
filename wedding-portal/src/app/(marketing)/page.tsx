@@ -8,9 +8,9 @@ import {
   ArrowLeft,
   ChevronLeft,
 } from "lucide-react";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql, count } from "drizzle-orm";
 import { db } from "@/lib/db/db";
-import { vendors } from "@/lib/db/schema";
+import { vendors, reviews } from "@/lib/db/schema";
 import type { Vendor } from "@/lib/db/schema";
 import { VendorCard } from "@/components/vendor/VendorCard";
 import { Footer } from "@/components/layout/Footer";
@@ -19,16 +19,39 @@ import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
 import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
 
-// ─── Stats data (vendor count is fetched dynamically) ─────────────────────────
+// ─── Stats queries ─────────────────────────────────────────────────────────────
 
-async function getVendorCount(): Promise<number> {
+async function getActiveVendorCount(): Promise<number> {
   try {
-    const { count } = await import("drizzle-orm");
     const [{ value }] = await db
       .select({ value: count() })
       .from(vendors)
       .where(eq(vendors.status, "active"));
     return Number(value) ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function getActiveCategoriesCount(): Promise<number> {
+  try {
+    const [{ value }] = await db
+      .select({ value: sql<number>`COUNT(DISTINCT ${vendors.category})` })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return Number(value) ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function getAverageRating(): Promise<number> {
+  try {
+    const [{ value }] = await db
+      .select({ value: sql<number>`COALESCE(AVG(${reviews.rating}), 0)` })
+      .from(reviews)
+      .where(eq(reviews.isPublished, true));
+    return Math.round(Number(value) * 10) / 10;
   } catch {
     return 0;
   }
@@ -172,17 +195,12 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [featuredVendors, vendorCount] = await Promise.all([
+  const [featuredVendors, vendorCount, categoriesCount, avgRating] = await Promise.all([
     getFeaturedVendors(),
-    getVendorCount(),
+    getActiveVendorCount(),
+    getActiveCategoriesCount(),
+    getAverageRating(),
   ]);
-
-  const STATS = [
-    { value: vendorCount > 0 ? `${vendorCount}+` : "50+", label: "ספקים מובחרים" },
-    { value: "18", label: "קטגוריות" },
-    { value: "4.9★", label: "דירוג ממוצע" },
-    { value: "100%", label: "ספקים מאומתים" },
-  ];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
 
   const websiteJsonLd = {
@@ -219,8 +237,13 @@ export default async function HomePage() {
       {/* ── HERO (rotating images + animated text) ─────────────────────────────── */}
       <HeroSlideshow />
 
-      {/* ── STATS (count-up on scroll) ─────────────────────────────────────────── */}
-      <AnimatedStats stats={STATS} />
+      {/* ── STATS (count-up on scroll, hidden if < 3 vendors) ─────────────────── */}
+      <AnimatedStats
+        totalVendors={vendorCount}
+        categories={categoriesCount}
+        avgRating={avgRating}
+        verifiedPercentage={100}
+      />
 
       {/* ── CATEGORIES (stagger on scroll + hover lift) ────────────────────────── */}
       <section className="py-20 sm:py-28">
@@ -302,7 +325,7 @@ export default async function HomePage() {
                 step: "01",
                 icon: MessageCircle,
                 title: "חפשו ומצאו",
-                description: "עיינו בין מאות ספקים מאומתים לפי קטגוריה, עיר ומחיר — כולל תמונות ורשמי לקוחות.",
+                description: "עיינו בין ספקים מאומתים לפי קטגוריה, עיר ומחיר — כולל תמונות וביקורות לקוחות.",
                 color: "bg-blush/20 text-dusty-rose",
               },
               {
