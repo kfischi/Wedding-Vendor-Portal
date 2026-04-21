@@ -1,0 +1,72 @@
+name: Health Monitor
+
+on:
+  schedule:
+    - cron: "0 8 * * *"  # כל יום בשעה 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets are configured
+        id: check_secrets
+        run: |
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "⚠️  APP_URL secret is not set — skipping health check"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run health check
+        if: steps.check_secrets.outputs.skip == 'false'
+        run: |
+          AUTH_HEADER=""
+          if [ -n "${{ secrets.N8N_API_KEY }}" ]; then
+            AUTH_HEADER="-H \"Authorization: Bearer ${{ secrets.N8N_API_KEY }}\""
+          fi
+
+          response=$(curl -s -o response.json -w "%{http_code}" \
+            --max-time 30 \
+            -H "Authorization: Bearer ${{ secrets.N8N_API_KEY }}" \
+            "${{ secrets.APP_URL }}/api/admin/health-check")
+
+          echo "HTTP Status: $response"
+          cat response.json
+
+          if [ "$response" != "200" ]; then
+            echo "❌ Health check failed with status $response"
+            exit 1
+          fi
+
+          status=$(cat response.json | python3 -c \
+            'import sys,json; d=json.load(sys.stdin); print(d.get("status", "unknown"))')
+          echo "Overall status: $status"
+
+          if [ "$status" = "error" ]; then
+            echo "❌ Health check returned error status"
+            cat response.json | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+for c in d.get("checks", []):
+    if c["status"] != "ok":
+        print(f"  [{c[\"status\"].upper()}] {c[\"name\"]}: {c[\"message\"]}")
+'
+            exit 1
+          fi
+
+          echo "✅ Health check passed (status: $status)"
+          if [ "$status" = "warn" ]; then
+            cat response.json | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+for c in d.get("checks", []):
+    if c["status"] == "warn":
+        print(f"  [WARN] {c[\"name\"]}: {c[\"message\"]}")
+'
+          fi
+
+      - name: Skipped
+        if: steps.check_secrets.outputs.skip == 'true'
+        run: echo "ℹ️  Health check skipped — set APP_URL secret in GitHub repo settings to enable"

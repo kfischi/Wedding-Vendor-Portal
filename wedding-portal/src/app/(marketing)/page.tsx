@@ -8,9 +8,9 @@ import {
   ArrowLeft,
   ChevronLeft,
 } from "lucide-react";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql, count } from "drizzle-orm";
 import { db } from "@/lib/db/db";
-import { vendors } from "@/lib/db/schema";
+import { vendors, reviews } from "@/lib/db/schema";
 import type { Vendor } from "@/lib/db/schema";
 import { VendorCard } from "@/components/vendor/VendorCard";
 import { Footer } from "@/components/layout/Footer";
@@ -19,14 +19,43 @@ import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
 import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
 
-// ─── Stats data ────────────────────────────────────────────────────────────────
+// ─── Stats queries ─────────────────────────────────────────────────────────────
 
-const STATS = [
-  { value: "500+", label: "ספקים מובחרים" },
-  { value: "10,000+", label: "זוגות מאושרים" },
-  { value: "15", label: "קטגוריות" },
-  { value: "4.9★", label: "דירוג ממוצע" },
-];
+async function getActiveVendorCount(): Promise<number> {
+  try {
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return Number(value) ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function getActiveCategoriesCount(): Promise<number> {
+  try {
+    const [{ value }] = await db
+      .select({ value: sql<number>`COUNT(DISTINCT ${vendors.category})` })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return Number(value) ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function getAverageRating(): Promise<number> {
+  try {
+    const [{ value }] = await db
+      .select({ value: sql<number>`COALESCE(AVG(${reviews.rating}), 0)` })
+      .from(reviews)
+      .where(eq(reviews.isPublished, true));
+    return Math.round(Number(value) * 10) / 10;
+  } catch {
+    return 0;
+  }
+}
 
 // ─── Mock featured vendors (fallback when DB is unavailable) ──────────────────
 
@@ -166,7 +195,12 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const featuredVendors = await getFeaturedVendors();
+  const [featuredVendors, vendorCount, categoriesCount, avgRating] = await Promise.all([
+    getFeaturedVendors(),
+    getActiveVendorCount(),
+    getActiveCategoriesCount(),
+    getAverageRating(),
+  ]);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
 
   const websiteJsonLd = {
@@ -203,8 +237,13 @@ export default async function HomePage() {
       {/* ── HERO (rotating images + animated text) ─────────────────────────────── */}
       <HeroSlideshow />
 
-      {/* ── STATS (count-up on scroll) ─────────────────────────────────────────── */}
-      <AnimatedStats stats={STATS} />
+      {/* ── STATS (count-up on scroll, hidden if < 3 vendors) ─────────────────── */}
+      <AnimatedStats
+        totalVendors={vendorCount}
+        categories={categoriesCount}
+        avgRating={avgRating}
+        verifiedPercentage={100}
+      />
 
       {/* ── CATEGORIES (stagger on scroll + hover lift) ────────────────────────── */}
       <section className="py-20 sm:py-28">
@@ -286,7 +325,7 @@ export default async function HomePage() {
                 step: "01",
                 icon: MessageCircle,
                 title: "חפשו ומצאו",
-                description: "עיינו בין מאות ספקים מאומתים לפי קטגוריה, עיר ומחיר — כולל תמונות ורשמי לקוחות.",
+                description: "עיינו בין ספקים מאומתים לפי קטגוריה, עיר ומחיר — כולל תמונות וביקורות לקוחות.",
                 color: "bg-blush/20 text-dusty-rose",
               },
               {
@@ -360,7 +399,7 @@ export default async function HomePage() {
 
           {/* Plan prices */}
           <p className="mt-8 text-white/30 text-xs">
-            חינם לתמיד · Standard ₪149/חודש · Premium ₪349/חודש
+            3 חודשי ניסיון חינם · ₪179/חודש לאחר מכן · ביטול בכל עת
           </p>
         </div>
       </section>

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Great+Vibes:wght@400&family=Inter:wght@300;400;500;600&display=swap");
 @import "tailwindcss";
 
 @layer base {
@@ -123,4 +124,16 @@
 
   .border-gold { border-color: rgb(184 147 90); }
   .border-champagne { border-color: rgb(232 221 208); }
+}
+
+/* ─── Accessibility widget classes ──────────────────────────────────────── */
+
+html.a11y-contrast {
+  filter: contrast(1.4) saturate(0.8);
+}
+
+html.a11y-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  font-weight: 600 !important;
 }

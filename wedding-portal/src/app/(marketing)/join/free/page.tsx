@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, CheckCircle2, Gift } from "lucide-react";
+import { Loader2, CheckCircle2, Gift, Eye, EyeOff } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
+import { createClient } from "@/lib/supabase/client";
 
 const CATEGORIES = [
   { value: "photography",             label: "צילום חתונות" },
@@ -31,8 +33,8 @@ const inputCls =
 const labelCls = "block text-sm font-semibold text-obsidian mb-1.5";
 
 export default function JoinFreePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -42,7 +44,10 @@ export default function JoinFreePage() {
     category: "",
     city: "",
     couponCode: "",
+    password: "",
+    confirmPassword: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   function set(key: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -52,6 +57,8 @@ export default function JoinFreePage() {
     e.preventDefault();
     if (!form.category) { setError("בחר קטגוריה"); return; }
     if (!form.couponCode.trim()) { setError("קוד קופון נדרש"); return; }
+    if (form.password.length < 8) { setError("הסיסמה חייבת להכיל לפחות 8 תווים"); return; }
+    if (form.password !== form.confirmPassword) { setError("הסיסמאות אינן תואמות"); return; }
 
     setLoading(true);
     setError(null);
@@ -66,38 +73,25 @@ export default function JoinFreePage() {
 
       if (!res.ok) { setError(data.error ?? "שגיאה בהרשמה"); return; }
 
-      setDone(true);
+      // Auto-login after successful registration
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      });
+
+      if (signInError) {
+        // Registration succeeded but auto-login failed — redirect to login with next param
+        router.push("/auth/login?next=/dashboard/onboarding");
+        return;
+      }
+
+      router.push("/dashboard/onboarding");
     } catch {
       setError("שגיאת רשת — נסה שוב");
     } finally {
       setLoading(false);
     }
-  }
-
-  if (done) {
-    return (
-      <div className="min-h-screen bg-ivory flex items-center justify-center px-4" dir="rtl">
-        <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-10 w-10 text-green-500" />
-          </div>
-          <h1 className="font-display text-3xl text-obsidian mb-3">ברוכים הבאים!</h1>
-          <p className="text-stone leading-relaxed mb-2">
-            שלחנו לך אימייל עם קישור להגדרת סיסמה.
-          </p>
-          <p className="text-stone/70 text-sm leading-relaxed mb-8">
-            לאחר הגדרת הסיסמה הפרופיל שלך יהיה פעיל מיד ויופיע בדירקטורי.
-            תקופת הניסיון שלך (3 חודשים) כבר מתחילה לרוץ!
-          </p>
-          <Link
-            href="/auth/login"
-            className="inline-block px-8 py-3 rounded-xl bg-dusty-rose text-white font-semibold text-sm hover:opacity-90 transition-opacity"
-          >
-            כניסה ללוח הבקרה
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -145,7 +139,7 @@ export default function JoinFreePage() {
               ))}
             </ul>
             <p className="text-xs text-stone/50 mt-4 pt-3 border-t border-champagne/40">
-              לאחר 3 חודשים תוכל לבחור תוכנית Standard (₪149/חודש) או Premium (₪349/חודש).
+              לאחר 3 חודשים תוכל להמשיך במנוי חודשי ב-₪179 בלבד — או לבטל בלי שאלות.
             </p>
           </div>
 
@@ -164,7 +158,7 @@ export default function JoinFreePage() {
                 maxLength={50}
                 value={form.couponCode}
                 onChange={(e) => set("couponCode", e.target.value.toUpperCase())}
-                placeholder="WEDDING2025"
+                placeholder="WEDDINGPRO"
                 dir="ltr"
                 className={inputCls + " font-mono tracking-widest uppercase"}
               />
@@ -249,6 +243,43 @@ export default function JoinFreePage() {
                   onChange={(e) => set("phone", e.target.value)}
                   placeholder="050-0000000"
                   dir="ltr"
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>סיסמה *</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={8}
+                    dir="ltr"
+                    value={form.password}
+                    onChange={(e) => set("password", e.target.value)}
+                    placeholder="לפחות 8 תווים"
+                    className={`${inputCls} pl-10`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-stone/40 hover:text-stone transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelCls}>אישור סיסמה *</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  dir="ltr"
+                  value={form.confirmPassword}
+                  onChange={(e) => set("confirmPassword", e.target.value)}
+                  placeholder="הזן שוב את הסיסמה"
                   className={inputCls}
                 />
               </div>

@@ -33,8 +33,8 @@ function AddPackageForm({ onAdded }: { onAdded: (pkg: VendorPricing) => void }) 
   useEffect(() => {
     if (state.success) {
       toast.success("החבילה נוספה");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpen(false);
-      // Page will revalidate; parent gets updated via server rerender
     }
     if (state.error) toast.error(state.error);
   }, [state]);
@@ -84,7 +84,7 @@ function AddPackageForm({ onAdded }: { onAdded: (pkg: VendorPricing) => void }) 
       </div>
 
       <div>
-        <label className={labelCls}>פיצ'רים (מופרדים בפסיק)</label>
+        <label className={labelCls}>פיצ&apos;רים (מופרדים בפסיק)</label>
         <textarea
           name="features"
           rows={3}
@@ -144,7 +144,11 @@ function PackageRow({
   );
 
   useEffect(() => {
-    if (state.success) { toast.success("החבילה עודכנה"); setEditing(false); }
+    if (state.success) {
+      toast.success("החבילה עודכנה");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEditing(false);
+    }
     if (state.error) toast.error(state.error);
   }, [state]);
 
@@ -173,7 +177,7 @@ function PackageRow({
         </div>
 
         <div>
-          <label className={labelCls}>פיצ'רים (מופרדים בפסיק)</label>
+          <label className={labelCls}>פיצ&apos;רים (מופרדים בפסיק)</label>
           <textarea
             name="features"
             defaultValue={pkg.features.join(", ")}

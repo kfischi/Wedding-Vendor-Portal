@@ -32,6 +32,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    turbopackUseSystemTlsCerts: true,
     optimizePackageImports: [
       "lucide-react",
       "framer-motion",

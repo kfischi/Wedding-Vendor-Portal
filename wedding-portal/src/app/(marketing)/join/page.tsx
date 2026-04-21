@@ -9,7 +9,7 @@ import {
 
 export const metadata: Metadata = {
   title: "הצטרפו כספק | WeddingPro",
-  description: "הצטרפו ל-500+ ספקי חתונות מובחרים בישראל. קבלו לידים, נהלו את הפרופיל שלכם, וגדלו עם WeddingPro.",
+  description: "הצטרפו לפורטל ספקי החתונות המוביל בישראל. קבלו לידים, נהלו את הפרופיל שלכם, וגדלו עם WeddingPro.",
 };
 
 const BENEFITS = [
@@ -47,39 +47,38 @@ const BENEFITS = [
 
 const PLANS = [
   {
-    name: "Standard",
-    price: "₪149",
-    period: "לחודש",
+    name: "ניסיון חינם",
+    price: "₪0",
+    period: "3 חודשים",
     color: "border-champagne",
+    badge: "עם קוד קופון",
     features: [
-      "פרופיל בסיסי",
-      "עד 20 תמונות",
-      "קבלת לידים",
+      "פרופיל מלא עם גלריה",
+      "קבלת לידים ללא הגבלה",
       "ניהול ביקורות",
-      "דף מחירים",
-      "סטטיסטיקות בסיסיות",
+      "אנליטיקס בסיסי",
+      "ללא כרטיס אשראי",
     ],
-    cta: "התחילו Standard",
+    cta: "הצטרפו בחינם",
     ctaCls: "bg-obsidian text-white hover:bg-obsidian/90",
+    href: "/join/free",
   },
   {
-    name: "Premium",
-    price: "₪349",
+    name: "מנוי חודשי",
+    price: "₪179",
     period: "לחודש",
     popular: true,
     color: "border-gold",
     features: [
-      "הכל ב-Standard",
-      "גלריה ללא הגבלה",
-      "עליית וידאו",
-      "SEO מתקדם",
-      "מיקום מועדף בחיפוש",
-      "WhatsApp ישיר",
-      "תמיכה עדיפות",
-      "אנליטיקס מלא",
+      "פרופיל מלא עם גלריה",
+      "קבלת לידים ללא הגבלה",
+      "ניהול ביקורות",
+      "אנליטיקס בסיסי",
+      "בטל בכל עת",
     ],
-    cta: "התחילו Premium",
+    cta: "התחילו עכשיו",
     ctaCls: "bg-gold text-white hover:bg-gold/90",
+    href: "/pricing",
   },
 ];
 
@@ -145,7 +144,7 @@ export default function JoinPage() {
           <div className="max-w-4xl mx-auto px-4 text-center relative">
             <div className="inline-flex items-center gap-2 bg-gold/20 text-gold text-sm font-semibold px-4 py-2 rounded-full border border-gold/30 mb-6">
               <Users className="h-4 w-4" />
-              500+ ספקים מובחרים כבר בפלטפורמה
+              ספקי חתונות מובחרים בפלטפורמה
             </div>
             <h1 className="font-display text-5xl lg:text-6xl leading-tight mb-6">
               הצטרפו למשפחת
@@ -231,7 +230,7 @@ export default function JoinPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/pricing"
+                  href={plan.href}
                   className={`flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl font-semibold transition-all ${plan.ctaCls}`}
                 >
                   {plan.cta} <ChevronLeft className="h-4 w-4" />

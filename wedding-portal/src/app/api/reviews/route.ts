@@ -10,7 +10,9 @@ import {
   ADMIN_EMAIL,
   NEXT_PUBLIC_APP_URL,
   RATE_LIMIT,
+  FROM_EMAIL,
 } from "@/lib/env";
+import { ReviewNotificationVendor } from "@/emails/ReviewNotificationVendor";
 
 const reviewSchema = z.object({
   vendorId: z.string().min(1),
@@ -102,12 +104,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "שגיאה בשמירה" }, { status: 500 });
   }
 
+  // ── Notify vendor of new review ──────────────────────────────────────────
+  if (vendor.email) {
+    try {
+      const resend = new Resend(RESEND_API_KEY);
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: vendor.email,
+        subject: `ביקורת חדשה על הפרופיל שלכם — ${vendor.businessName}`,
+        react: ReviewNotificationVendor({
+          vendorName: vendor.businessName,
+          authorName,
+          rating,
+          title: title ?? null,
+          body: reviewBody,
+          dashboardUrl: `${NEXT_PUBLIC_APP_URL}/dashboard/reviews`,
+        }),
+      });
+    } catch (err) {
+      console.error("[reviews] vendor notification error:", err);
+    }
+  }
+
   // ── Notify admin to moderate ──────────────────────────────────────────────
   if (ADMIN_EMAIL) {
     try {
       const resend = new Resend(RESEND_API_KEY);
       const baseUrl = NEXT_PUBLIC_APP_URL;
-      const hostname = new URL(baseUrl).hostname;
 
       const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
       const safeVendorName = escapeHtml(vendor.businessName);
@@ -117,7 +140,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const safeBody = escapeHtml(reviewBody);
 
       await resend.emails.send({
-        from: `WeddingPro <noreply@${hostname}>`,
+        from: FROM_EMAIL,
         to: ADMIN_EMAIL,
         subject: `[ביקורת חדשה] ${vendor.businessName} — ${stars}`,
         html: `

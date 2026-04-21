@@ -1,0 +1,46 @@
+name: Auto Blog Generator
+
+on:
+  schedule:
+    - cron: "0 7 */4 * *"  # כל 4 ימים בשעה 07:00 UTC
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets are configured
+        id: check_secrets
+        run: |
+          if [ -z "${{ secrets.APP_URL }}" ] || [ -z "${{ secrets.N8N_API_KEY }}" ]; then
+            echo "⚠️  APP_URL or N8N_API_KEY secret is not set — skipping blog generation"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate blog post
+        if: steps.check_secrets.outputs.skip == 'false'
+        run: |
+          response=$(curl -s -o response.json -w "%{http_code}" \
+            --max-time 60 \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.N8N_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "${{ secrets.APP_URL }}/api/admin/blog-generate")
+
+          echo "HTTP Status: $response"
+          cat response.json
+
+          if [ "$response" != "200" ] && [ "$response" != "201" ]; then
+            echo "❌ Blog generation failed with status $response"
+            exit 1
+          fi
+
+          echo "✅ Blog post created: $(cat response.json | python3 -c \
+            'import sys,json; d=json.load(sys.stdin); print(d.get("slug", "unknown"))')"
+
+      - name: Skipped
+        if: steps.check_secrets.outputs.skip == 'true'
+        run: echo "ℹ️  Blog generation skipped — set APP_URL and N8N_API_KEY secrets to enable"

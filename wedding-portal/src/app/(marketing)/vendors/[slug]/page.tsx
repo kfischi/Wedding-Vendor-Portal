@@ -21,6 +21,20 @@ import { WhatsAppButton } from "@/components/vendor/WhatsAppButton";
 import { ViewCountTracker } from "@/components/vendor/ViewCountTracker";
 import { Footer } from "@/components/layout/Footer";
 
+// ─── Static params ─────────────────────────────────────────────────────────────
+
+export async function generateStaticParams(): Promise<{ slug: string }[]> {
+  try {
+    const rows = await db
+      .select({ slug: vendors.slug })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return rows.map((r) => ({ slug: r.slug }));
+  } catch {
+    return [];
+  }
+}
+
 // ─── Mock data (for /vendors/demo and DB-fallback during development) ──────────
 
 const MOCK_VENDOR: Vendor = {
@@ -235,7 +249,7 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
     const [vendor] = await db
       .select()
       .from(vendors)
-      .where(and(eq(vendors.slug, slug), eq(vendors.status, "active")))
+      .where(eq(vendors.slug, slug))   // no status filter — pending vendors can preview their page
       .limit(1);
 
     if (!vendor) {
@@ -288,14 +302,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { vendor } = data;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
-  const ogImage =
-    vendor.coverImage && cloudName && !vendor.coverImage.startsWith("http")
-      ? `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/${vendor.coverImage}`
-      : vendor.coverImage?.startsWith("http")
-      ? vendor.coverImage
-      : undefined;
+  const ogApiUrl = `${appUrl}/api/og?name=${encodeURIComponent(vendor.businessName)}&category=${encodeURIComponent(vendor.category)}&city=${encodeURIComponent(vendor.city)}${vendor.coverImage && vendor.coverImage.startsWith("http") ? `&image=${encodeURIComponent(vendor.coverImage)}` : ""}`;
 
   return {
     title: vendor.seoTitle ?? `${vendor.businessName} | WeddingPro`,
@@ -307,14 +315,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
       url: `${appUrl}/vendors/${slug}`,
-      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
+      images: [{ url: ogApiUrl, width: 1200, height: 630 }],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
-      images: ogImage ? [ogImage] : [],
+      images: [ogApiUrl],
     },
   };
 }
@@ -401,6 +409,18 @@ export default async function VendorPage({ params }: Props) {
       />
 
       <div className="min-h-screen bg-ivory">
+        {/* ── Pending / suspended notice ── */}
+        {vendor.status === "pending" && (
+          <div className="w-full bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-sm text-amber-800">
+            🔒 הפרופיל הזה גלוי לך בלבד — הוא לא מופיע עדיין בדירקטורי הציבורי
+          </div>
+        )}
+        {vendor.status === "suspended" && (
+          <div className="w-full bg-red-50 border-b border-red-200 px-4 py-2.5 text-center text-sm text-red-800">
+            הפרופיל הושעה
+          </div>
+        )}
+
         {/* ── Full-bleed Hero ── */}
         <VendorHero vendor={vendor} heroVideo={heroVideo} heroImageUrl={heroImageUrl} />
 
