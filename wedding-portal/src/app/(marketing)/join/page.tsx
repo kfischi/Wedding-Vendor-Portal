@@ -9,7 +9,7 @@ import {
 
 export const metadata: Metadata = {
   title: "הצטרפו כספק | WeddingPro",
-  description: "הצטרפו ל-500+ ספקי חתונות מובחרים בישראל. קבלו לידים, נהלו את הפרופיל שלכם, וגדלו עם WeddingPro.",
+  description: "הצטרפו לפורטל ספקי החתונות המוביל בישראל. קבלו לידים, נהלו את הפרופיל שלכם, וגדלו עם WeddingPro.",
 };
 
 const BENEFITS = [
@@ -144,7 +144,7 @@ export default function JoinPage() {
           <div className="max-w-4xl mx-auto px-4 text-center relative">
             <div className="inline-flex items-center gap-2 bg-gold/20 text-gold text-sm font-semibold px-4 py-2 rounded-full border border-gold/30 mb-6">
               <Users className="h-4 w-4" />
-              500+ ספקים מובחרים כבר בפלטפורמה
+              ספקי חתונות מובחרים בפלטפורמה
             </div>
             <h1 className="font-display text-5xl lg:text-6xl leading-tight mb-6">
               הצטרפו למשפחת

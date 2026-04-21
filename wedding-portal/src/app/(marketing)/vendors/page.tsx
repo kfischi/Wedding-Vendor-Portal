@@ -8,9 +8,29 @@ import { VendorCard } from "@/components/vendor/VendorCard";
 import { VendorDirectoryFilters } from "@/components/marketing/VendorDirectoryFilters";
 import { Footer } from "@/components/layout/Footer";
 
+export const revalidate = 3600;
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://weddingpro.co.il";
+
 export const metadata: Metadata = {
-  title: "דירקטורי ספקי חתונות",
-  description: "חפשו בין מאות ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג ועוד.",
+  title: "ספקי חתונות בישראל | WeddingPro",
+  description: "מצאו ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד. חיפוש לפי קטגוריה ועיר.",
+  openGraph: {
+    title: "ספקי חתונות בישראל | WeddingPro",
+    description: "מצאו ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד.",
+    url: `${APP_URL}/vendors`,
+    type: "website",
+    images: [{ url: `${APP_URL}/api/og?name=ספקי+חתונות&category=&city=ישראל`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ספקי חתונות בישראל | WeddingPro",
+    description: "מצאו ספקי חתונות מובחרים בישראל — צלמים, אולמות, קייטרינג, פרחים ועוד.",
+    images: [`${APP_URL}/api/og?name=ספקי+חתונות&category=&city=ישראל`],
+  },
+  alternates: {
+    canonical: `${APP_URL}/vendors`,
+  },
 };
 
 interface SearchParams {

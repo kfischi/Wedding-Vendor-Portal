@@ -5,9 +5,27 @@ import { getAllPostsMerged, getAllCategories } from "@/lib/blog";
 import { Footer } from "@/components/layout/Footer";
 import { Clock, ChevronLeft } from "lucide-react";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://weddingpro.co.il";
+
 export const metadata: Metadata = {
-  title: "בלוג | WeddingPro",
+  title: "בלוג חתונות | WeddingPro",
   description: "טיפים, מדריכים ורעיונות לחתונה המושלמת — מאת מומחי WeddingPro",
+  openGraph: {
+    title: "בלוג חתונות | WeddingPro",
+    description: "טיפים, מדריכים ורעיונות לחתונה המושלמת — מאת מומחי WeddingPro",
+    url: `${APP_URL}/blog`,
+    type: "website",
+    images: [{ url: `${APP_URL}/api/og?name=בלוג+WeddingPro&category=&city=`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "בלוג חתונות | WeddingPro",
+    description: "טיפים, מדריכים ורעיונות לחתונה המושלמת — מאת מומחי WeddingPro",
+    images: [`${APP_URL}/api/og?name=בלוג+WeddingPro&category=&city=`],
+  },
+  alternates: {
+    canonical: `${APP_URL}/blog`,
+  },
 };
 
 function formatDate(d: string) {
