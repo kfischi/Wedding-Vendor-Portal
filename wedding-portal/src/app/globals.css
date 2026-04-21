@@ -1,113 +1,138 @@
 @import "tailwindcss";
 
+/* ─── Luxury Design System — Tailwind 4 @theme tokens ───────────────────── */
+@theme {
+  /* Colors — Quiet Luxury palette (Ivory/Blush/Gold) */
+  --color-ivory: #FBF8F3;
+  --color-champagne: #E8DCC4;
+  --color-blush: #EFD9CE;
+  --color-dusty-rose: #C9A89D;
+  --color-gold: #B8935A;
+  --color-gold-deep: #8F6F3F;
+  --color-obsidian: #1A1614;
+  --color-obsidian-soft: #2C2724;
+  --color-cream-white: #FFFDFA;
+  --color-stone: #6B5F5A;
+
+  /* Font families — fed by next/font CSS vars injected on <html> */
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-script: var(--font-script);
+
+  /* Fluid display typography — clamp() for mobile-to-4K scaling */
+  --text-display-xl: clamp(3rem, 2rem + 5vw, 8rem);
+  --text-display-xl--line-height: 0.95;
+  --text-display-xl--letter-spacing: -0.02em;
+
+  --text-display-lg: clamp(2.5rem, 1.8rem + 3vw, 5rem);
+  --text-display-lg--line-height: 1;
+  --text-display-lg--letter-spacing: -0.02em;
+
+  --text-display-md: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  --text-display-md--line-height: 1.1;
+  --text-display-md--letter-spacing: -0.01em;
+
+  /* Letter-spacing tokens */
+  --tracking-micro: 0.25em;
+  --tracking-wide-lux: 0.15em;
+
+  /* Animations */
+  --animate-fade-up: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fadeIn 0.8s ease-out forwards;
+  --animate-shimmer: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  0%   { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* ─── Runtime CSS variables (non-Tailwind usage) ─────────────────────────── */
+:root {
+  /* Legacy font aliases — keep existing components working */
+  --font-cormorant: var(--font-display);
+  --font-inter: var(--font-body);
+
+  /* Legacy rgb-triplet tokens — some older components use rgb(var(--ivory)) */
+  --ivory:        251 248 243;
+  --champagne:    232 220 196;
+  --blush:        239 217 206;
+  --dusty-rose:   201 168 157;
+  --obsidian:     26 22 20;
+  --obsidian-soft: 44 39 36;
+  --stone:        107 95 90;
+  --gold:         184 147 90;
+  --gold-deep:    143 111 63;
+  --cream-white:  255 253 250;
+
+  /* Component system tokens */
+  --background:  var(--ivory);
+  --foreground:  var(--obsidian);
+  --card:        var(--cream-white);
+  --border:      var(--champagne);
+  --ring:        var(--gold);
+  --primary:     var(--gold);
+  --destructive: 220 38 38;
+  --radius:      0.5rem;
+}
+
 @layer base {
-  :root {
-    /* ── Brand palette ─────────────────────────────── */
-    --gold:        201 168 84;   /* warm gold — bright on dark */
-    --gold-light:  229 199 120;
-    --blush:       190 110 100;
-    --dusty-rose:  160 82 74;
-    --ivory:       250 247 242;  /* kept for text/accents */
-
-    /* ── Dark surface palette ──────────────────────── */
-    --bg:          9   9  11;   /* zinc-950  #09090b */
-    --surface:    15  15  18;   /* near-black card bg */
-    --surface-2:  24  24  27;   /* zinc-900  #18181b */
-    --surface-3:  32  32  36;   /* slightly lighter */
-
-    /* ── Borders ───────────────────────────────────── */
-    --border:     39  39  42;   /* zinc-800  #27272a */
-    --border-2:   63  63  70;   /* zinc-700  #3f3f46 */
-
-    /* ── Text ──────────────────────────────────────── */
-    --fg:        250 250 250;   /* zinc-50   #fafafa */
-    --fg-muted:  113 113 122;   /* zinc-500  #71717a */
-    --fg-subtle:  82  82  91;   /* zinc-600  #52525b */
-
-    /* ── Legacy semantic aliases (used by components) ─ */
-    --champagne:   var(--surface-2);
-    --obsidian:    var(--bg);
-    --stone:       var(--fg-muted);
-    --cream-white: var(--surface-2);
-
-    --background:  var(--bg);
-    --foreground:  var(--fg);
-    --card:        var(--surface);
-    --card-foreground: var(--fg);
-    --border-color: var(--border);
-    --ring:        var(--gold);
-    --primary:     var(--gold);
-    --destructive: 220 38 38;
-
-    --radius: 0.625rem;
-
-    --font-cormorant: "Cormorant Garamond", serif;
-    --font-inter:     "Inter", sans-serif;
-    --font-script:    "Great Vibes", cursive;
-  }
-
   * { box-sizing: border-box; }
 
   html { scroll-behavior: smooth; }
 
+  html[dir="rtl"] { text-align: right; }
+
   body {
-    background-color: rgb(9 9 11);
-    background-image: url("https://res.cloudinary.com/decirk3zb/image/upload/v1774012420/WhatsApp_Image_2026-03-20_at_12.50.24_j8ss5w.jpg");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    color: rgb(250 250 250);
-    font-family: var(--font-inter);
+    font-feature-settings: 'kern', 'liga', 'clig', 'calt';
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: rgb(9 9 11); }
-  ::-webkit-scrollbar-thumb { background: rgb(63 63 70); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgb(82 82 91); }
 }
 
 @layer utilities {
-
-  /* ── Glassmorphism (dark) ──────────────────────────── */
-  .glass {
-    background: rgb(15 15 18 / 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgb(39 39 42 / 0.8);
+  /* ── Luxury editorial typography ───────────────────────────────────────── */
+  .text-editorial {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
   }
 
-  /* ── Shadows ───────────────────────────────────────── */
-  .card-shadow {
-    box-shadow:
-      0 0 0 1px rgb(39 39 42 / 0.6),
-      0 4px 16px rgb(0 0 0 / 0.5),
-      0 16px 48px rgb(0 0 0 / 0.3);
+  .text-body-lux {
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
   }
 
-  .card-shadow-lg {
-    box-shadow:
-      0 0 0 1px rgb(39 39 42 / 0.5),
-      0 8px 32px rgb(0 0 0 / 0.6),
-      0 32px 80px rgb(0 0 0 / 0.4);
+  .text-micro-label {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
   }
 
-  /* ── Gold ──────────────────────────────────────────── */
-  .gold-border { border-color: rgb(201 168 84 / 0.35); }
-  .gold-glow   { box-shadow: 0 0 24px rgb(201 168 84 / 0.15), 0 0 48px rgb(201 168 84 / 0.06); }
-
-  .gradient-gold {
-    background: linear-gradient(135deg, #C9A854 0%, #E5C97B 50%, #C9A854 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .text-script-accent {
+    font-family: var(--font-script);
+    font-weight: 400;
   }
 
-  /* ── Typography ────────────────────────────────────── */
+  /* Legacy compound typography utilities (keep full compound style so
+     existing components that rely on font-weight/line-height don't regress) */
   .font-display {
-    font-family: var(--font-cormorant);
+    font-family: var(--font-display);
     font-weight: 300;
     letter-spacing: -0.02em;
     line-height: 1.08;
@@ -118,7 +143,7 @@
     font-weight: 400;
   }
 
-  /* ── Spacing ───────────────────────────────────────── */
+  /* ── Layout ─────────────────────────────────────────────────────────────── */
   .section-padding {
     padding-inline: 1.5rem;
     padding-block: 5rem;
@@ -130,56 +155,68 @@
     .section-padding { padding-inline: 5rem; padding-block: 9rem; }
   }
 
-  /* ── Text colors ───────────────────────────────────── */
-  .text-ivory      { color: rgb(250 247 242); }
-  .text-champagne  { color: rgb(200 190 178); }
-  .text-blush      { color: rgb(190 110 100); }
-  .text-dusty-rose { color: rgb(160 82 74); }
-  .text-obsidian   { color: rgb(250 250 250); }   /* inverted for dark */
-  .text-stone      { color: rgb(113 113 122); }
-  .text-gold       { color: rgb(201 168 84); }
-  .text-muted      { color: rgb(113 113 122); }
-  .text-subtle     { color: rgb(82 82 91); }
+  /* ── Surface effects ────────────────────────────────────────────────────── */
+  .glass {
+    background: rgb(251 248 243 / 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgb(232 220 196 / 0.5);
+  }
 
-  /* ── Backgrounds ───────────────────────────────────── */
-  .bg-ivory        { background-color: rgb(9 9 11); }
-  .bg-champagne    { background-color: rgb(24 24 27); }
-  .bg-blush        { background-color: rgb(190 110 100); }
-  .bg-dusty-rose   { background-color: rgb(160 82 74); }
-  .bg-obsidian     { background-color: rgb(9 9 11); }
-  .bg-gold         { background-color: rgb(201 168 84); }
-  .bg-cream-white  { background-color: rgb(24 24 27); }
-  .bg-surface      { background-color: rgb(15 15 18); }
-  .bg-surface-2    { background-color: rgb(24 24 27); }
+  .card-shadow {
+    box-shadow:
+      0 1px 3px rgb(26 22 20 / 0.04),
+      0 4px 12px rgb(26 22 20 / 0.06),
+      0 12px 32px rgb(26 22 20 / 0.04);
+  }
 
-  /* ── Borders ───────────────────────────────────────── */
-  .border-gold      { border-color: rgb(201 168 84 / 0.45); }
-  .border-champagne { border-color: rgb(39 39 42); }
-  .border-subtle    { border-color: rgb(39 39 42); }
+  .card-shadow-lg {
+    box-shadow:
+      0 2px 8px rgb(26 22 20 / 0.06),
+      0 8px 24px rgb(26 22 20 / 0.08),
+      0 24px 64px rgb(26 22 20 / 0.06);
+  }
 
-  /* ── Input (dark premium) ──────────────────────────── */
+  /* ── Gold accent effects ─────────────────────────────────────────────────── */
+  .gold-border { border-color: rgb(184 147 90 / 0.4); }
+
+  .gold-glow {
+    box-shadow:
+      0 0 24px rgb(184 147 90 / 0.15),
+      0 0 48px rgb(184 147 90 / 0.06);
+  }
+
+  .gradient-gold {
+    background: linear-gradient(135deg, #B8935A 0%, #D4B07A 50%, #B8935A 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Form components ────────────────────────────────────────────────────── */
   .input-dark {
     width: 100%;
-    background: rgb(24 24 27);
-    border: 1px solid rgb(39 39 42);
-    color: rgb(250 250 250);
+    background: rgb(255 253 250);
+    border: 1px solid rgb(232 220 196);
+    color: rgb(26 22 20);
     border-radius: var(--radius);
     padding: 0.65rem 1rem;
     font-size: 0.875rem;
     line-height: 1.5;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .input-dark::placeholder { color: rgb(82 82 91); }
+  .input-dark::placeholder { color: rgb(107 95 90 / 0.6); }
   .input-dark:focus {
     outline: none;
-    border-color: rgb(201 168 84 / 0.5);
-    box-shadow: 0 0 0 3px rgb(201 168 84 / 0.08);
+    border-color: rgb(184 147 90 / 0.5);
+    box-shadow: 0 0 0 3px rgb(184 147 90 / 0.08);
   }
 
-  /* ── Buttons ───────────────────────────────────────── */
+  /* ── Buttons ────────────────────────────────────────────────────────────── */
   .btn-white {
-    background: rgb(250 250 250);
-    color: rgb(9 9 11);
+    background: rgb(251 248 243);
+    color: rgb(26 22 20);
+    border: 1px solid rgb(232 220 196);
     border-radius: var(--radius);
     padding: 0.65rem 1.25rem;
     font-size: 0.875rem;
@@ -189,12 +226,12 @@
     align-items: center;
     justify-content: center;
   }
-  .btn-white:hover  { background: rgb(228 228 231); }
+  .btn-white:hover  { background: rgb(232 220 196 / 0.4); }
   .btn-white:active { transform: scale(0.99); }
 
   .btn-gold {
-    background: linear-gradient(135deg, rgb(201 168 84), rgb(180 148 68));
-    color: rgb(9 9 11);
+    background: linear-gradient(135deg, rgb(184 147 90), rgb(160 128 72));
+    color: rgb(251 248 243);
     border-radius: var(--radius);
     padding: 0.65rem 1.25rem;
     font-size: 0.875rem;
@@ -209,8 +246,8 @@
 
   .btn-outline {
     background: transparent;
-    border: 1px solid rgb(39 39 42);
-    color: rgb(250 250 250);
+    border: 1px solid rgb(232 220 196);
+    color: rgb(26 22 20);
     border-radius: var(--radius);
     padding: 0.65rem 1.25rem;
     font-size: 0.875rem;
@@ -220,46 +257,47 @@
     align-items: center;
     justify-content: center;
   }
-  .btn-outline:hover { background: rgb(24 24 27); border-color: rgb(63 63 70); }
+  .btn-outline:hover { background: rgb(232 220 196 / 0.2); border-color: rgb(184 147 90 / 0.5); }
 
-  /* ── Skeleton / shimmer ────────────────────────────── */
-  @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position:  200% 0; }
-  }
-  .shimmer {
-    background: linear-gradient(90deg, rgb(24 24 27) 25%, rgb(39 39 42) 50%, rgb(24 24 27) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
-  }
-
-  /* ── Noise overlay ─────────────────────────────────── */
-  .noise::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    opacity: 0.04;
-    mix-blend-mode: overlay;
-  }
-
-  /* ── Gradient border trick ─────────────────────────── */
-  .gradient-border {
-    position: relative;
-    background: rgb(15 15 18);
+  /* ── Skeleton shimmer ────────────────────────────────────────────────────── */
+  .skeleton {
+    background: rgb(232 220 196 / 0.4);
     border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
   }
-  .gradient-border::before {
-    content: "";
+  .skeleton::after {
+    content: '';
     position: absolute;
     inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, rgb(201 168 84 / 0.4), rgb(39 39 42 / 0.2), rgb(201 168 84 / 0.1));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(251 248 243 / 0.6),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer 1.8s ease-in-out infinite;
   }
+}
+
+/* ─── prefers-reduced-motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Accessibility widget classes ──────────────────────────────────────── */
+html.a11y-contrast {
+  filter: contrast(1.4) saturate(0.8);
+}
+
+html.a11y-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  font-weight: 600 !important;
 }

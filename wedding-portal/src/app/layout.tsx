@@ -4,18 +4,20 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+  variable: "--font-display",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
+  fallback: ["Georgia", "serif"],
 });
 
 const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+  variable: "--font-body",
+  subsets: ["latin", "latin-ext"],
   weight: ["300", "400", "500", "600"],
   display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const greatVibes = Great_Vibes({
@@ -50,7 +52,8 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: "WeddingPro — ספקי חתונות מובחרים בישראל",
-        secureUrl: "https://res.cloudinary.com/dptyfvwyo/image/upload/w_1200,h_630,c_fill,g_center,f_jpg,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A4_hkjxkz.jpg",
+        secureUrl:
+          "https://res.cloudinary.com/dptyfvwyo/image/upload/w_1200,h_630,c_fill,g_center,f_jpg,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A4_hkjxkz.jpg",
       },
     ],
   },
@@ -76,17 +79,17 @@ export default function RootLayout({
       dir="rtl"
       className={`${cormorant.variable} ${inter.variable} ${greatVibes.variable}`}
     >
-      <body className="antialiased">
+      <body className="bg-ivory text-obsidian font-body antialiased">
         {children}
         <Toaster
           position="bottom-right"
           dir="rtl"
           toastOptions={{
             style: {
-              background: "rgb(255 253 250)",
-              border: "1px solid rgb(232 221 208)",
+              background: "rgb(251 248 243)",
+              border: "1px solid rgb(232 220 196)",
               color: "rgb(26 22 20)",
-              fontFamily: "var(--font-inter)",
+              fontFamily: "var(--font-body)",
             },
           }}
         />
