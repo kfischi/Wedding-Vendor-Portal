@@ -112,7 +112,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   try {
     supabaseAdmin = getSupabaseAdmin();
