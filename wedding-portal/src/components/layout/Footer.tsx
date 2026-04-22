@@ -34,40 +34,46 @@ const COLS = [
 
 export function Footer() {
   return (
-    <footer
-      dir="rtl"
-      style={{
-        background: "rgb(9 9 11)",
-        borderTop: "1px solid rgb(39 39 42)",
-        color: "rgb(113 113 122)",
-      }}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
+    <footer dir="rtl" className="bg-obsidian border-t border-ivory/10">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 py-16">
 
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
 
           {/* Brand */}
-          <div className="space-y-4 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "rgb(24 24 27)", border: "1px solid rgb(39 39 42)" }}
-              >
-                <span className="font-script leading-none" style={{ color: "rgb(201 168 84)", fontSize: "1rem" }}>W</span>
+          <div className="space-y-5 lg:col-span-1">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-3 group"
+              aria-label="WeddingPro — ראשי"
+            >
+              <div className="w-8 h-8 bg-ivory/5 border border-ivory/15 flex items-center justify-center shrink-0 group-hover:border-gold/40 transition-colors">
+                <span className="text-script-accent text-gold leading-none text-lg">W</span>
               </div>
-              <span className="font-semibold text-[15px]" style={{ color: "rgb(250 250 250)" }}>
+              <span className="text-micro-label text-ivory/90 group-hover:text-ivory transition-colors tracking-widest">
                 WeddingPro
               </span>
             </Link>
-            <p className="text-sm leading-relaxed" style={{ color: "rgb(82 82 91)" }}>
+            <p className="text-body-lux text-sm text-ivory/40 leading-relaxed max-w-[200px]">
               הפלטפורמה המובילה לחיבור בין ספקי חתונות לזוגות מתחתנים בישראל.
             </p>
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2">
               {[
-                { href: "https://instagram.com/weddingpro.il", label: "Instagram", icon: <Instagram className="h-3.5 w-3.5" /> },
-                { href: "https://facebook.com/weddingpro.il",  label: "Facebook",  icon: <Facebook  className="h-3.5 w-3.5" /> },
-                { href: "https://tiktok.com/@weddingpro.il",   label: "TikTok",    icon: <span className="text-[10px] font-bold">TT</span> },
+                {
+                  href: "https://instagram.com/weddingpro.il",
+                  label: "Instagram",
+                  icon: <Instagram className="h-3.5 w-3.5" />,
+                },
+                {
+                  href: "https://facebook.com/weddingpro.il",
+                  label: "Facebook",
+                  icon: <Facebook className="h-3.5 w-3.5" />,
+                },
+                {
+                  href: "https://tiktok.com/@weddingpro.il",
+                  label: "TikTok",
+                  icon: <span className="text-[10px] font-bold tracking-tight">TT</span>,
+                },
               ].map(({ href, label, icon }) => (
                 <a
                   key={href}
@@ -75,8 +81,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:text-white"
-                  style={{ background: "rgb(24 24 27)", border: "1px solid rgb(39 39 42)", color: "rgb(113 113 122)" }}
+                  className="w-8 h-8 bg-ivory/5 border border-ivory/10 flex items-center justify-center text-ivory/40 hover:text-gold hover:border-gold/30 transition-all"
                 >
                   {icon}
                 </a>
@@ -84,22 +89,18 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Columns */}
+          {/* Nav columns */}
           {COLS.map((col) => (
             <div key={col.title}>
-              <h3
-                className="text-xs font-semibold uppercase tracking-widest mb-4"
-                style={{ color: "rgb(82 82 91)" }}
-              >
+              <h3 className="text-micro-label text-ivory/30 mb-5">
                 {col.title}
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="space-y-3">
                 {col.links.map(({ href, label }) => (
                   <li key={href}>
                     <Link
                       href={href}
-                      className="text-sm transition-colors hover:text-zinc-300"
-                      style={{ color: "rgb(82 82 91)" }}
+                      className="text-body-lux text-sm text-ivory/50 hover:text-ivory/90 transition-colors"
                     >
                       {label}
                     </Link>
@@ -111,38 +112,30 @@ export function Footer() {
         </div>
 
         {/* Newsletter bar */}
-        <div
-          className="rounded-xl p-5 mb-10"
-          style={{
-            background: "rgb(15 15 18)",
-            border: "1px solid rgb(39 39 42)",
-          }}
-        >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="border border-ivory/10 p-6 mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className="flex-1">
-              <p className="text-sm font-medium" style={{ color: "rgb(212 212 216)" }}>
+              <p className="text-micro-label text-ivory/80">
                 טיפים לחתונה במייל
               </p>
-              <p className="text-xs mt-0.5" style={{ color: "rgb(82 82 91)" }}>
+              <p className="text-body-lux text-sm text-ivory/35 mt-1">
                 המדריכים הטובים ביותר ישירות לתיבה שלכם
               </p>
             </div>
-            <form className="flex gap-2 w-full sm:w-auto" action="/contact" method="get">
+            <form
+              className="flex gap-2 w-full sm:w-auto"
+              action="/contact"
+              method="get"
+            >
               <input
                 type="email"
                 placeholder="האימייל שלכם"
                 dir="ltr"
-                className="flex-1 sm:w-52 px-3 py-2 rounded-lg text-sm transition-all"
-                style={{
-                  background: "rgb(24 24 27)",
-                  border: "1px solid rgb(39 39 42)",
-                  color: "rgb(212 212 216)",
-                }}
+                className="flex-1 sm:w-52 px-4 py-2.5 bg-ivory/5 border border-ivory/10 text-ivory/80 text-sm placeholder:text-ivory/25 focus:outline-none focus:border-gold/40 transition-colors"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg text-sm font-semibold shrink-0 transition-opacity"
-                style={{ background: "rgb(250 250 250)", color: "rgb(9 9 11)" }}
+                className="px-5 py-2.5 bg-gold text-obsidian text-micro-label shrink-0 hover:bg-gold/90 transition-colors"
               >
                 הרשמה
               </button>
@@ -151,15 +144,12 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div
-          className="pt-7 flex flex-col sm:flex-row items-center justify-between gap-3"
-          style={{ borderTop: "1px solid rgb(39 39 42)" }}
-        >
-          <p className="text-xs" style={{ color: "rgb(63 63 70)" }}>
+        <div className="pt-6 border-t border-ivory/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-micro-label text-ivory/25">
             © {YEAR} WeddingPro. כל הזכויות שמורות.
           </p>
-          <p className="text-xs" style={{ color: "rgb(63 63 70)" }}>
-            נבנה עם ❤️ בישראל 🇮🇱
+          <p className="text-micro-label text-ivory/25">
+            נבנה עם אהבה בישראל 🇮🇱
           </p>
         </div>
       </div>

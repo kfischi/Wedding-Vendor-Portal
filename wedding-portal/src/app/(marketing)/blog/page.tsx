@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getAllPosts, getAllCategories } from "@/lib/blog";
 import { Footer } from "@/components/layout/Footer";
-import { Clock, ChevronLeft } from "lucide-react";
+import { Clock } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "בלוג | WeddingPro",
@@ -12,7 +12,9 @@ export const metadata: Metadata = {
 
 function formatDate(d: string) {
   return new Intl.DateTimeFormat("he-IL", {
-    day: "numeric", month: "long", year: "numeric",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   }).format(new Date(d));
 }
 
@@ -34,28 +36,30 @@ export default async function BlogPage({
 
   return (
     <>
-      <main dir="rtl" className="min-h-screen bg-[#faf9f7]">
-        {/* Hero */}
-        <section className="bg-white border-b border-champagne/60 py-14 text-center">
-          <div className="max-w-3xl mx-auto px-4">
-            <p className="font-script text-2xl text-gold mb-2">הבלוג שלנו</p>
-            <h1 className="font-display text-4xl lg:text-5xl text-obsidian leading-tight mb-4">
+      <main dir="rtl" className="min-h-screen bg-ivory">
+        {/* Editorial header */}
+        <section className="bg-cream-white border-b border-champagne/60 py-20 text-center">
+          <div className="max-w-2xl mx-auto px-6">
+            <p className="text-script-accent text-2xl text-gold mb-3">היומן שלנו</p>
+            <h1 className="text-editorial text-5xl md:text-6xl text-obsidian mb-5">
               טיפים לחתונה המושלמת
             </h1>
-            <p className="text-stone/60 text-lg">מדריכים מעשיים, השראה, ורעיונות מהמומחים</p>
+            <p className="text-body-lux text-obsidian/60 text-lg">
+              מדריכים מעשיים, השראה ורעיונות מהמומחים
+            </p>
           </div>
         </section>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-8">
-          {/* Category tabs */}
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12 space-y-12">
+          {/* Category filter tabs */}
           {categories.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <nav aria-label="סינון לפי קטגוריה" className="flex flex-wrap gap-2">
               <Link
                 href="/blog"
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                className={`px-5 py-2 text-micro-label transition-all border-b-2 ${
                   !catParam
-                    ? "bg-obsidian text-white border-obsidian"
-                    : "bg-white text-stone border-champagne hover:border-obsidian/30"
+                    ? "border-obsidian text-obsidian"
+                    : "border-transparent text-obsidian/40 hover:text-obsidian/70 hover:border-obsidian/30"
                 }`}
               >
                 הכל
@@ -64,56 +68,60 @@ export default async function BlogPage({
                 <Link
                   key={cat}
                   href={`/blog?category=${encodeURIComponent(cat)}`}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                  className={`px-5 py-2 text-micro-label transition-all border-b-2 ${
                     catParam === cat
-                      ? "bg-obsidian text-white border-obsidian"
-                      : "bg-white text-stone border-champagne hover:border-obsidian/30"
+                      ? "border-gold text-gold"
+                      : "border-transparent text-obsidian/40 hover:text-obsidian/70 hover:border-obsidian/30"
                   }`}
                 >
                   {cat}
                 </Link>
               ))}
-            </div>
+            </nav>
           )}
 
-          {/* Featured post */}
+          {/* Featured hero post */}
           {featured && (
             <Link
               href={`/blog/${featured.slug}`}
-              className="group block bg-white rounded-3xl border border-champagne/60 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+              className="group block overflow-hidden"
             >
-              <div className="grid lg:grid-cols-2">
-                <div className="relative h-64 lg:h-auto min-h-[260px]">
+              <div className="grid lg:grid-cols-2 gap-0">
+                <div className="relative aspect-[4/3] lg:aspect-auto lg:min-h-[460px] overflow-hidden bg-champagne/30">
                   <Image
                     src={featured.coverImage}
                     alt={featured.title}
                     fill
-                    className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                    className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
                     sizes="(max-width: 1024px) 100vw, 50vw"
+                    priority
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-gradient-to-t from-obsidian/30 to-transparent"
                   />
                 </div>
-                <div className="p-8 lg:p-10 flex flex-col justify-center">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-gold/10 text-gold border border-gold/20">
-                      {featured.category}
-                    </span>
-                    <span className="text-xs text-stone/50 flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {featured.readTime}
-                    </span>
-                  </div>
-                  <h2 className="font-display text-2xl lg:text-3xl text-obsidian leading-tight mb-3 group-hover:text-gold transition-colors">
+                <div className="bg-cream-white px-8 py-10 lg:px-12 lg:py-14 flex flex-col justify-center">
+                  <p className="text-micro-label text-gold mb-4">כתבה ראשית</p>
+                  <span className="inline-block text-micro-label text-obsidian/50 border border-obsidian/20 px-3 py-1 mb-5 w-fit">
+                    {featured.category}
+                  </span>
+                  <h2 className="text-editorial text-3xl lg:text-4xl text-obsidian leading-tight mb-5 group-hover:text-gold transition-colors duration-300">
                     {featured.title}
                   </h2>
-                  <p className="text-stone/60 text-sm leading-relaxed mb-6 line-clamp-3">
+                  <p className="text-body-lux text-obsidian/60 leading-relaxed mb-8 line-clamp-3">
                     {featured.excerpt}
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-obsidian">{featured.author}</p>
-                      <p className="text-xs text-stone/50">{formatDate(featured.date)}</p>
+                      <p className="text-micro-label text-obsidian">{featured.author}</p>
+                      <p className="text-micro-label text-obsidian/40 mt-1">
+                        {formatDate(featured.date)}
+                      </p>
                     </div>
-                    <span className="flex items-center gap-1 text-sm font-semibold text-gold group-hover:gap-2 transition-all">
-                      קראו עוד <ChevronLeft className="h-4 w-4" />
+                    <span className="text-micro-label text-obsidian flex items-center gap-2 border-b border-obsidian pb-0.5 group-hover:gap-3 transition-all">
+                      קראו עוד
+                      <span aria-hidden>→</span>
                     </span>
                   </div>
                 </div>
@@ -121,49 +129,62 @@ export default async function BlogPage({
             </Link>
           )}
 
-          {/* Grid */}
+          {/* Masonry grid */}
           {rest.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
               {rest.map((post) => (
-                <Link
+                <article
                   key={post.slug}
-                  href={`/blog/${post.slug}`}
-                  className="group bg-white rounded-2xl border border-champagne/60 overflow-hidden shadow-sm hover:shadow-md transition-all"
+                  className="break-inside-avoid mb-6 block"
                 >
-                  <div className="relative h-48">
-                    <Image
-                      src={post.coverImage}
-                      alt={post.title}
-                      fill
-                      className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-obsidian/30 to-transparent" />
-                    <span className="absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/90 text-obsidian">
-                      {post.category}
-                    </span>
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-display text-lg text-obsidian leading-snug mb-2 group-hover:text-gold transition-colors line-clamp-2">
-                      {post.title}
-                    </h3>
-                    <p className="text-xs text-stone/55 leading-relaxed line-clamp-2 mb-4">
-                      {post.excerpt}
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-stone/45">
-                      <span>{formatDate(post.date)}</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {post.readTime}
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="group block bg-cream-white overflow-hidden hover:shadow-[0_8px_40px_rgba(26,22,20,0.08)] transition-shadow duration-500"
+                  >
+                    <div className="relative overflow-hidden bg-champagne/30 aspect-[4/3]">
+                      <Image
+                        src={post.coverImage}
+                        alt={post.title}
+                        fill
+                        className="object-cover transition-transform duration-[1000ms] ease-out group-hover:scale-[1.04]"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-gradient-to-t from-obsidian/30 to-transparent"
+                      />
+                      <span className="absolute top-4 right-4 text-micro-label bg-ivory/90 text-obsidian px-3 py-1">
+                        {post.category}
                       </span>
                     </div>
-                  </div>
-                </Link>
+                    <div className="p-6">
+                      <h3 className="text-editorial text-xl md:text-2xl text-obsidian leading-snug mb-3 group-hover:text-gold transition-colors duration-300 line-clamp-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-body-lux text-sm text-obsidian/55 leading-relaxed mb-5 line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                      <div className="flex items-center justify-between text-micro-label text-obsidian/40">
+                        <span>{formatDate(post.date)}</span>
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3 w-3" />
+                          {post.readTime}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </article>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-white rounded-2xl border border-champagne/60">
-              <p className="font-display text-2xl text-obsidian mb-2">אין מאמרים בקטגוריה זו</p>
-              <Link href="/blog" className="text-sm text-gold hover:underline">
+            <div className="text-center py-24 bg-cream-white">
+              <p className="text-editorial text-2xl text-obsidian mb-4">
+                אין מאמרים בקטגוריה זו
+              </p>
+              <Link
+                href="/blog"
+                className="text-micro-label text-gold hover:text-obsidian transition-colors"
+              >
                 חזרה לכל המאמרים
               </Link>
             </div>
