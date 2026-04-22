@@ -8,8 +8,8 @@
       "when": 1773179654985,
       "tag": "0000_eager_ted_forrester",
       "breakpoints": true
-    }
-    ,{
+    },
+    {
       "idx": 1,
       "version": "7",
       "when": 1742169600000,
@@ -35,6 +35,27 @@
       "version": "7",
       "when": 1744848000000,
       "tag": "0004_automation_blog_social",
+      "breakpoints": true
+    }
+    ,{
+      "idx": 5,
+      "version": "7",
+      "when": 1744934400000,
+      "tag": "0005_ai_lead_score",
+      "breakpoints": true
+    }
+    ,{
+      "idx": 6,
+      "version": "7",
+      "when": 1745020800000,
+      "tag": "0006_messages",
+      "breakpoints": true
+    }
+    ,{
+      "idx": 7,
+      "version": "7",
+      "when": 1745107200000,
+      "tag": "0007_review_requests",
       "breakpoints": true
     }
   ]

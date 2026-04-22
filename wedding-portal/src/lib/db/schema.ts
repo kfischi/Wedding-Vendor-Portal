@@ -168,6 +168,9 @@ export const leads = pgTable(
     status: leadStatusEnum("status").notNull().default("new"),
     notes: text("notes"),
     submitterIp: text("submitter_ip"),
+    aiScore: integer("ai_score"),
+    aiScoreLabel: text("ai_score_label"), // "hot" | "warm" | "cold"
+    aiScoreReason: text("ai_score_reason"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -202,6 +205,42 @@ export const reviews = pgTable(
   ]
 );
 
+// ─── review_requests ──────────────────────────────────────────────────────────
+//
+// Outbound invitations for past clients to submit a review.
+// Each request has a unique token that unlocks a public, auth-less review form
+// at /r/{token}. Tokens expire after 30 days.
+
+export const reviewRequests = pgTable(
+  "review_requests",
+  {
+    id: text("id").primaryKey().notNull(),
+    vendorId: text("vendor_id")
+      .notNull()
+      .references(() => vendors.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    clientName: text("client_name").notNull(),
+    clientEmail: text("client_email"),
+    clientPhone: text("client_phone"),
+    eventDate: text("event_date"),
+    /** sent | used | expired */
+    status: text("status").notNull().default("sent"),
+    /** email | whatsapp | both */
+    sentChannel: text("sent_channel"),
+    reviewId: text("review_id").references(() => reviews.id, {
+      onDelete: "set null",
+    }),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    usedAt: timestamp("used_at"),
+  },
+  (table) => [
+    index("review_requests_token_idx").on(table.token),
+    index("review_requests_vendor_id_idx").on(table.vendorId),
+    index("review_requests_status_idx").on(table.status),
+  ]
+);
+
 // ─── coupons ──────────────────────────────────────────────────────────────────
 
 export const coupons = pgTable("coupons", {
@@ -216,6 +255,31 @@ export const coupons = pgTable("coupons", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// ─── messages ─────────────────────────────────────────────────────────────────
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: text("id").primaryKey().notNull(),
+    vendorId: text("vendor_id")
+      .notNull()
+      .references(() => vendors.id, { onDelete: "cascade" }),
+    leadId: text("lead_id").references(() => leads.id, { onDelete: "set null" }),
+    channel: text("channel").notNull(), // 'email' | 'whatsapp'
+    recipient: text("recipient").notNull(),
+    subject: text("subject"),
+    body: text("body").notNull(),
+    status: text("status").notNull().default("sent"), // 'sent' | 'failed'
+    error: text("error"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("messages_vendor_id_idx").on(table.vendorId),
+    index("messages_lead_id_idx").on(table.leadId),
+    index("messages_created_at_idx").on(table.createdAt),
+  ]
+);
 
 // ─── plan_overrides ───────────────────────────────────────────────────────────
 
@@ -351,5 +415,10 @@ export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
 export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
+
+export type ReviewRequest = typeof reviewRequests.$inferSelect;
+export type NewReviewRequest = typeof reviewRequests.$inferInsert;
 export type Coupon = typeof coupons.$inferSelect;
 export type NewCoupon = typeof coupons.$inferInsert;
+export type Message = typeof messages.$inferSelect;
+export type NewMessage = typeof messages.$inferInsert;

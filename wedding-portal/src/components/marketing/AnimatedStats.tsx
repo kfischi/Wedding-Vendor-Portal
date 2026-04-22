@@ -66,7 +66,7 @@ export function AnimatedStats({ stats }: { stats: Stat[] }) {
               transition={{ delay: i * 0.12, duration: 0.5 }}
               className="text-center sm:px-8"
             >
-              <p className="font-display text-3xl sm:text-4xl text-gold">
+              <p className="text-3xl sm:text-4xl font-light tabular-nums tracking-tight text-gold">
                 <CountUp raw={value} active={inView} />
               </p>
               <p className="text-white/50 text-xs mt-1">{label}</p>

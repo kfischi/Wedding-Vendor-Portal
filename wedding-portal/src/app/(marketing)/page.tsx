@@ -15,9 +15,18 @@ import type { Vendor } from "@/lib/db/schema";
 import { VendorCard } from "@/components/vendor/VendorCard";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/shared/CookieBanner";
-import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
+import { HeroEditorial } from "@/components/home/hero-editorial";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
-import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
+import { CategoryBento } from "@/components/home/category-bento";
+import { FeaturedCoverStory } from "@/components/home/featured-cover-story";
+import { CuratedStrip } from "@/components/home/curated-strip";
+import { getCoverStoryVendor } from "@/lib/queries/featured-cover";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  organizationSchema,
+  websiteSchema,
+  itemListSchema,
+} from "@/lib/seo/factories";
 
 // ─── Stats data (vendor count is fetched dynamically) ─────────────────────────
 
@@ -172,10 +181,15 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [featuredVendors, vendorCount] = await Promise.all([
+  const [featuredVendors, coverVendor, vendorCount] = await Promise.all([
     getFeaturedVendors(),
+    getCoverStoryVendor(),
     getVendorCount(),
   ]);
+  const currentMonth = new Intl.DateTimeFormat("he-IL", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
 
   const STATS = [
     { value: vendorCount > 0 ? `${vendorCount}+` : "50+", label: "ספקים מובחרים" },
@@ -183,58 +197,62 @@ export default async function HomePage() {
     { value: "4.9★", label: "דירוג ממוצע" },
     { value: "100%", label: "ספקים מאומתים" },
   ];
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://wedding-vendor-portal.netlify.app";
-
-  const websiteJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "WeddingPro",
-    url: appUrl,
-    description: "הפלטפורמה המובילה לספקי חתונות בישראל — מצאו צלמים, אולמות, קייטרינג ועוד",
-    inLanguage: "he",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: { "@type": "EntryPoint", urlTemplate: `${appUrl}/vendors?q={search_term_string}` },
-      "query-input": "required name=search_term_string",
-    },
-  };
-
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "WeddingPro",
-    url: appUrl,
-    logo: `${appUrl}/favicon.ico`,
-    description: "פלטפורמת ספקי חתונות בישראל",
-    areaServed: { "@type": "Country", name: "Israel" },
-    sameAs: [],
-  };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-    <div className="min-h-screen bg-ivory" dir="rtl">
+      <JsonLd
+        data={[
+          websiteSchema(),
+          organizationSchema(),
+          itemListSchema(
+            featuredVendors.map((v) => ({
+              slug: v.slug,
+              businessName: v.businessName,
+              coverImage: v.coverImage,
+            }))
+          ),
+        ]}
+      />
+    <div className="min-h-screen" dir="rtl">
 
       {/* ── HERO (rotating images + animated text) ─────────────────────────────── */}
-      <HeroSlideshow />
+      <HeroEditorial
+        backgroundMedia={{
+          type: "image",
+          // TODO: replace with a dedicated hero asset once curated.
+          // Reusing the existing branded OG wedding photo for now.
+          src: "https://res.cloudinary.com/dptyfvwyo/image/upload/w_2400,c_fill,g_center,f_auto,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A4_hkjxkz.jpg",
+          alt: "חתונה אלגנטית בישראל",
+        }}
+        titleLine1="הספקים שמייצרים"
+        titleHighlight="את הרגע"
+        titleLine2="הזה"
+        subtitle="פורטל אוצרות של ספקי החתונות הטובים בישראל — צלמים, מעצבות שמלות, אולמות, וכל מי שהופך יום חלומות למציאות."
+        primaryCta={{ label: "גלו ספקים", href: "/vendors" }}
+        secondaryCta={{ label: "הצטרפו כספק", href: "/join/free" }}
+      />
 
       {/* ── STATS (count-up on scroll) ─────────────────────────────────────────── */}
       <AnimatedStats stats={STATS} />
 
       {/* ── CATEGORIES (stagger on scroll + hover lift) ────────────────────────── */}
-      <section className="py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <p className="font-script text-gold text-xl mb-1">כל מה שצריך</p>
-            <h2 className="font-display text-4xl sm:text-5xl text-obsidian">
-              קטגוריות פופולריות
-            </h2>
-          </div>
+      <CategoryBento />
 
-          <AnimatedCategories />
-        </div>
-      </section>
+      {/* ── COVER STORY (renders only when a premium vendor exists) ───────────── */}
+      {coverVendor && (
+        <FeaturedCoverStory vendor={coverVendor} month={currentMonth} />
+      )}
+
+      {/* ── CURATED HORIZONTAL STRIP ──────────────────────────────────────────── */}
+      <CuratedStrip
+        vendors={featuredVendors.map((v) => ({
+          slug: v.slug,
+          businessName: v.businessName,
+          category: v.category,
+          city: v.city,
+          coverImage: v.coverImage,
+        }))}
+      />
 
       {/* ── FEATURED VENDORS ──────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 bg-cream-white">
@@ -291,7 +309,7 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p className="font-script text-gold text-xl mb-1">בשלושה צעדים פשוטים</p>
-            <h2 className="font-display text-4xl sm:text-5xl text-obsidian">
+            <h2 className="font-display text-4xl sm:text-5xl" style={{ color: "rgb(26 22 20)" }}>
               איך זה עובד?
             </h2>
           </div>
@@ -330,8 +348,8 @@ export default async function HomePage() {
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${color}`}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="font-display text-2xl text-obsidian">{title}</h3>
-                <p className="text-stone text-sm leading-relaxed">{description}</p>
+                <h3 className="font-display text-2xl" style={{ color: "rgb(26 22 20)" }}>{title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "rgb(82 78 76)" }}>{description}</p>
               </div>
             ))}
           </div>

@@ -1,0 +1,172 @@
+{
+  "name": "WeddingPro — ספק חדש נרשם (vendor.registered)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "weddingpro-lead",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000001",
+      "name": "Webhook — קבלת אירוע",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "weddingpro-lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-vendor",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "vendor.registered",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000002",
+      "name": "אמת event = vendor.registered",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "g1",
+              "name": "registration_type_label",
+              "value": "={{ $json.registration_type === 'trial' ? 'ניסיון חינמי (3 חודשים)' : 'תשלום' }}",
+              "type": "string"
+            },
+            {
+              "id": "g2",
+              "name": "trial_end_display",
+              "value": "={{ $json.trial_ends_at ? new Date($json.trial_ends_at).toLocaleDateString('he-IL') : 'לא רלוונטי' }}",
+              "type": "string"
+            },
+            {
+              "id": "g3",
+              "name": "admin_whatsapp_message",
+              "value": "=🆕 *ספק חדש נרשם ל-WeddingPro!*\n\n🏢 *שם עסק:* {{ $json.vendor_name }}\n📧 *אימייל:* {{ $json.vendor_email }}\n📱 *טלפון:* {{ $json.vendor_phone ?? 'לא צוין' }}\n📍 *עיר:* {{ $json.city }}\n🏷️ *קטגוריה:* {{ $json.category }}\n📋 *סוג הרשמה:* {{ $json.registration_type === 'trial' ? 'ניסיון חינמי' : 'בתשלום' }}\n📅 *ניסיון עד:* {{ $json.trial_ends_at ? new Date($json.trial_ends_at).toLocaleDateString('he-IL') : '-' }}\n\n🔗 לאישור בפאנל:\nhttps://weddingpro.co.il/admin/vendors"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000003",
+      "name": "הכן נתוני ספק",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3001/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.WA_SERVICE_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $env.ADMIN_PHONE }}" },
+            { "name": "message", "value": "={{ $json.admin_whatsapp_message }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000004",
+      "name": "WhatsApp לאדמין",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@weddingpro.co.il",
+        "toEmail": "YOUR_ADMIN_EMAIL",
+        "subject": "=🆕 ספק חדש נרשם — {{ $json.vendor_name }}",
+        "emailType": "html",
+        "message": "=<div dir=\"rtl\" style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n  <h2 style=\"color: #1a1614;\">ספק חדש נרשם ל-WeddingPro</h2>\n  <table style=\"width:100%; border-collapse:collapse;\">\n    <tr><td style=\"padding:8px; font-weight:bold;\">שם עסק</td><td style=\"padding:8px;\">{{ $json.vendor_name }}</td></tr>\n    <tr><td style=\"padding:8px; font-weight:bold;\">אימייל</td><td style=\"padding:8px;\">{{ $json.vendor_email }}</td></tr>\n    <tr><td style=\"padding:8px; font-weight:bold;\">טלפון</td><td style=\"padding:8px;\">{{ $json.vendor_phone ?? 'לא צוין' }}</td></tr>\n    <tr><td style=\"padding:8px; font-weight:bold;\">עיר</td><td style=\"padding:8px;\">{{ $json.city }}</td></tr>\n    <tr><td style=\"padding:8px; font-weight:bold;\">קטגוריה</td><td style=\"padding:8px;\">{{ $json.category }}</td></tr>\n    <tr><td style=\"padding:8px; font-weight:bold;\">סוג הרשמה</td><td style=\"padding:8px;\">{{ $json.registration_type === 'trial' ? 'ניסיון חינמי 3 חודשים' : 'בתשלום' }}</td></tr>\n    <tr><td style=\"padding:8px; font-weight:bold;\">ניסיון עד</td><td style=\"padding:8px;\">{{ $json.trial_ends_at ? new Date($json.trial_ends_at).toLocaleDateString('he-IL') : '-' }}</td></tr>\n  </table>\n  <a href=\"https://weddingpro.co.il/admin/vendors\" style=\"display:inline-block; margin-top:20px; background:#8c5f58; color:white; padding:12px 24px; border-radius:8px; text-decoration:none;\">עבור לאדמין לאישור</a>\n</div>",
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000005",
+      "name": "אימייל לאדמין",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true }) }}",
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000006",
+      "name": "תגובה 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — קבלת אירוע": {
+      "main": [
+        [{ "node": "אמת event = vendor.registered", "type": "main", "index": 0 }]
+      ]
+    },
+    "אמת event = vendor.registered": {
+      "main": [
+        [{ "node": "הכן נתוני ספק", "type": "main", "index": 0 }]
+      ]
+    },
+    "הכן נתוני ספק": {
+      "main": [
+        [
+          { "node": "WhatsApp לאדמין", "type": "main", "index": 0 },
+          { "node": "אימייל לאדמין", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "WhatsApp לאדמין": {
+      "main": [
+        [{ "node": "תגובה 200 OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "אימייל לאדמין": {
+      "main": [
+        [{ "node": "תגובה 200 OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["weddingpro"],
+  "triggerCount": 0,
+  "updatedAt": "2026-03-18T00:00:00.000Z",
+  "versionId": "v1"
+}

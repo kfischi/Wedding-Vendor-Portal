@@ -1,0 +1,114 @@
+{
+  "name": "WeddingPro — Telegram ליד חדש",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "weddingpro-lead-new",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000001",
+      "name": "Webhook — קבלת ליד",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "weddingpro-lead-new"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-lead",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "lead.new",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000002",
+      "name": "אמת event = lead.new",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-tg",
+              "leftValue": "={{ $json.vendor_telegram_chat_id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000004",
+      "name": "יש chat_id לספק?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.vendor_telegram_chat_id }}",
+        "text": "=🎉 <b>פנייה חדשה ב-WeddingPro!</b>\n\n👤 <b>שם הלקוח:</b> {{ $json.lead_name }}\n📱 <b>טלפון:</b> {{ $json.lead_phone ?? 'לא צוין' }}\n📧 <b>אימייל:</b> {{ $json.lead_email }}\n📅 <b>תאריך אירוע:</b> {{ $json.event_date ?? 'לא צוין' }}\n\n💬 <b>הודעה:</b>\n{{ $json.message }}\n\n🔗 <a href=\"https://weddingpro.co.il/dashboard/leads\">לצפייה בכל הלידים</a>",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000005",
+      "name": "Telegram לספק",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 200],
+      "credentials": {
+        "telegramApi": { "id": "TELEGRAM_CREDENTIAL_ID", "name": "WeddingPro Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true }) }}",
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-0004-0004-000000000006",
+      "name": "תגובה 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — קבלת ליד": {
+      "main": [[{ "node": "אמת event = lead.new", "type": "main", "index": 0 }]]
+    },
+    "אמת event = lead.new": {
+      "main": [[{ "node": "יש chat_id לספק?", "type": "main", "index": 0 }]]
+    },
+    "יש chat_id לספק?": {
+      "main": [
+        [{ "node": "Telegram לספק", "type": "main", "index": 0 }],
+        [{ "node": "תגובה 200 OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Telegram לספק": {
+      "main": [[{ "node": "תגובה 200 OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["weddingpro", "telegram"],
+  "versionId": "v2"
+}

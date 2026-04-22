@@ -20,6 +20,8 @@ import { LeadCaptureForm } from "@/components/vendor/LeadCaptureForm";
 import { WhatsAppButton } from "@/components/vendor/WhatsAppButton";
 import { ViewCountTracker } from "@/components/vendor/ViewCountTracker";
 import { Footer } from "@/components/layout/Footer";
+import { JsonLd } from "@/components/seo/json-ld";
+import { vendorSchema, breadcrumbSchema } from "@/lib/seo/factories";
 
 // ─── Static params ─────────────────────────────────────────────────────────────
 
@@ -302,8 +304,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { vendor } = data;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
 
-  const ogApiUrl = `${appUrl}/api/og?name=${encodeURIComponent(vendor.businessName)}&category=${encodeURIComponent(vendor.category)}&city=${encodeURIComponent(vendor.city)}${vendor.coverImage && vendor.coverImage.startsWith("http") ? `&image=${encodeURIComponent(vendor.coverImage)}` : ""}`;
+  // Build cover URL for OG image
+  const coverUrl =
+    vendor.coverImage && cloudName && !vendor.coverImage.startsWith("http")
+      ? `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/${vendor.coverImage}`
+      : vendor.coverImage?.startsWith("http")
+      ? vendor.coverImage
+      : undefined;
+
+  // Use dynamic OG image generator
+  const ogParams = new URLSearchParams({
+    name: vendor.businessName,
+    plan: vendor.plan,
+    ...(vendor.category && { category: vendor.category }),
+    ...(vendor.city && { city: vendor.city }),
+    ...(vendor.rating != null && { rating: String(vendor.rating) }),
+    ...(coverUrl && { image: coverUrl }),
+  });
+  const ogImage = `${appUrl}/api/og?${ogParams.toString()}`;
 
   return {
     title: vendor.seoTitle ?? `${vendor.businessName} | WeddingPro`,
@@ -315,14 +335,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
       url: `${appUrl}/vendors/${slug}`,
-      images: [{ url: ogApiUrl, width: 1200, height: 630 }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: vendor.businessName }],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
-      images: [ogApiUrl],
+      images: [ogImage],
     },
   };
 }
@@ -357,39 +377,38 @@ export default async function VendorPage({ params }: Props) {
     .filter((m) => m.type === "image")
     .slice(0, planLimits.maxImages === Infinity ? undefined : planLimits.maxImages);
 
-  // JSON-LD structured data
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: vendor.businessName,
-    description: vendor.description ?? vendor.shortDescription ?? undefined,
-    url: `${appUrl}/vendors/${slug}`,
-    telephone: vendor.phone ?? undefined,
-    email: vendor.email,
-    image: heroImageUrl ?? undefined,
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: vendor.city,
-      addressRegion: vendor.region ?? undefined,
-      addressCountry: "IL",
-    },
-    sameAs: [
-      vendor.instagram && `https://instagram.com/${vendor.instagram.replace("@", "")}`,
-      vendor.tiktok && `https://tiktok.com/@${vendor.tiktok.replace("@", "")}`,
-      vendor.youtube,
-      vendor.facebook,
-      vendor.website,
-    ].filter(Boolean),
-    ...(vendor.rating != null && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: vendor.rating,
-        reviewCount: vendor.reviewCount,
-        bestRating: 5,
-        worstRating: 1,
-      },
+  // JSON-LD — LocalBusiness + Breadcrumb via typed factories (T3C)
+  const jsonLdData = [
+    vendorSchema({
+      slug,
+      businessName: vendor.businessName,
+      category: vendor.category,
+      description: vendor.description ?? vendor.shortDescription ?? null,
+      city: vendor.city,
+      region: vendor.region ?? null,
+      phone: vendor.phone,
+      email: vendor.email,
+      coverImage: heroImageUrl ?? null,
+      rating: vendor.rating ?? null,
+      reviewCount: vendor.reviewCount ?? null,
+      sameAs: [
+        vendor.instagram && `https://instagram.com/${vendor.instagram.replace("@", "")}`,
+        vendor.tiktok && `https://tiktok.com/@${vendor.tiktok.replace("@", "")}`,
+        vendor.youtube,
+        vendor.facebook,
+        vendor.website,
+      ],
     }),
-  };
+    breadcrumbSchema([
+      { name: "ראשי", url: "/" },
+      { name: "ספקים", url: "/vendors" },
+      {
+        name: vendor.category,
+        url: `/vendors?category=${encodeURIComponent(vendor.category)}`,
+      },
+      { name: vendor.businessName, url: `/vendors/${slug}` },
+    ]),
+  ];
 
   // Build scroll-spy nav sections dynamically
   const navSections = [
@@ -403,10 +422,7 @@ export default async function VendorPage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLdData} />
 
       <div className="min-h-screen bg-ivory">
         {/* ── Pending / suspended notice ── */}

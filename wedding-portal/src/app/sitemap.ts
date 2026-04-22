@@ -4,7 +4,7 @@ import { vendors } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getAllPosts } from "@/lib/blog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // regenerate once per hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const appUrl =
@@ -52,12 +52,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.6,
-    },
-    {
-      url: `${appUrl}/auth/login`,
-      lastModified: new Date(),
-      changeFrequency: "yearly",
-      priority: 0.5,
     },
     {
       url: `${appUrl}/privacy`,
