@@ -15,7 +15,7 @@ import type { Vendor } from "@/lib/db/schema";
 import { VendorCard } from "@/components/vendor/VendorCard";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/shared/CookieBanner";
-import { HeroSlideshow } from "@/components/marketing/HeroSlideshow";
+import { HeroEditorial } from "@/components/home/hero-editorial";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
 import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -192,7 +192,21 @@ export default async function HomePage() {
     <div className="min-h-screen" dir="rtl">
 
       {/* ── HERO (rotating images + animated text) ─────────────────────────────── */}
-      <HeroSlideshow />
+      <HeroEditorial
+        backgroundMedia={{
+          type: "image",
+          // TODO: replace with a dedicated hero asset once curated.
+          // Reusing the existing branded OG wedding photo for now.
+          src: "https://res.cloudinary.com/dptyfvwyo/image/upload/w_2400,c_fill,g_center,f_auto,q_auto:good/v1774085224/%D7%AA%D7%9E%D7%95%D7%A0%D7%94_%D7%9C%D7%95%D7%95%D7%98%D7%A1%D7%90%D7%A4_hkjxkz.jpg",
+          alt: "חתונה אלגנטית בישראל",
+        }}
+        titleLine1="הספקים שמייצרים"
+        titleHighlight="את הרגע"
+        titleLine2="הזה"
+        subtitle="פורטל אוצרות של ספקי החתונות הטובים בישראל — צלמים, מעצבות שמלות, אולמות, וכל מי שהופך יום חלומות למציאות."
+        primaryCta={{ label: "גלו ספקים", href: "/vendors" }}
+        secondaryCta={{ label: "הצטרפו כספק", href: "/join/free" }}
+      />
 
       {/* ── STATS (count-up on scroll) ─────────────────────────────────────────── */}
       <AnimatedStats stats={STATS} />
