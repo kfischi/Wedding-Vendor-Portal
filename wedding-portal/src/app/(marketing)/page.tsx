@@ -17,7 +17,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/shared/CookieBanner";
 import { HeroEditorial } from "@/components/home/hero-editorial";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
-import { AnimatedCategories } from "@/components/marketing/AnimatedCategories";
+import { CategoryBento } from "@/components/home/category-bento";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
   organizationSchema,
@@ -212,18 +212,7 @@ export default async function HomePage() {
       <AnimatedStats stats={STATS} />
 
       {/* ── CATEGORIES (stagger on scroll + hover lift) ────────────────────────── */}
-      <section className="py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <p className="font-script text-gold text-xl mb-1">כל מה שצריך</p>
-            <h2 className="font-display text-4xl sm:text-5xl" style={{ color: "rgb(26 22 20)" }}>
-              קטגוריות פופולריות
-            </h2>
-          </div>
-
-          <AnimatedCategories />
-        </div>
-      </section>
+      <CategoryBento />
 
       {/* ── FEATURED VENDORS ──────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 bg-cream-white">
