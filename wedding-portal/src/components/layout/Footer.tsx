@@ -57,6 +57,9 @@ export function Footer() {
             <p className="text-body-lux text-sm text-ivory/40 leading-relaxed max-w-[200px]">
               הפלטפורמה המובילה לחיבור בין ספקי חתונות לזוגות מתחתנים בישראל.
             </p>
+            <p className="text-micro-label text-ivory/30">
+              הצטרפות: חינם עם קופון · ₪179/חודש
+            </p>
             <div className="flex items-center gap-2">
               {[
                 {

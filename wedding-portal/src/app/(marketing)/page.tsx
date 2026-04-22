@@ -28,14 +28,20 @@ import {
   itemListSchema,
 } from "@/lib/seo/factories";
 
-// ─── Stats data ────────────────────────────────────────────────────────────────
+// ─── Stats data (vendor count is fetched dynamically) ─────────────────────────
 
-const STATS = [
-  { value: "500+", label: "ספקים מובחרים" },
-  { value: "10,000+", label: "זוגות מאושרים" },
-  { value: "15", label: "קטגוריות" },
-  { value: "4.9★", label: "דירוג ממוצע" },
-];
+async function getVendorCount(): Promise<number> {
+  try {
+    const { count } = await import("drizzle-orm");
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return Number(value) ?? 0;
+  } catch {
+    return 0;
+  }
+}
 
 // ─── Mock featured vendors (fallback when DB is unavailable) ──────────────────
 
@@ -175,14 +181,22 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [featuredVendors, coverVendor] = await Promise.all([
+  const [featuredVendors, coverVendor, vendorCount] = await Promise.all([
     getFeaturedVendors(),
     getCoverStoryVendor(),
+    getVendorCount(),
   ]);
   const currentMonth = new Intl.DateTimeFormat("he-IL", {
     month: "long",
     year: "numeric",
   }).format(new Date());
+
+  const STATS = [
+    { value: vendorCount > 0 ? `${vendorCount}+` : "50+", label: "ספקים מובחרים" },
+    { value: "18", label: "קטגוריות" },
+    { value: "4.9★", label: "דירוג ממוצע" },
+    { value: "100%", label: "ספקים מאומתים" },
+  ];
 
   return (
     <>
@@ -380,7 +394,7 @@ export default async function HomePage() {
 
           {/* Plan prices */}
           <p className="mt-8 text-white/30 text-xs">
-            חינם לתמיד · Standard ₪149/חודש · Premium ₪349/חודש
+            3 חודשי ניסיון חינם · ₪179/חודש לאחר מכן · ביטול בכל עת
           </p>
         </div>
       </section>

@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import Stripe from "stripe";
+import { eq } from "drizzle-orm";
 import { getStripe } from "@/lib/stripe/config";
 import { db } from "@/lib/db/db";
 import { vendors } from "@/lib/db/schema";
 import { slugify } from "@/lib/utils";
-import { n8nVendorPaymentCompleted } from "@/lib/n8n";
+import { FROM_EMAIL } from "@/lib/env";
 
 export const runtime = "nodejs";
 
-// Supabase admin client (service role)
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,11 +48,9 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  // אם משתמש קיים — שלוף אותו
   let userId = newUser?.user?.id;
   if (!userId) {
-    const { data: existing } =
-      await supabaseAdmin.auth.admin.listUsers();
+    const { data: existing } = await supabaseAdmin.auth.admin.listUsers();
     const found = existing?.users?.find((u) => u.email === vendorEmail);
     userId = found?.id;
   }
@@ -73,31 +71,35 @@ async function handleCheckoutCompleted(
     resetData?.properties?.action_link ?? `${baseUrl}/auth/login`;
 
   await resend.emails.send({
-    from: `WeddingPro <noreply@${new URL(baseUrl).hostname}>`,
+    from: FROM_EMAIL,
     to: vendorEmail,
     subject: "ברוכים הבאים ל-WeddingPro — הגדר את הסיסמה שלך",
     html: `
-      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1a1614;">ברוכים הבאים ל-WeddingPro!</h2>
-        <p>תשלומך התקבל בהצלחה עבור תוכנית <strong>${plan === "premium" ? "פרמיום" : "סטנדרט"}</strong>.</p>
-        <p>כדי להתחיל, עליך להגדיר סיסמה לחשבון שלך:</p>
-        <a href="${resetUrl}" style="
-          display: inline-block;
-          background: #8c5f58;
-          color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
-          text-decoration: none;
-          margin: 16px 0;
-        ">
-          הגדר סיסמה
-        </a>
-        <p style="color: #6b5f5a; font-size: 14px;">
-          הקישור תקף ל-24 שעות. לאחר הגדרת הסיסמה, תוכל להיכנס ולמלא את פרופיל הספק שלך.
-        </p>
-        <p style="color: #6b5f5a; font-size: 14px;">
-          הפרופיל שלך יפורסם לאחר אישור ידני מצוות WeddingPro.
-        </p>
+      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#faf8f5; border-radius:12px; overflow:hidden;">
+        <div style="background: linear-gradient(135deg, #1a1614 0%, #2d2420 100%); padding: 24px 28px;">
+          <p style="margin:0; font-size:20px; color:#b8976a; font-weight:bold;">WeddingPro</p>
+        </div>
+        <div style="padding: 28px 32px; background:#ffffff;">
+          <h2 style="margin:0 0 8px; color:#1a1614;">ברוכים הבאים ל-WeddingPro!</h2>
+          <p style="margin:0 0 16px; color:#5a4a42; line-height:1.6;">
+            תשלומך התקבל בהצלחה עבור תוכנית <strong>סטנדרט ₪179/חודש</strong>.
+          </p>
+          <p style="margin:0 0 20px; color:#5a4a42; line-height:1.6;">
+            כדי להתחיל, הגדר סיסמה לחשבון שלך:
+          </p>
+          <div style="text-align:center; margin: 24px 0;">
+            <a href="${resetUrl}"
+               style="display:inline-block; background:linear-gradient(135deg,#b8976a,#9a7d56); color:white; padding:14px 32px; border-radius:10px; text-decoration:none; font-weight:bold; font-size:15px;">
+              הגדר סיסמה →
+            </a>
+          </div>
+          <p style="margin:0; color:#9e8e86; font-size:13px;">
+            הקישור תקף ל-24 שעות. הפרופיל יפורסם לאחר אישור ידני.
+          </p>
+        </div>
+        <div style="padding:12px 28px; background:#faf8f5; text-align:center; font-size:11px; color:#9e8e86;">
+          WeddingPro — פלטפורמת ספקי חתונות בישראל
+        </div>
       </div>
     `,
   });
@@ -114,29 +116,22 @@ async function handleCheckoutCompleted(
       category: "other",
       city: "",
       email: vendorEmail,
-      plan: plan as "standard" | "premium",
+      plan: "standard",
       status: "pending",
       role: "vendor",
       stripeCustomerId: session.customer as string | null,
       stripeSubscriptionId: session.subscription as string | null,
+      subscriptionStatus: "active",
     });
   } catch (dbError) {
     console.error("[webhook] DB insert error:", dbError);
   }
 
-  // ── 4. Trigger n8n webhook (non-blocking) ────────────────────────────────────
-  void n8nVendorPaymentCompleted({
-    vendor_email: vendorEmail,
-    plan,
-    stripe_session_id: session.id,
-    stripe_customer_id: (session.customer as string | null) ?? null,
-  });
-
-  // ── 5. שלח התראה לאדמין ─────────────────────────────────────────────────────
+  // ── 4. שלח התראה לאדמין ─────────────────────────────────────────────────────
   const adminEmail = process.env.ADMIN_EMAIL;
   if (adminEmail) {
     await resend.emails.send({
-      from: `WeddingPro <noreply@${new URL(baseUrl).hostname}>`,
+      from: FROM_EMAIL,
       to: adminEmail,
       subject: `[WeddingPro] ספק חדש מחכה לאישור — ${vendorEmail}`,
       html: `
@@ -144,22 +139,73 @@ async function handleCheckoutCompleted(
           <h3>ספק חדש נרשם ומחכה לאישור</h3>
           <ul>
             <li><strong>אימייל:</strong> ${vendorEmail}</li>
-            <li><strong>תוכנית:</strong> ${plan}</li>
+            <li><strong>תוכנית:</strong> סטנדרט ₪179/חודש</li>
             <li><strong>Stripe Session:</strong> ${session.id}</li>
           </ul>
           <a href="${baseUrl}/admin/vendors" style="
-            display: inline-block;
-            background: #8c5f58;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-          ">
+            display: inline-block; background: #8c5f58; color: white;
+            padding: 10px 20px; border-radius: 6px; text-decoration: none;">
             עבור לאדמין לאישור
           </a>
         </div>
       `,
     });
+  }
+}
+
+async function handleSubscriptionUpdated(
+  subscription: Stripe.Subscription
+): Promise<void> {
+  const subId = subscription.id;
+  const status = subscription.status; // active | past_due | canceled | unpaid | trialing
+
+  try {
+    await db
+      .update(vendors)
+      .set({ subscriptionStatus: status })
+      .where(eq(vendors.stripeSubscriptionId, subId));
+    console.log(`[webhook] subscription.updated: ${subId} → ${status}`);
+  } catch (err) {
+    console.error("[webhook] subscription.updated DB error:", err);
+  }
+}
+
+async function handleSubscriptionDeleted(
+  subscription: Stripe.Subscription
+): Promise<void> {
+  const subId = subscription.id;
+
+  try {
+    await db
+      .update(vendors)
+      .set({
+        subscriptionStatus: "canceled",
+        plan: "free",
+      })
+      .where(eq(vendors.stripeSubscriptionId, subId));
+    console.log(`[webhook] subscription.deleted: ${subId} → downgraded to free`);
+  } catch (err) {
+    console.error("[webhook] subscription.deleted DB error:", err);
+  }
+}
+
+async function handleInvoicePaymentFailed(
+  invoice: Stripe.Invoice
+): Promise<void> {
+  // In Stripe API 2026-02-25, subscription reference is under invoice.parent
+  const parent = (invoice as unknown as Record<string, unknown>).parent as Record<string, unknown> | null | undefined;
+  const subId = (parent?.subscription_details as Record<string, unknown> | null)?.subscription_id as string | null ?? null;
+
+  if (!subId) return;
+
+  try {
+    await db
+      .update(vendors)
+      .set({ subscriptionStatus: "past_due" })
+      .where(eq(vendors.stripeSubscriptionId, subId));
+    console.log(`[webhook] invoice.payment_failed: ${subId} → past_due`);
+  } catch (err) {
+    console.error("[webhook] invoice.payment_failed DB error:", err);
   }
 }
 
@@ -188,20 +234,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutCompleted(
-          event.data.object as Stripe.Checkout.Session
-        );
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
       default:
-        // אירועים אחרים — מתעלמים בינתיים
         break;
     }
   } catch (err) {
     console.error("[webhook] Handler error:", err);
-    return NextResponse.json(
-      { error: "Internal handler error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal handler error" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

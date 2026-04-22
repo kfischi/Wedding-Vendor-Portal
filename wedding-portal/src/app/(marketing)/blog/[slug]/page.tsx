@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getAllSlugs, getPostBySlug, getAllPosts } from "@/lib/blog";
+import { getAllSlugs, getPostBySlugMerged, getAllPostsMerged } from "@/lib/blog";
 import { Footer } from "@/components/layout/Footer";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { Clock, Calendar, ArrowRight, ChevronLeft } from "lucide-react";
@@ -20,7 +20,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlugMerged(slug);
   if (!post) return {};
   return {
     title: `${post.title} | WeddingPro`,
@@ -105,10 +105,11 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlugMerged(slug);
   if (!post) notFound();
 
-  const related = getAllPosts()
+  const allPostsForRelated = await getAllPostsMerged();
+  const related = allPostsForRelated
     .filter((p) => p.slug !== slug && p.category === post.category)
     .slice(0, 3);
 

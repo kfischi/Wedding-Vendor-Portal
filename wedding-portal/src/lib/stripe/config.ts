@@ -15,12 +15,7 @@ export const PLANS = {
   standard: {
     name: "Standard",
     priceId: process.env.STRIPE_STANDARD_PRICE_ID!,
-    amount: 14900, // אגורות — ₪149
-  },
-  premium: {
-    name: "Premium",
-    priceId: process.env.STRIPE_PREMIUM_PRICE_ID!,
-    amount: 34900, // אגורות — ₪349
+    amount: 17900, // אגורות — ₪179
   },
 } as const;
 

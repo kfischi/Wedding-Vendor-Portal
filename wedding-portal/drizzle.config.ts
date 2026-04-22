@@ -3,8 +3,10 @@ import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 
-const dbUrl = process.env.DATABASE_URL!;
-const parsed = new URL(dbUrl);
+// DIRECT_URL = direct Postgres (port 5432) — required for DDL like ALTER TYPE
+// DATABASE_URL = pooled PgBouncer (port 6543) — runtime queries only
+const migrateUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL!;
+const parsed = new URL(migrateUrl);
 
 export default {
   schema: "./src/lib/db/schema.ts",
@@ -12,7 +14,7 @@ export default {
   dialect: "postgresql",
   dbCredentials: {
     host: parsed.hostname,
-    port: Number(parsed.port) || 6543,
+    port: Number(parsed.port) || 5432,
     user: decodeURIComponent(parsed.username),
     password: decodeURIComponent(parsed.password),
     database: parsed.pathname.replace("/", ""),

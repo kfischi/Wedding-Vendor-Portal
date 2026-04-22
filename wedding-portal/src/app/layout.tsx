@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter, Great_Vibes } from "next/font/google";
 import { Toaster } from "sonner";
+import { AccessibilityWidget } from "@/components/shared/AccessibilityWidget";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -81,6 +82,7 @@ export default function RootLayout({
     >
       <body className="bg-ivory text-obsidian font-body antialiased">
         {children}
+        <AccessibilityWidget />
         <Toaster
           position="bottom-right"
           dir="rtl"

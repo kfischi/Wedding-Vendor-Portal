@@ -8,7 +8,7 @@ export const revalidate = 3600; // regenerate once per hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.suite-hagit.co.il";
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://weddingpro.co.il";
 
   const staticPages: MetadataRoute.Sitemap = [
     {
