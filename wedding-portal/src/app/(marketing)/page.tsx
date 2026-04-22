@@ -19,6 +19,7 @@ import { HeroEditorial } from "@/components/home/hero-editorial";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
 import { CategoryBento } from "@/components/home/category-bento";
 import { FeaturedCoverStory } from "@/components/home/featured-cover-story";
+import { CuratedStrip } from "@/components/home/curated-strip";
 import { getCoverStoryVendor } from "@/lib/queries/featured-cover";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
@@ -227,6 +228,17 @@ export default async function HomePage() {
       {coverVendor && (
         <FeaturedCoverStory vendor={coverVendor} month={currentMonth} />
       )}
+
+      {/* ── CURATED HORIZONTAL STRIP ──────────────────────────────────────────── */}
+      <CuratedStrip
+        vendors={featuredVendors.map((v) => ({
+          slug: v.slug,
+          businessName: v.businessName,
+          category: v.category,
+          city: v.city,
+          coverImage: v.coverImage,
+        }))}
+      />
 
       {/* ── FEATURED VENDORS ──────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 bg-cream-white">
