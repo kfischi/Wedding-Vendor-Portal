@@ -106,6 +106,7 @@ export interface LocalBusinessSchema extends SchemaBase {
   priceRange?: string;
   address?: PostalAddressSchema;
   areaServed?: string | { "@type": "City"; name: string };
+  sameAs?: string[];
   aggregateRating?: AggregateRatingSchema;
   review?: ReviewSchema[];
 }

@@ -73,12 +73,15 @@ export interface VendorSchemaInput {
   category: string;
   description?: string | null;
   city?: string | null;
+  region?: string | null;
   phone?: string | null;
   email?: string | null;
   coverImage?: string | null;
   priceRange?: string | null;
   rating?: number | null;
   reviewCount?: number | null;
+  /** Full URLs to social profiles / official website. Falsy entries are filtered. */
+  sameAs?: Array<string | null | undefined | false>;
 }
 
 export function vendorSchema(vendor: VendorSchemaInput): LocalBusinessSchema {
@@ -103,8 +106,16 @@ export function vendorSchema(vendor: VendorSchemaInput): LocalBusinessSchema {
       "@type": "PostalAddress",
       addressLocality: vendor.city,
       addressCountry: "IL",
+      ...(vendor.region ? { addressRegion: vendor.region } : {}),
     };
     schema.areaServed = { "@type": "City", name: vendor.city };
+  }
+
+  if (vendor.sameAs && vendor.sameAs.length > 0) {
+    const filtered = vendor.sameAs.filter(
+      (x): x is string => typeof x === "string" && x.length > 0
+    );
+    if (filtered.length > 0) schema.sameAs = filtered;
   }
 
   if (vendor.rating && vendor.reviewCount && vendor.reviewCount > 0) {
