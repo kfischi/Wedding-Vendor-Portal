@@ -20,6 +20,22 @@ import { LeadCaptureForm } from "@/components/vendor/LeadCaptureForm";
 import { WhatsAppButton } from "@/components/vendor/WhatsAppButton";
 import { ViewCountTracker } from "@/components/vendor/ViewCountTracker";
 import { Footer } from "@/components/layout/Footer";
+import { JsonLd } from "@/components/seo/json-ld";
+import { vendorSchema, breadcrumbSchema } from "@/lib/seo/factories";
+
+// ─── Static params ─────────────────────────────────────────────────────────────
+
+export async function generateStaticParams(): Promise<{ slug: string }[]> {
+  try {
+    const rows = await db
+      .select({ slug: vendors.slug })
+      .from(vendors)
+      .where(eq(vendors.status, "active"));
+    return rows.map((r) => ({ slug: r.slug }));
+  } catch {
+    return [];
+  }
+}
 
 // ─── Mock data (for /vendors/demo and DB-fallback during development) ──────────
 
@@ -235,7 +251,7 @@ async function getVendorData(slug: string): Promise<VendorData | null> {
     const [vendor] = await db
       .select()
       .from(vendors)
-      .where(and(eq(vendors.slug, slug), eq(vendors.status, "active")))
+      .where(eq(vendors.slug, slug))   // no status filter — pending vendors can preview their page
       .limit(1);
 
     if (!vendor) {
@@ -288,14 +304,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { vendor } = data;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
 
-  const ogImage =
+  // Build cover URL for OG image
+  const coverUrl =
     vendor.coverImage && cloudName && !vendor.coverImage.startsWith("http")
       ? `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/${vendor.coverImage}`
       : vendor.coverImage?.startsWith("http")
       ? vendor.coverImage
       : undefined;
+
+  // Use dynamic OG image generator
+  const ogParams = new URLSearchParams({
+    name: vendor.businessName,
+    plan: vendor.plan,
+    ...(vendor.category && { category: vendor.category }),
+    ...(vendor.city && { city: vendor.city }),
+    ...(vendor.rating != null && { rating: String(vendor.rating) }),
+    ...(coverUrl && { image: coverUrl }),
+  });
+  const ogImage = `${appUrl}/api/og?${ogParams.toString()}`;
 
   return {
     title: vendor.seoTitle ?? `${vendor.businessName} | WeddingPro`,
@@ -307,14 +335,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
       url: `${appUrl}/vendors/${slug}`,
-      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: vendor.businessName }],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: vendor.businessName,
       description: vendor.shortDescription ?? undefined,
-      images: ogImage ? [ogImage] : [],
+      images: [ogImage],
     },
   };
 }
@@ -349,39 +377,38 @@ export default async function VendorPage({ params }: Props) {
     .filter((m) => m.type === "image")
     .slice(0, planLimits.maxImages === Infinity ? undefined : planLimits.maxImages);
 
-  // JSON-LD structured data
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: vendor.businessName,
-    description: vendor.description ?? vendor.shortDescription ?? undefined,
-    url: `${appUrl}/vendors/${slug}`,
-    telephone: vendor.phone ?? undefined,
-    email: vendor.email,
-    image: heroImageUrl ?? undefined,
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: vendor.city,
-      addressRegion: vendor.region ?? undefined,
-      addressCountry: "IL",
-    },
-    sameAs: [
-      vendor.instagram && `https://instagram.com/${vendor.instagram.replace("@", "")}`,
-      vendor.tiktok && `https://tiktok.com/@${vendor.tiktok.replace("@", "")}`,
-      vendor.youtube,
-      vendor.facebook,
-      vendor.website,
-    ].filter(Boolean),
-    ...(vendor.rating != null && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: vendor.rating,
-        reviewCount: vendor.reviewCount,
-        bestRating: 5,
-        worstRating: 1,
-      },
+  // JSON-LD — LocalBusiness + Breadcrumb via typed factories (T3C)
+  const jsonLdData = [
+    vendorSchema({
+      slug,
+      businessName: vendor.businessName,
+      category: vendor.category,
+      description: vendor.description ?? vendor.shortDescription ?? null,
+      city: vendor.city,
+      region: vendor.region ?? null,
+      phone: vendor.phone,
+      email: vendor.email,
+      coverImage: heroImageUrl ?? null,
+      rating: vendor.rating ?? null,
+      reviewCount: vendor.reviewCount ?? null,
+      sameAs: [
+        vendor.instagram && `https://instagram.com/${vendor.instagram.replace("@", "")}`,
+        vendor.tiktok && `https://tiktok.com/@${vendor.tiktok.replace("@", "")}`,
+        vendor.youtube,
+        vendor.facebook,
+        vendor.website,
+      ],
     }),
-  };
+    breadcrumbSchema([
+      { name: "ראשי", url: "/" },
+      { name: "ספקים", url: "/vendors" },
+      {
+        name: vendor.category,
+        url: `/vendors?category=${encodeURIComponent(vendor.category)}`,
+      },
+      { name: vendor.businessName, url: `/vendors/${slug}` },
+    ]),
+  ];
 
   // Build scroll-spy nav sections dynamically
   const navSections = [
@@ -395,12 +422,21 @@ export default async function VendorPage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLdData} />
 
       <div className="min-h-screen bg-ivory">
+        {/* ── Pending / suspended notice ── */}
+        {vendor.status === "pending" && (
+          <div className="w-full bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-sm text-amber-800">
+            🔒 הפרופיל הזה גלוי לך בלבד — הוא לא מופיע עדיין בדירקטורי הציבורי
+          </div>
+        )}
+        {vendor.status === "suspended" && (
+          <div className="w-full bg-red-50 border-b border-red-200 px-4 py-2.5 text-center text-sm text-red-800">
+            הפרופיל הושעה
+          </div>
+        )}
+
         {/* ── Full-bleed Hero ── */}
         <VendorHero vendor={vendor} heroVideo={heroVideo} heroImageUrl={heroImageUrl} />
 

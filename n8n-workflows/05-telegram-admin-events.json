@@ -1,0 +1,172 @@
+{
+  "name": "WeddingPro — Telegram התראות אדמין",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "weddingpro-admin-events",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e5f6a7b8-0005-0005-0005-000000000001",
+      "name": "Webhook — קבלת אירוע",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "weddingpro-admin-events"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "vendor.registered",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "vendor_registered"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "vendor.payment_completed",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_completed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e5f6a7b8-0005-0005-0005-000000000002",
+      "name": "Switch לפי אירוע",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "message",
+              "value": "=🆕 <b>ספק חדש נרשם!</b>\n\n🏢 <b>שם עסק:</b> {{ $json.vendor_name }}\n📧 <b>אימייל:</b> {{ $json.vendor_email }}\n📍 <b>עיר:</b> {{ $json.city }}\n🏷 <b>קטגוריה:</b> {{ $json.category }}\n📋 <b>סוג:</b> {{ $json.registration_type === 'trial' ? 'ניסיון חינמי 3 חודשים' : 'בתשלום' }}\n\n<a href=\"https://weddingpro.co.il/admin/vendors\">לאישור בפאנל</a>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e5f6a7b8-0005-0005-0005-000000000003",
+      "name": "הכן הודעת הרשמה",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 160]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "message",
+              "value": "=💳 <b>תשלום חדש התקבל!</b>\n\n📧 <b>ספק:</b> {{ $json.vendor_email }}\n📋 <b>תוכנית:</b> {{ $json.plan === 'premium' ? 'פרמיום ₪349/חודש' : 'סטנדרט ₪149/חודש' }}\n🔑 <b>Session:</b> <code>{{ $json.stripe_session_id }}</code>\n\n⚠️ ממתין לאישור ידני!\n<a href=\"https://weddingpro.co.il/admin/vendors\">לאישור בפאנל</a>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e5f6a7b8-0005-0005-0005-000000000004",
+      "name": "הכן הודעת תשלום",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 440]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByIndex",
+        "options": {}
+      },
+      "id": "e5f6a7b8-0005-0005-0005-000000000008",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.ADMIN_TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "disable_web_page_preview": false
+        }
+      },
+      "id": "e5f6a7b8-0005-0005-0005-000000000005",
+      "name": "Telegram לאדמין",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1160, 300],
+      "credentials": {
+        "telegramApi": { "id": "TELEGRAM_CREDENTIAL_ID", "name": "WeddingPro Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true }) }}",
+        "options": {}
+      },
+      "id": "e5f6a7b8-0005-0005-0005-000000000007",
+      "name": "תגובה 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1380, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — קבלת אירוע": {
+      "main": [[{ "node": "Switch לפי אירוע", "type": "main", "index": 0 }]]
+    },
+    "Switch לפי אירוע": {
+      "main": [
+        [{ "node": "הכן הודעת הרשמה", "type": "main", "index": 0 }],
+        [{ "node": "הכן הודעת תשלום", "type": "main", "index": 0 }]
+      ]
+    },
+    "הכן הודעת הרשמה": {
+      "main": [[{ "node": "Merge", "type": "main", "index": 0 }]]
+    },
+    "הכן הודעת תשלום": {
+      "main": [[{ "node": "Merge", "type": "main", "index": 1 }]]
+    },
+    "Merge": {
+      "main": [[{ "node": "Telegram לאדמין", "type": "main", "index": 0 }]]
+    },
+    "Telegram לאדמין": {
+      "main": [[{ "node": "תגובה 200 OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["weddingpro", "telegram"],
+  "versionId": "v2"
+}

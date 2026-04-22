@@ -12,11 +12,11 @@ export function CookieBanner() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) setVisible(true);
-    } catch {
-      // localStorage not available (SSR / private mode)
-    }
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setVisible(true);
+      }
+    } catch {}
   }, []);
 
   const accept = () => {

@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { Vendor } from "@/lib/db/schema";
+import { AIDescriptionHelper } from "./AIDescriptionHelper";
 
 const CATEGORIES = [
   { value: "photography",             label: "📷 צילום חתונות" },
@@ -67,6 +68,10 @@ export function OnboardingWizard({ vendor }: Props) {
   }
 
   async function saveAndContinue() {
+    if (step === 1 && !form.phone.trim()) {
+      toast.error("טלפון / WhatsApp נדרש");
+      return;
+    }
     setSaving(true);
     try {
       const fd = new FormData();
@@ -93,7 +98,7 @@ export function OnboardingWizard({ vendor }: Props) {
 
   async function finish() {
     await saveAndContinue();
-    toast.success("הפרופיל נשמר! בקרוב תקבל אישור מהצוות שלנו 🎉");
+    toast.success("הפרופיל נשמר! הפרופיל שלך פעיל ומופיע בדירקטורי 🎉");
     router.push("/dashboard");
   }
 
@@ -214,9 +219,10 @@ export function OnboardingWizard({ vendor }: Props) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>טלפון / WhatsApp</label>
+                <label className={labelCls}>טלפון / WhatsApp *</label>
                 <input
                   type="tel"
+                  required
                   dir="ltr"
                   value={form.phone}
                   onChange={(e) => set("phone", e.target.value)}
@@ -277,7 +283,15 @@ export function OnboardingWizard({ vendor }: Props) {
 
             <div>
               <div className="flex justify-between mb-1.5">
-                <label className={labelCls} style={{margin:0}}>תיאור מלא</label>
+                <div className="flex items-center gap-3">
+                  <label className={labelCls} style={{margin:0}}>תיאור מלא</label>
+                  <AIDescriptionHelper
+                    category={form.category}
+                    city={form.city}
+                    businessName={form.businessName}
+                    onResult={(text) => set("description", text)}
+                  />
+                </div>
                 <span className={`text-xs ${form.description.length > 900 ? "text-amber-500" : "text-stone/40"}`}>
                   {form.description.length}/1000
                 </span>
@@ -308,10 +322,10 @@ export function OnboardingWizard({ vendor }: Props) {
                 <Rocket className="h-9 w-9 text-gold" />
               </div>
               <div>
-                <h2 className="font-display text-2xl text-obsidian mb-2">הפרופיל כמעט מוכן!</h2>
+                <h2 className="font-display text-2xl text-obsidian mb-2">הפרופיל מוכן!</h2>
                 <p className="text-stone/70 text-sm leading-relaxed max-w-sm mx-auto">
-                  לאחר שמירה, הפרופיל שלך יישלח לאישור קצר מצוות WeddingPro.
-                  בינתיים תוכל להעלות תמונות ולמלא פרטים נוספים.
+                  הפרופיל שלך פעיל ומופיע בדירקטורי מיד לאחר השמירה.
+                  עכשיו תוכל להעלות תמונות ולמלא פרטים נוספים.
                 </p>
               </div>
 

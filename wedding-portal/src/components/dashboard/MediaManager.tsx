@@ -25,6 +25,7 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
   const [coverUrl, setCoverUrl] = useState<string | null>(currentCoverImage ?? null);
 
   const isPremium = plan === "premium";
+  const heroVideoId = media.find(m => m.type === "video")?.id ?? null;
   const imageCount = media.filter((m) => m.type === "image").length;
   const atLimit = !isPremium && imageCount >= MAX_STANDARD;
   const usagePercent = isPremium ? null : Math.round((imageCount / MAX_STANDARD) * 100);
@@ -238,6 +239,14 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
           )}
         </div>
 
+        {/* Hero video note */}
+        {isPremium && media.some(m => m.type === "video") && (
+          <p className="text-xs text-stone/50 flex items-center gap-1.5 mt-1">
+            <Video className="h-3 w-3 shrink-0" />
+            הסרטון הראשון ברשימה משמש כ-Hero Video בפרופיל — גרור כדי לסדר מחדש
+          </p>
+        )}
+
         {/* Image grid */}
         {media.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -269,11 +278,27 @@ export function MediaManager({ initialMedia, plan, vendorId, currentCoverImage }
                   />
                 )}
 
+                {/* Video hero badge — first video is auto-used as the hero on vendor page */}
+                {item.type === "video" && media.filter((m) => m.type === "video")[0]?.id === item.id && (
+                  <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 bg-dusty-rose text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm">
+                    <Video className="h-2.5 w-2.5" />
+                    ראשי
+                  </div>
+                )}
+
                 {/* Cover badge */}
                 {item.type === "image" && item.url === coverUrl && (
                   <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 bg-gold text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm">
                     <Star className="h-2.5 w-2.5 fill-white" />
                     כריכה
+                  </div>
+                )}
+
+                {/* Hero Video badge */}
+                {item.type === "video" && item.id === heroVideoId && (
+                  <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 bg-dusty-rose text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm">
+                    <Video className="h-2.5 w-2.5" />
+                    Hero
                   </div>
                 )}
 

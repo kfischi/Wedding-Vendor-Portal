@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getAllSlugs, getPostBySlug, getAllPosts } from "@/lib/blog";
+import { getAllSlugs, getPostBySlugMerged, getAllPostsMerged } from "@/lib/blog";
 import { Footer } from "@/components/layout/Footer";
 import { ShareButtons } from "@/components/blog/ShareButtons";
 import { Clock, Calendar, ArrowRight, ChevronLeft } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
+import { articleSchema, breadcrumbSchema } from "@/lib/seo/factories";
 
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
@@ -18,7 +20,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlugMerged(slug);
   if (!post) return {};
   return {
     title: `${post.title} | WeddingPro`,
@@ -103,16 +105,35 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlugMerged(slug);
   if (!post) notFound();
 
-  const related = getAllPosts()
+  const allPostsForRelated = await getAllPostsMerged();
+  const related = allPostsForRelated
     .filter((p) => p.slug !== slug && p.category === post.category)
     .slice(0, 3);
 
+  const jsonLd = [
+    articleSchema({
+      slug: post.slug,
+      title: post.title,
+      excerpt: post.excerpt,
+      coverImage: post.coverImage,
+      publishedAt: post.date,
+      authorName: post.author,
+      category: post.category,
+    }),
+    breadcrumbSchema([
+      { name: "ראשי", url: "/" },
+      { name: "בלוג", url: "/blog" },
+      { name: post.title, url: `/blog/${post.slug}` },
+    ]),
+  ];
+
   return (
     <>
-      <main dir="rtl" className="min-h-screen bg-[#faf9f7]">
+      <JsonLd data={jsonLd} />
+      <main dir="rtl" className="min-h-screen bg-ivory">
         {/* Hero image */}
         <div className="relative h-72 lg:h-[480px] bg-obsidian">
           <Image

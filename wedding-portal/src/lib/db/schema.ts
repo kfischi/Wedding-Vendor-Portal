@@ -168,6 +168,9 @@ export const leads = pgTable(
     status: leadStatusEnum("status").notNull().default("new"),
     notes: text("notes"),
     submitterIp: text("submitter_ip"),
+    aiScore: integer("ai_score"),
+    aiScoreLabel: text("ai_score_label"), // "hot" | "warm" | "cold"
+    aiScoreReason: text("ai_score_reason"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -202,6 +205,42 @@ export const reviews = pgTable(
   ]
 );
 
+// ─── review_requests ──────────────────────────────────────────────────────────
+//
+// Outbound invitations for past clients to submit a review.
+// Each request has a unique token that unlocks a public, auth-less review form
+// at /r/{token}. Tokens expire after 30 days.
+
+export const reviewRequests = pgTable(
+  "review_requests",
+  {
+    id: text("id").primaryKey().notNull(),
+    vendorId: text("vendor_id")
+      .notNull()
+      .references(() => vendors.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    clientName: text("client_name").notNull(),
+    clientEmail: text("client_email"),
+    clientPhone: text("client_phone"),
+    eventDate: text("event_date"),
+    /** sent | used | expired */
+    status: text("status").notNull().default("sent"),
+    /** email | whatsapp | both */
+    sentChannel: text("sent_channel"),
+    reviewId: text("review_id").references(() => reviews.id, {
+      onDelete: "set null",
+    }),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    usedAt: timestamp("used_at"),
+  },
+  (table) => [
+    index("review_requests_token_idx").on(table.token),
+    index("review_requests_vendor_id_idx").on(table.vendorId),
+    index("review_requests_status_idx").on(table.status),
+  ]
+);
+
 // ─── coupons ──────────────────────────────────────────────────────────────────
 
 export const coupons = pgTable("coupons", {
@@ -216,6 +255,31 @@ export const coupons = pgTable("coupons", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// ─── messages ─────────────────────────────────────────────────────────────────
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: text("id").primaryKey().notNull(),
+    vendorId: text("vendor_id")
+      .notNull()
+      .references(() => vendors.id, { onDelete: "cascade" }),
+    leadId: text("lead_id").references(() => leads.id, { onDelete: "set null" }),
+    channel: text("channel").notNull(), // 'email' | 'whatsapp'
+    recipient: text("recipient").notNull(),
+    subject: text("subject"),
+    body: text("body").notNull(),
+    status: text("status").notNull().default("sent"), // 'sent' | 'failed'
+    error: text("error"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("messages_vendor_id_idx").on(table.vendorId),
+    index("messages_lead_id_idx").on(table.leadId),
+    index("messages_created_at_idx").on(table.createdAt),
+  ]
+);
 
 // ─── plan_overrides ───────────────────────────────────────────────────────────
 
@@ -251,8 +315,96 @@ export const adminLogs = pgTable(
   ]
 );
 
+// ─── automation_logs ──────────────────────────────────────────────────────────
+// Tracks every outbound automation event: N8N webhooks, WAHA messages, AI tasks
+
+export const automationChannelEnum = pgEnum("automation_channel", [
+  "n8n",
+  "waha",
+  "email",
+  "ai",
+  "cron",
+]);
+
+export const automationStatusEnum = pgEnum("automation_status", [
+  "sent",
+  "failed",
+  "skipped",
+  "pending",
+]);
+
+export const automationLogs = pgTable(
+  "automation_logs",
+  {
+    id: text("id").primaryKey().notNull(),
+    event: text("event").notNull(), // 'lead.new', 'vendor.registered', 'blog.generated', etc.
+    channel: automationChannelEnum("channel").notNull(),
+    status: automationStatusEnum("status").notNull().default("sent"),
+    payload: jsonb("payload").$type<Record<string, unknown>>(),
+    responseCode: integer("response_code"),
+    durationMs: integer("duration_ms"),
+    error: text("error"),
+    vendorId: text("vendor_id").references(() => vendors.id, {
+      onDelete: "set null",
+    }),
+    leadId: text("lead_id").references(() => leads.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("automation_logs_event_idx").on(table.event),
+    index("automation_logs_channel_idx").on(table.channel),
+    index("automation_logs_status_idx").on(table.status),
+    index("automation_logs_created_at_idx").on(table.createdAt),
+  ]
+);
+
+// ─── blog_posts ───────────────────────────────────────────────────────────────
+// AI-generated + manually curated blog posts (SEO machine)
+
+export const blogPostStatusEnum = pgEnum("blog_post_status", [
+  "draft",
+  "published",
+  "archived",
+]);
+
+export const blogPosts = pgTable(
+  "blog_posts",
+  {
+    id: text("id").primaryKey().notNull(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    excerpt: text("excerpt").notNull(),
+    content: text("content").notNull(), // MDX/Markdown content
+    coverImage: text("cover_image"),
+    author: text("author").notNull().default("צוות WeddingPro"),
+    category: text("category").notNull().default("general"),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    status: blogPostStatusEnum("status").notNull().default("draft"),
+    isAiGenerated: boolean("is_ai_generated").notNull().default(false),
+    publishedAt: timestamp("published_at"),
+    viewCount: integer("view_count").notNull().default(0),
+    readingTimeMinutes: integer("reading_time_minutes"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("blog_posts_slug_idx").on(table.slug),
+    index("blog_posts_status_idx").on(table.status),
+    index("blog_posts_category_idx").on(table.category),
+    index("blog_posts_published_at_idx").on(table.publishedAt),
+  ]
+);
+
 // ─── Type Exports ─────────────────────────────────────────────────────────────
 
+export type AutomationLog = typeof automationLogs.$inferSelect;
+export type NewAutomationLog = typeof automationLogs.$inferInsert;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type NewBlogPost = typeof blogPosts.$inferInsert;
 export type Vendor = typeof vendors.$inferSelect;
 export type NewVendor = typeof vendors.$inferInsert;
 export type VendorMedia = typeof vendorMedia.$inferSelect;
@@ -263,5 +415,10 @@ export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
 export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
+
+export type ReviewRequest = typeof reviewRequests.$inferSelect;
+export type NewReviewRequest = typeof reviewRequests.$inferInsert;
 export type Coupon = typeof coupons.$inferSelect;
 export type NewCoupon = typeof coupons.$inferInsert;
+export type Message = typeof messages.$inferSelect;
+export type NewMessage = typeof messages.$inferInsert;

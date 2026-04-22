@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&amp;display=swap');
+    </style>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#e2c97e"/>
+      <stop offset="50%"  stop-color="#c9a854"/>
+      <stop offset="100%" stop-color="#a07830"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="56" height="56" rx="11" fill="#18181b"/>
+  <!-- Subtle border -->
+  <rect width="56" height="56" rx="11" fill="none" stroke="#3f3f46" stroke-width="1.2"/>
+
+  <!-- W letter in Great Vibes (script/calligraphic) -->
+  <text
+    x="28"
+    y="43"
+    font-family="'Great Vibes', cursive, serif"
+    font-size="42"
+    fill="url(#goldGrad)"
+    text-anchor="middle"
+    dominant-baseline="auto"
+  >W</text>
+</svg>

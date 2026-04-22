@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    // Netlify / CI build servers need system TLS certs to fetch Google Fonts
+    turbopackUseSystemTlsCerts: true,
     optimizePackageImports: [
       "lucide-react",
       "framer-motion",

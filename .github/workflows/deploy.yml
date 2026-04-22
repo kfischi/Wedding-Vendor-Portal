@@ -1,0 +1,219 @@
+name: 🚀 Deploy → Netlify (Self-Healing)
+
+on:
+  push:
+    branches: [main, master, "claude/**"]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── 1. Type-check + Lint ──────────────────────────────────────────────────
+  quality:
+    name: 🔍 Quality Gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wedding-portal
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: wedding-portal/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+        continue-on-error: false
+
+      - name: ESLint
+        run: pnpm lint --max-warnings 0
+        continue-on-error: false
+
+  # ─── 2. Build ─────────────────────────────────────────────────────────────
+  build:
+    name: 🏗️ Build
+    needs: quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wedding-portal
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+      CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+      CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: wedding-portal/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Next.js
+        run: pnpm build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: wedding-portal/.next
+          retention-days: 1
+
+  # ─── 3. Deploy to Netlify ─────────────────────────────────────────────────
+  deploy:
+    name: 🌐 Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    outputs:
+      deploy_url: ${{ steps.deploy.outputs.deploy_url }}
+      deploy_id: ${{ steps.deploy.outputs.deploy_id }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: wedding-portal/pnpm-lock.yaml
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: wedding-portal/.next
+
+      - name: Install netlify-cli
+        run: npm install -g netlify-cli
+
+      - name: Install dependencies (for Netlify plugin)
+        working-directory: wedding-portal
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy to Netlify
+        id: deploy
+        working-directory: wedding-portal
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          IS_PROD=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+          if [ "$IS_PROD" = "true" ]; then
+            RESULT=$(netlify deploy --dir=.next --prod --json 2>&1)
+          else
+            RESULT=$(netlify deploy --dir=.next --json 2>&1)
+          fi
+          echo "$RESULT"
+          DEPLOY_URL=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('deploy_url', d.get('url','')))" 2>/dev/null || echo "")
+          DEPLOY_ID=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('deploy_id',''))" 2>/dev/null || echo "")
+          echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "deploy_id=$DEPLOY_ID"   >> $GITHUB_OUTPUT
+          echo "✅ Deployed: $DEPLOY_URL"
+
+  # ─── 4. Self-Heal on Failure ──────────────────────────────────────────────
+  self-heal:
+    name: 🔧 Self-Heal
+    runs-on: ubuntu-latest
+    needs: [quality, build, deploy]
+    if: |
+      always() &&
+      (needs.quality.result == 'failure' || needs.build.result == 'failure' || needs.deploy.result == 'failure')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: wedding-portal/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: wedding-portal
+        run: pnpm install --frozen-lockfile
+
+      - name: Collect error logs
+        working-directory: wedding-portal
+        id: errors
+        run: |
+          {
+            echo "=== TypeScript Errors ==="
+            npx tsc --noEmit 2>&1 || true
+            echo "=== ESLint Errors ==="
+            pnpm lint 2>&1 || true
+            echo "=== Build Errors ==="
+            pnpm build 2>&1 || true
+          } > /tmp/build-errors.txt
+          echo "errors<<EOF" >> $GITHUB_OUTPUT
+          head -200 /tmp/build-errors.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Auto-fix with Claude AI
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node scripts/claude-fixer.mjs "/tmp/build-errors.txt" "wedding-portal"
+
+      - name: Verify fix builds
+        working-directory: wedding-portal
+        run: |
+          pnpm install --frozen-lockfile
+          npx tsc --noEmit
+          pnpm build
+
+      - name: Commit & push fix
+        run: |
+          git config user.name "Claude Self-Heal Bot"
+          git config user.email "claude-bot@suite-hagit.co.il"
+          git add -A
+          git diff --staged --quiet || git commit -m "fix: auto-heal build errors [skip ci]"
+          git push origin HEAD
+
+      - name: Re-trigger deploy
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh workflow run deploy.yml --ref ${{ github.ref_name }}

@@ -23,6 +23,11 @@ export default async function DashboardLayout({
     redirect("/auth/login");
   }
 
+  // Admin users have no vendor record — send them straight to the admin panel
+  if (user.email && user.email === process.env.ADMIN_EMAIL) {
+    redirect("/admin");
+  }
+
   let vendor = null;
   let newLeadsCount = 0;
 
@@ -62,7 +67,7 @@ export default async function DashboardLayout({
           </div>
           <div className="bg-white rounded-2xl border border-red-100 p-5 text-sm text-stone/70 text-right space-y-2">
             <p className="font-semibold text-obsidian text-xs mb-1">מה ניתן לעשות?</p>
-            <p>• פנה לתמיכה בדוא"ל עם פרטי חשבונך</p>
+            <p>• פנה לתמיכה בדוא&quot;ל עם פרטי חשבונך</p>
             <p>• וודא שפרטי העסק תקינים ועומדים בתנאי השימוש</p>
             <p>• לאחר פתרון הבעיה, הצוות ישחרר את החשבון</p>
           </div>
@@ -107,15 +112,12 @@ export default async function DashboardLayout({
               כדי להמשיך להופיע בדירקטורי ולקבל לידים — בחר תוכנית מנוי.
             </p>
           </div>
-          <div className="bg-white rounded-2xl border border-amber-100 p-5 text-sm text-stone text-right space-y-3">
+          <div className="bg-white rounded-2xl border border-amber-100 p-5 text-sm text-stone text-right">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-obsidian">Standard</span>
-              <span className="text-gold font-display text-lg">₪149<span className="text-xs text-stone/60">/חודש</span></span>
+              <span className="font-semibold text-obsidian">מנוי חודשי</span>
+              <span className="text-gold font-display text-lg">₪179<span className="text-xs text-stone/60">/חודש</span></span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-obsidian">Premium</span>
-              <span className="text-gold font-display text-lg">₪349<span className="text-xs text-stone/60">/חודש</span></span>
-            </div>
+            <p className="text-xs text-stone/50 mt-2">ביטול בכל עת. ללא עמלות על לידים.</p>
           </div>
           <div className="flex flex-col gap-3">
             <Link

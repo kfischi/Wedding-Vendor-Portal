@@ -3,30 +3,24 @@ import { createServerClient } from "@supabase/ssr";
 
 // ── Security headers applied to every response ────────────────────────────────
 function applySecurityHeaders(response: NextResponse): NextResponse {
-  // Prevent clickjacking
   response.headers.set("X-Frame-Options", "DENY");
-  // Prevent MIME-type sniffing
   response.headers.set("X-Content-Type-Options", "nosniff");
-  // Referrer policy — share origin only with same-origin requests
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  // Restrict access to sensitive browser APIs
   response.headers.set(
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), payment=(self)"
   );
-  // Force HTTPS in production
   if (process.env.NODE_ENV === "production") {
     response.headers.set(
       "Strict-Transport-Security",
       "max-age=63072000; includeSubDomains; preload"
     );
   }
-  // Basic Content-Security-Policy (tightened — adjust if using external scripts)
   response.headers.set(
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires unsafe-eval in dev
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.supabase.co",
@@ -41,12 +35,12 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 // ── Auth guard for protected routes ───────────────────────────────────────────
 async function withAuthGuard(
   request: NextRequest,
-  response: NextResponse
+  response: NextResponse,
+  requireAdmin = false
 ): Promise<NextResponse> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Skip auth guard if Supabase is not configured (dev without DB)
   if (!supabaseUrl || !supabaseKey) {
     return response;
   }
@@ -74,27 +68,47 @@ async function withAuthGuard(
     return NextResponse.redirect(loginUrl);
   }
 
+  if (requireAdmin) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail || user.email !== adminEmail) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
   return response;
 }
 
-// ── Proxy entrypoint (Next.js 16 — replaces middleware) ───────────────────────
-export async function proxy(request: NextRequest): Promise<NextResponse> {
-  const { pathname } = request.nextUrl;
+// ── Pages that handle ?code= themselves — do NOT intercept ───────────────────
+const CODE_HANDLED_PATHS = ["/auth/callback", "/auth/reset-password"];
 
-  // Start with a pass-through response so we can attach headers/cookies
+// ── Middleware entrypoint ─────────────────────────────────────────────────────
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const { pathname, searchParams, origin } = request.nextUrl;
+
+  // If Supabase redirected ?code= to the wrong page, forward to /auth/callback
+  const code = searchParams.get("code");
+  if (code && !CODE_HANDLED_PATHS.includes(pathname)) {
+    const callbackUrl = new URL("/auth/callback", origin);
+    callbackUrl.searchParams.set("code", code);
+    return NextResponse.redirect(callbackUrl);
+  }
+
+  // Pass-through response (preserves headers/cookies for SSR)
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
 
-  // Apply security headers on every request
+  // Security headers on every request
   response = applySecurityHeaders(response);
 
-  // Protect dashboard and admin routes
-  if (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/admin")
-  ) {
+  // Protect dashboard routes (any authenticated user)
+  if (pathname.startsWith("/dashboard")) {
     response = await withAuthGuard(request, response);
+  }
+
+  // Protect admin routes (admin email only)
+  if (pathname.startsWith("/admin")) {
+    response = await withAuthGuard(request, response, true);
   }
 
   return response;
@@ -102,13 +116,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     *  - _next/static (static files)
-     *  - _next/image (image optimisation)
-     *  - favicon.ico
-     *  - public assets (images, svg, etc.)
-     */
     "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)",
   ],
 };

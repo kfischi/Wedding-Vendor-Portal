@@ -10,6 +10,7 @@ import {
   NEXT_PUBLIC_APP_URL,
   RESEND_API_KEY,
   ADMIN_EMAIL,
+  FROM_EMAIL,
 } from "@/lib/env";
 import { escapeHtml } from "@/lib/security/sanitize";
 
@@ -22,11 +23,17 @@ const schema = z.object({
   city: z.string().min(1, "עיר נדרשת").max(100),
   phone: z.string().max(20).optional(),
   couponCode: z.string().min(1, "קוד קופון נדרש").max(50),
+  password: z.string().min(8, "הסיסמה חייבת להכיל לפחות 8 תווים").max(72),
 });
 
 function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(
+      `Missing env vars: ${!url ? "NEXT_PUBLIC_SUPABASE_URL" : ""} ${!key ? "SUPABASE_SERVICE_ROLE_KEY" : ""}`.trim()
+    );
+  }
   return createSupabaseAdmin(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -55,7 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { email, businessName, category, city, phone, couponCode } = parsed.data;
+  const { email, businessName, category, city, phone, couponCode, password } = parsed.data;
   const now = new Date();
 
   // ── Validate coupon ──────────────────────────────────────────────────────────
@@ -105,44 +112,92 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
-  const baseUrl = NEXT_PUBLIC_APP_URL;
-  const hostname = new URL(baseUrl).hostname;
+   
+  let supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  try {
+    supabaseAdmin = getSupabaseAdmin();
+  } catch (err) {
+    console.error("[register-free] Admin client init error:", err);
+    return NextResponse.json(
+      { error: "שגיאת תצורת שרת — פנה למנהל המערכת" },
+      { status: 500 }
+    );
+  }
 
-  // Create Supabase auth user
-  const tempPassword = crypto.randomUUID();
+  const baseUrl = NEXT_PUBLIC_APP_URL;
+
+  // Create Supabase auth user with the provided password
   const { data: newUser, error: userError } =
     await supabaseAdmin.auth.admin.createUser({
       email,
-      password: tempPassword,
+      password,
       email_confirm: true,
       user_metadata: { role: "vendor", plan: "standard" },
     });
 
-  if (userError && !userError.message.includes("already registered")) {
-    console.error("[register-free] Supabase user creation error:", userError);
-    return NextResponse.json({ error: "שגיאה ביצירת חשבון" }, { status: 500 });
-  }
-
-  // Resolve userId (handle existing user case)
   let userId = newUser?.user?.id;
-  if (!userId) {
-    const { data: existing } = await supabaseAdmin.auth.admin.listUsers();
-    const found = existing?.users?.find((u) => u.email === email);
-    userId = found?.id;
+
+  if (userError) {
+    const isAlreadyExists =
+      userError.message.toLowerCase().includes("already registered") ||
+      userError.message.toLowerCase().includes("already exists") ||
+      userError.message.toLowerCase().includes("email address has already been registered");
+
+    if (!isAlreadyExists) {
+      console.error("[register-free] Supabase createUser error:", userError.message);
+      return NextResponse.json(
+        { error: "שגיאה ביצירת חשבון: " + userError.message },
+        { status: 500 }
+      );
+    }
+
+    // Email already exists in Supabase auth — find userId via paginated search
+    let page = 1;
+    outer: while (true) {
+      const { data: pageData, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: 1000,
+      });
+      if (listErr || !pageData?.users?.length) break;
+      for (const u of pageData.users) {
+        if (u.email === email) { userId = u.id; break outer; }
+      }
+      if (pageData.users.length < 1000) break;
+      page++;
+    }
+
+    if (!userId) {
+      // Edge case: email exists in Supabase but we can't find the userId
+      return NextResponse.json(
+        { error: "האימייל הזה כבר רשום. כנס דרך דף ההתחברות או אפס סיסמה." },
+        { status: 409 }
+      );
+    }
   }
 
   if (!userId) {
+    console.error("[register-free] No userId after createUser (unexpected)");
     return NextResponse.json({ error: "שגיאה ביצירת חשבון" }, { status: 500 });
   }
 
-  // Generate password-reset link
-  const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
-    type: "recovery",
-    email,
-    options: { redirectTo: `${baseUrl}/auth/login` },
-  });
-  const resetUrl = resetData?.properties?.action_link ?? `${baseUrl}/auth/login`;
+  // Check if this userId already has a vendor (e.g. previous partial registration)
+  try {
+    const [existingByUserId] = await db
+      .select({ id: vendors.id, email: vendors.email })
+      .from(vendors)
+      .where(eq(vendors.userId, userId))
+      .limit(1);
+
+    if (existingByUserId) {
+      // Vendor already exists for this Supabase user — treat as already registered
+      return NextResponse.json(
+        { error: "החשבון שלך כבר קיים במערכת. כנס דרך דף ההתחברות." },
+        { status: 409 }
+      );
+    }
+  } catch {
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
+  }
 
   // Compute trial end date (90 days from now)
   const trialEndsAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -175,8 +230,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     await db.insert(vendors).values(newVendor);
   } catch (err) {
-    console.error("[register-free] DB insert error:", err);
-    return NextResponse.json({ error: "שגיאה בשמירת נתונים" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[register-free] DB insert error:", msg);
+    // Clean up the Supabase user we just created so the email can be reused
+    try { await supabaseAdmin.auth.admin.deleteUser(userId); } catch {}
+    return NextResponse.json({ error: "שגיאה בשמירת נתונים: " + msg }, { status: 500 });
   }
 
   // Increment coupon usage
@@ -190,14 +248,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Non-fatal — vendor is already created
   }
 
-  // Send welcome email with password setup link
+  // Send welcome email
   try {
     const resend = new Resend(RESEND_API_KEY);
-
     await resend.emails.send({
-      from: `WeddingPro <noreply@${hostname}>`,
+      from: FROM_EMAIL,
       to: email,
-      subject: "ברוכים הבאים ל-WeddingPro — הגדר את הסיסמה שלך",
+      subject: "ברוכים הבאים ל-WeddingPro!",
       html: `
         <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#faf8f5; border-radius:12px; overflow:hidden;">
           <div style="background: linear-gradient(135deg, #1a1614 0%, #2d2420 100%); padding: 24px 28px;">
@@ -214,17 +271,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 הפרופיל שלך פעיל ומופיע בדירקטורי עד <strong>${trialEndDisplay}</strong>.
               </p>
             </div>
-            <p style="margin:0 0 20px; color:#5a4a42; line-height:1.6;">
-              כדי להתחיל למלא את הפרופיל, הגדר תחילה סיסמה:
-            </p>
             <div style="text-align:center; margin: 24px 0;">
-              <a href="${escapeHtml(resetUrl)}"
+              <a href="${escapeHtml(baseUrl)}/dashboard"
                  style="display:inline-block; background:linear-gradient(135deg,#b8976a,#9a7d56); color:white; padding:14px 32px; border-radius:10px; text-decoration:none; font-weight:bold; font-size:15px;">
-                הגדר סיסמה →
+                כניסה ללוח הבקרה →
               </a>
             </div>
             <p style="margin:0; color:#9e8e86; font-size:13px;">
-              הקישור תקף ל-24 שעות. לשאלות: <a href="mailto:support@${hostname}" style="color:#b8976a;">support@${hostname}</a>
+              לשאלות: <a href="mailto:info@weddingpro.co.il" style="color:#b8976a;">info@weddingpro.co.il</a>
             </p>
           </div>
           <div style="padding:12px 28px; background:#faf8f5; text-align:center; font-size:11px; color:#9e8e86;">
@@ -242,7 +296,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       const resend = new Resend(RESEND_API_KEY);
       await resend.emails.send({
-        from: `WeddingPro <noreply@${hostname}>`,
+        from: FROM_EMAIL,
         to: ADMIN_EMAIL,
         subject: `[WeddingPro] ספק ניסיון חדש — ${businessName}`,
         html: `

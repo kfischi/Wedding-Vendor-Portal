@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Resend } from "resend";
 import { escapeHtml, escapeHtmlMultiline } from "@/lib/security/sanitize";
-import { RESEND_API_KEY, ADMIN_EMAIL, NEXT_PUBLIC_APP_URL } from "@/lib/env";
+import { RESEND_API_KEY, ADMIN_EMAIL, FROM_EMAIL } from "@/lib/env";
 
 const contactSchema = z.object({
   name: z.string().min(2, "שם נדרש").max(100),
@@ -30,9 +30,7 @@ export async function POST(req: NextRequest) {
   const { name, email, subject, message } = parsed.data;
 
   // Determine recipient — fall back to a well-known alias if ADMIN_EMAIL unset
-  const hostname = new URL(NEXT_PUBLIC_APP_URL).hostname;
-  const supportEmail = ADMIN_EMAIL || `support@${hostname}`;
-  const fromAddress = `WeddingPro <noreply@${hostname}>`;
+  const supportEmail = ADMIN_EMAIL || "info@weddingpro.co.il";
 
   // Escape all user-supplied values before HTML interpolation
   const safeName = escapeHtml(name);
@@ -44,7 +42,7 @@ export async function POST(req: NextRequest) {
     const resend = new Resend(RESEND_API_KEY);
 
     await resend.emails.send({
-      from: fromAddress,
+      from: FROM_EMAIL,
       to: supportEmail,
       replyTo: email, // raw email — Resend handles this, not inserted into HTML
       subject: `[צור קשר] ${subject}`,

@@ -3,16 +3,18 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db/db";
-import { vendors } from "@/lib/db/schema";
+import { vendors, vendorCategoryEnum } from "@/lib/db/schema";
+
+const VALID_CATEGORIES = vendorCategoryEnum.enumValues;
 
 const schema = z.object({
   businessName:     z.string().min(2).max(100),
-  category:         z.string().min(1),
+  category:         z.enum(VALID_CATEGORIES),
   city:             z.string().min(1).max(50),
   region:           z.string().optional(),
   shortDescription: z.string().max(160).optional(),
   description:      z.string().max(1000).optional(),
-  phone:            z.string().max(20).optional(),
+  phone:            z.string().min(9, "טלפון נדרש").max(20),
   email:            z.string().email().max(255),
   website:          z.string().url().optional().or(z.literal("")),
   instagram:        z.string().max(50).optional(),
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .update(vendors)
       .set({
         businessName:     d.businessName,
-        category:         d.category as typeof vendors.$inferSelect["category"],
+        category:         d.category,
         city:             d.city,
         region:           d.region ?? null,
         shortDescription: d.shortDescription ?? null,
