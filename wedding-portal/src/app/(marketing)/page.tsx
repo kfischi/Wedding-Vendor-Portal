@@ -18,6 +18,8 @@ import { CookieBanner } from "@/components/shared/CookieBanner";
 import { HeroEditorial } from "@/components/home/hero-editorial";
 import { AnimatedStats } from "@/components/marketing/AnimatedStats";
 import { CategoryBento } from "@/components/home/category-bento";
+import { FeaturedCoverStory } from "@/components/home/featured-cover-story";
+import { getCoverStoryVendor } from "@/lib/queries/featured-cover";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
   organizationSchema,
@@ -172,7 +174,14 @@ async function getFeaturedVendors(): Promise<Vendor[]> {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const featuredVendors = await getFeaturedVendors();
+  const [featuredVendors, coverVendor] = await Promise.all([
+    getFeaturedVendors(),
+    getCoverStoryVendor(),
+  ]);
+  const currentMonth = new Intl.DateTimeFormat("he-IL", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
 
   return (
     <>
@@ -213,6 +222,11 @@ export default async function HomePage() {
 
       {/* ── CATEGORIES (stagger on scroll + hover lift) ────────────────────────── */}
       <CategoryBento />
+
+      {/* ── COVER STORY (renders only when a premium vendor exists) ───────────── */}
+      {coverVendor && (
+        <FeaturedCoverStory vendor={coverVendor} month={currentMonth} />
+      )}
 
       {/* ── FEATURED VENDORS ──────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 bg-cream-white">
